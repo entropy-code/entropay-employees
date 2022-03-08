@@ -1,0 +1,8 @@
+version: '3.9'
+
+services:
+    entropay-employees:
+      build: .
+      ports:
+          - "8080:8080"
+
