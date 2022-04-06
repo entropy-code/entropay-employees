@@ -4,5 +4,5 @@ services:
     entropay-employees:
       build: .
       ports:
-          - "8080:8080"
+          - "8100:8100"
 
