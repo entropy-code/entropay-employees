@@ -8,10 +8,10 @@
 		<version>2.6.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.entropy</groupId>
-	<artifactId>entropay.employees</artifactId>
+	<groupId>com.entropyteam.entropay</groupId>
+	<artifactId>entropay-employees</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>entropay-employees</name>
 	<description>Entropay employees</description>
 	<properties>
@@ -54,6 +54,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<finalName>entropay-employees</finalName>
+				</configuration>
 			</plugin>
 
 			<plugin>
