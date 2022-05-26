@@ -1,14 +1,14 @@
-package com.entropy.entropay.employees.projects.models;
+package com.entropyteam.entropay.employees.projects.models;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import com.entropy.entropay.employees.clients.models.Client;
+import com.entropyteam.entropay.employees.clients.models.Client;
 
 import lombok.Data;
 
 @Entity
-@Table(name = "projects")
+@Table(name = "projects", schema = "employees")
 @Data
 public class Project {
     @Id

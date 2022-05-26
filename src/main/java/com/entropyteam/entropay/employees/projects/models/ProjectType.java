@@ -1,4 +1,4 @@
-package com.entropy.entropay.employees.projects.models;
+package com.entropyteam.entropay.employees.projects.models;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
