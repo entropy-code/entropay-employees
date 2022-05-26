@@ -1,4 +1,4 @@
-package com.entropy.entropay.employees.common.exceptions;
+package com.entropyteam.entropay.employees.common.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

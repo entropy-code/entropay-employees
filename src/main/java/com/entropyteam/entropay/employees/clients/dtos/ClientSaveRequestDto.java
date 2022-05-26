@@ -1,4 +1,4 @@
-package com.entropy.entropay.employees.clients.dtos;
+package com.entropyteam.entropay.employees.clients.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

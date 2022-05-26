@@ -1,19 +1,18 @@
-package com.entropy.entropay.employees.common.mappers;
+package com.entropyteam.entropay.employees.common.mappers;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import com.entropy.entropay.employees.clients.dtos.ClientDto;
-import com.entropy.entropay.employees.clients.dtos.ClientSaveRequestDto;
-import com.entropy.entropay.employees.clients.dtos.ClientSaveResponseDto;
-import com.entropy.entropay.employees.clients.models.Client;
+import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
+import com.entropyteam.entropay.employees.clients.dtos.ClientSaveRequestDto;
+import com.entropyteam.entropay.employees.clients.dtos.ClientSaveResponseDto;
+import com.entropyteam.entropay.employees.clients.models.Client;
 
 class ClientMapperTest {
 

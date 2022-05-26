@@ -1,13 +1,13 @@
-package com.entropy.entropay.employees.common.mappers;
+package com.entropyteam.entropay.employees.common.mappers;
 
 import java.util.Collection;
 import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import com.entropy.entropay.employees.clients.dtos.ClientDto;
-import com.entropy.entropay.employees.clients.dtos.ClientSaveRequestDto;
-import com.entropy.entropay.employees.clients.dtos.ClientSaveResponseDto;
-import com.entropy.entropay.employees.clients.models.Client;
+import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
+import com.entropyteam.entropay.employees.clients.dtos.ClientSaveRequestDto;
+import com.entropyteam.entropay.employees.clients.dtos.ClientSaveResponseDto;
+import com.entropyteam.entropay.employees.clients.models.Client;
 
 @Mapper
 public interface ClientMapper {
