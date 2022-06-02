@@ -43,8 +43,10 @@ permissions:
   contents: read
 
 jobs:
+
+
   deploy:
-    name: Deploy
+    name: Deploy to Dev
     runs-on: ubuntu-latest
     environment: development
 
@@ -67,14 +69,14 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        VERSION='mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout'
+        docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$VERSION"
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
