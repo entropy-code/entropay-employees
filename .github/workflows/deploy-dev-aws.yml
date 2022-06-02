@@ -47,7 +47,8 @@ jobs:
     name: Release Dev version
     runs-on: ubuntu-latest
     environment: development
-
+    outputs:
+      version: ${{ steps.release.outputs.version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -63,8 +64,7 @@ jobs:
       run: |
         export VERSION='mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout'
         echo "::set-output name=version::${VERSION}"
-    outputs:
-      version: ${{ steps.release.outputs.version}}
+
 
   build-deploy:
     name: Deploy to Dev
@@ -90,7 +90,7 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        VERSION: ${{needs.release.outputs.version }}
+        VERSION: ${{ needs.release-dev.outputs.version }}
       run: |
         # Build a docker container and push it to ECR so that it can be deployed to ECS.
         docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
