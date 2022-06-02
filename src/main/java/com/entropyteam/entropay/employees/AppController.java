@@ -9,7 +9,7 @@ public class AppController {
 
     @GetMapping("/health-check")
     public ResponseEntity<String> heathCheck(){
-        return ResponseEntity.ok("Entropay-employess: OK");
+        return ResponseEntity.ok("Entropay-employess: OK, Version: 2");
     }
 }
 
