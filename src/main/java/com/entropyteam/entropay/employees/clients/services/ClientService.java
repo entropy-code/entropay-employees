@@ -14,6 +14,7 @@ import com.entropyteam.entropay.employees.clients.dtos.ClientSaveRequestDto;
 import com.entropyteam.entropay.employees.clients.dtos.ClientSaveResponseDto;
 import com.entropyteam.entropay.employees.clients.models.Client;
 import com.entropyteam.entropay.employees.clients.repositories.ClientRepository;
+import com.entropyteam.entropay.employees.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.common.exceptions.ResourceNotFoundException;
 import com.entropyteam.entropay.employees.common.mappers.ClientMapper;
 
@@ -83,7 +84,7 @@ public class ClientService {
 
         log.debug("Attempting to retrieve the list of active clients. Page: {}. Size: {}. Sort: {}.", page, size, sort);
 
-        Pageable paging = PageRequest.of(page, size).withSort(sort, sortBy);
+        Pageable paging = PageRequest.of(--page, size).withSort(sort, sortBy);
         Page<ClientDto> result = clientRepository.findAllByIsActiveTrue(paging);
         log.trace("Result: {}.", result);
         return result;

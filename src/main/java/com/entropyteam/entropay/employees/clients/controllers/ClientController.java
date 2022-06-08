@@ -19,6 +19,7 @@ import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
 import com.entropyteam.entropay.employees.clients.dtos.ClientSaveRequestDto;
 import com.entropyteam.entropay.employees.clients.dtos.ClientSaveResponseDto;
 import com.entropyteam.entropay.employees.clients.services.ClientService;
+import com.entropyteam.entropay.employees.common.exceptions.InvalidRequestParametersException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -33,12 +34,17 @@ public class ClientController {
 
     @GetMapping
     public ResponseEntity<Page<ClientDto>> findClients(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "ASC") Direction sort,
             @RequestParam(defaultValue = "name") String sortBy
             ) {
         log.info("GET findClients");
+
+        if(page < 1) {
+            throw  new InvalidRequestParametersException("\"page\" must be greater than 0.");
+        }
+
         return ResponseEntity.ok(clientService.listActiveClients(sort, page, size, sortBy));
     }
 
