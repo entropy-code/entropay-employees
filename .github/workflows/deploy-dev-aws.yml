@@ -63,7 +63,7 @@ jobs:
     - name: Release
       id: release
       run: |
-        export VERSION=${mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout}
+        echo "export VERSION=${mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout}"
         echo "::set-output name=version::${VERSION}"
 
 
