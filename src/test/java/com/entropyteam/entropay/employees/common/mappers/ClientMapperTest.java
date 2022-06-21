@@ -3,10 +3,6 @@ package com.entropyteam.entropay.employees.common.mappers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
