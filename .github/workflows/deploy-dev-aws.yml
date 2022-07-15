@@ -3,14 +3,14 @@ name: Deploy to dev
 on:
   push:
     branches:
-      - main
+      - cicd-implemantation
 
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: entropay-employees
   ECS_SERVICE: entropay-employees
   ECS_CLUSTER: entropay-dev
-  ECS_TASK_DEFINITION: .aws/task-definition.json
+  #ECS_TASK_DEFINITION: .aws/task-definition.json
   CONTAINER_NAME: entropay-employees           
 
 permissions:
@@ -57,6 +57,10 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+
+    - name: Download task definition
+      run: |
+        aws ecs describe-task-definition --task-definition entropay-employees --query taskDefinition > task-definition.json
 
     - name: Login to Amazon ECR
       id: login-ecr
