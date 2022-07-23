@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.common;
 
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,7 +18,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     private final CrudService<T, K> crudService;
 
     public BaseController(CrudService<T, K> crudService) {
-        this.crudService = crudService;
+        this.crudService = Objects.requireNonNull(crudService);
     }
 
     @Override
