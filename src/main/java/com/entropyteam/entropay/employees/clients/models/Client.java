@@ -1,31 +1,23 @@
 package com.entropyteam.entropay.employees.clients.models;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
+import com.entropyteam.entropay.employees.common.BaseEntity;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Entity
-@Table(name = "clients")
-@Data
-@Builder
+@Entity(name = "Client")
+@Table(name = "client")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Client {
-
-    @Id
-    @GeneratedValue
-    private UUID id;
+public class Client extends BaseEntity {
 
     @Column(unique = true, nullable = false)
     private String name;
@@ -51,14 +43,14 @@ public class Client {
     @Column(nullable = false)
     private String preferredCurrency;
 
-    @CreationTimestamp
-    @Column(columnDefinition = "TIMESTAMP", nullable = false, updatable = false)
-    private LocalDateTime createdOn;
-
-    @UpdateTimestamp
-    @Column(columnDefinition = "TIMESTAMP", nullable = false)
-    private LocalDateTime modifiedOn;
-
-    @Column
-    private boolean isActive;
+    public Client(ClientDto clientDto) {
+        this.name = clientDto.name();
+        this.address = clientDto.address();
+        this.zipCode = clientDto.zipCode();
+        this.city = clientDto.city();
+        this.state = clientDto.state();
+        this.country = clientDto.country();
+        this.contact = clientDto.contact();
+        this.preferredCurrency = clientDto.preferredCurrency();
+    }
 }
