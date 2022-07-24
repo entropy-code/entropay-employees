@@ -15,8 +15,8 @@ public record ClientDto(
         String country,
         String contact,
         String preferredCurrency,
-        @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss") LocalDateTime createdAt,
-        @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss") LocalDateTime modifiedAt) {
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
 
     public ClientDto(Client client) {
         this(client.getId(), client.getName(), client.getAddress(), client.getZipCode(), client.getCity(), client.getState(),

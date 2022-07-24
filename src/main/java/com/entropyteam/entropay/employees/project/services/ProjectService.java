@@ -51,13 +51,13 @@ public class ProjectService implements CrudService<ProjectDto, UUID> {
     @Override
     @Transactional
     public ProjectDto delete(UUID id) {
-        projectRepository.delete(id);
-        return projectRepository.findById(id)
-                .map(ProjectDto::new)
-                .orElseThrow();
+        Project project = projectRepository.findById(id).orElseThrow();
+        project.setDeleted(true);
+        return new ProjectDto(project);
     }
 
     @Override
+    @Transactional
     public ProjectDto create(ProjectDto entity) {
         Client client = clientRepository.findByIdAndDeletedIsFalse(entity.clientId()).orElseThrow();
         ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
@@ -75,6 +75,7 @@ public class ProjectService implements CrudService<ProjectDto, UUID> {
     }
 
     @Override
+    @Transactional
     public ProjectDto update(UUID id, ProjectDto entity) {
         Project project = projectRepository.findById(id).orElseThrow();
         Client client = clientRepository.findByIdAndDeletedIsFalse(entity.clientId()).orElseThrow();
