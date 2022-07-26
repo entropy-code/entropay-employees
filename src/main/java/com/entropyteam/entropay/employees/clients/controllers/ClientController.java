@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.employees.clients.controllers;
 
 import java.util.List;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
-@RequestMapping(value = "/client", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/clients", produces = MediaType.APPLICATION_JSON_VALUE)
 @Log4j2
 @RequiredArgsConstructor
 public class ClientController {
@@ -33,19 +32,19 @@ public class ClientController {
     private final ClientService clientService;
 
     @GetMapping
-    public ResponseEntity<Page<ClientDto>> findClients(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "ASC") Direction sort,
-            @RequestParam(defaultValue = "name") String sortBy
-            ) {
+    public ResponseEntity<List<ClientDto>> findClients() {
         log.info("GET findClients");
+        int page = 1;
+        int size = 10;
+        Direction sort = Direction.ASC;
+        String sortBy = "name";
 
-        if(page < 1) {
-            throw  new InvalidRequestParametersException("\"page\" must be greater than 0.");
+        if (page < 1) {
+            throw new InvalidRequestParametersException("\"page\" must be greater than 0.");
         }
 
-        return ResponseEntity.ok(clientService.listActiveClients(sort, page, size, sortBy));
+        List<ClientDto> clients = clientService.listActiveClients(sort, page, size, sortBy).get().toList();
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(clients.size())).body(clients);
     }
 
     @GetMapping(value = "/{clientId}")

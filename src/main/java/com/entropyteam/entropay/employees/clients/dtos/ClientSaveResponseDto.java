@@ -2,19 +2,15 @@ package com.entropyteam.entropay.employees.clients.dtos;
 
 import java.util.UUID;
 
-import lombok.Data;
-
-@Data
-public class ClientSaveResponseDto {
-
-    private UUID id;
-    private String name;
-    private String address;
-    private String zipCode;
-    private String city;
-    private String state;
-    private String country;
-    private String contact;
-    private String preferredCurrency;
+public record ClientSaveResponseDto(
+        UUID id,
+        String name,
+        String address,
+        String zipCode,
+        String city,
+        String state,
+        String country,
+        String contact,
+        String preferredCurrency) {
 
 }
