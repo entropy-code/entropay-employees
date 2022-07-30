@@ -1,87 +1,77 @@
 package com.entropyteam.entropay.employees.clients.services;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
+import java.util.stream.Collectors;
+import javax.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
-import com.entropyteam.entropay.employees.clients.dtos.ClientSaveRequestDto;
-import com.entropyteam.entropay.employees.clients.dtos.ClientSaveResponseDto;
 import com.entropyteam.entropay.employees.clients.models.Client;
 import com.entropyteam.entropay.employees.clients.repositories.ClientRepository;
-import com.entropyteam.entropay.employees.common.exceptions.ResourceNotFoundException;
-import com.entropyteam.entropay.employees.common.mappers.ClientMapper;
+import com.entropyteam.entropay.employees.common.CrudService;
+import com.entropyteam.entropay.employees.common.Filter;
+import com.entropyteam.entropay.employees.common.Range;
+import com.entropyteam.entropay.employees.common.Sort;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
-@RequiredArgsConstructor
-public class ClientService {
+public class ClientService implements CrudService<ClientDto, UUID> {
 
     private final ClientRepository clientRepository;
 
-    public ClientSaveResponseDto createClient(ClientSaveRequestDto newClientDto) {
-        Client newClient = ClientMapper.MAPPER.toEntity(newClientDto);
-
-        log.info("Attempting to save client {}.", newClientDto.name());
-
-        ClientSaveResponseDto result = ClientMapper.MAPPER.toSaveResponseDto(clientRepository.save(newClient));
-
-        log.info("Successfully created client with name: {}.: Id: {}.", result.name(), result.id());
-
-        return result;
+    @Autowired
+    public ClientService(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
     }
 
-    public ClientDto findClientById(String clientId) {
-        log.debug("Attempting to find client with Id: {}.", clientId);
-        return ClientMapper.MAPPER.toDto(clientRepository.findByIdAndDeletedIsFalse(UUID.fromString(clientId))
-                .orElseThrow(() -> new ResourceNotFoundException("Client does not exist: " + clientId)));
+    @Override
+    public Optional<ClientDto> findOne(UUID id) {
+        return clientRepository.findById(id)
+                .map(ClientDto::new);
     }
 
-    public ClientSaveResponseDto updateClient(String clientId, ClientSaveRequestDto clientDto) {
-        Client client = clientRepository.findByIdAndDeletedIsFalse(UUID.fromString(clientId))
-                .orElseThrow(() -> new ResourceNotFoundException("Client does not exist: " + clientId));
-
-        log.info("Attempting to Update client with Id: {}.", clientId);
-        log.trace("Current Client Data: {}.", client);
-
-        client.setAddress(clientDto.address());
-        client.setContact(clientDto.contact());
-        client.setPreferredCurrency(clientDto.preferredCurrency());
-
-        log.info("Client Data to update: {}.", client);
-
-        client = clientRepository.save(client);
-
-        log.info("Successfully updated client Id: {}.", clientId);
-
-        return ClientMapper.MAPPER.toSaveResponseDto(client);
+    @Override
+    public List<ClientDto> findAllActive(Filter filter, Sort sort, Range range) {
+        return clientRepository.findAllByDeletedIsFalse()
+                .stream()
+                .map(ClientDto::new)
+                .collect(Collectors.toList());
     }
 
-    public void deleteClient(String clientId) {
-        Client client = clientRepository.findById(UUID.fromString(clientId))
-                .orElseThrow(() -> new ResourceNotFoundException("Client does not exist: " + clientId));
-
-        log.debug("Attempting to delete client with Id: {}.", clientId);
-        log.trace("Current client Data: {}.", client);
-
+    @Override
+    @Transactional
+    public ClientDto delete(UUID id) {
+        Client client = clientRepository.findById(id).orElseThrow();
         client.setDeleted(true);
-        clientRepository.save(client);
-
-        log.info("Successfully deleted client with Id: {}.", clientId);
+        return new ClientDto(client);
     }
 
-    public Page<ClientDto> listActiveClients(Direction sort, int page, int size, String sortBy) {
+    @Override
+    @Transactional
+    public ClientDto create(ClientDto entity) {
+        Client client = new Client(entity);
 
-        log.debug("Attempting to retrieve the list of active clients. Page: {}. Size: {}. Sort: {}.", page, size, sort);
+        Client save = clientRepository.save(client);
 
-        Pageable paging = PageRequest.of(--page, size).withSort(sort, sortBy);
-        Page<ClientDto> result = clientRepository.findAllByDeletedIsFalse(paging);
-        log.trace("Result: {}.", result);
-        return result;
+        return new ClientDto(save);
+    }
+
+    @Override
+    @Transactional
+    public ClientDto update(UUID id, ClientDto entity) {
+        Client client = clientRepository.findById(id).orElseThrow();
+        client.setName(entity.name());
+        client.setAddress(entity.address());
+        client.setZipCode(entity.zipCode());
+        client.setCity(entity.city());
+        client.setCountry(entity.country());
+        client.setContact(entity.contact());
+        client.setPreferredCurrency(entity.preferredCurrency());
+
+        return new ClientDto(client);
     }
 }
