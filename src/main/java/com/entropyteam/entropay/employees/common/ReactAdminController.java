@@ -3,15 +3,15 @@ package com.entropyteam.entropay.employees.common;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 
-public interface ReactAdminController<T, K> {
+public interface ReactAdminController<DTO, Key> {
 
-    ResponseEntity<List<T>> getList(Filter filter, Sort sort, Range range);
+    ResponseEntity<List<DTO>> getList(Filter filter, Sort sort, Range range);
 
-    ResponseEntity<T> getOne(K id);
+    ResponseEntity<DTO> getOne(Key id);
 
-    ResponseEntity<T> create(T entity);
+    ResponseEntity<DTO> create(DTO entity);
 
-    ResponseEntity<T> delete(K id);
+    ResponseEntity<DTO> delete(Key id);
 
-    ResponseEntity<T> update(K id, T entity);
+    ResponseEntity<DTO> update(Key id, DTO entity);
 }

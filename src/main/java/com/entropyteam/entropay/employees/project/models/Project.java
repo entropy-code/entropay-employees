@@ -9,9 +9,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import com.entropyteam.entropay.employees.clients.models.Client;
 import com.entropyteam.entropay.employees.common.BaseEntity;
+import com.entropyteam.entropay.employees.project.dtos.ProjectDto;
 
 @Entity(name = "Project")
-@Table(name = "project")
+@Table(name = "project", schema = "employees")
 public class Project extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,6 +29,16 @@ public class Project extends BaseEntity {
     private LocalDate endDate;
     @Column
     private String notes;
+
+    public Project() {
+    }
+
+    public Project(ProjectDto entity) {
+        this.name = entity.name();
+        this.startDate = entity.startDate();
+        this.endDate = entity.endDate();
+        this.notes = entity.notes();
+    }
 
     public String getName() {
         return name;

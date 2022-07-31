@@ -1,18 +1,13 @@
 package com.entropyteam.entropay.employees.project.services;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.employees.clients.models.Client;
 import com.entropyteam.entropay.employees.clients.repositories.ClientRepository;
-import com.entropyteam.entropay.employees.common.CrudService;
-import com.entropyteam.entropay.employees.common.Filter;
-import com.entropyteam.entropay.employees.common.Range;
-import com.entropyteam.entropay.employees.common.Sort;
+import com.entropyteam.entropay.employees.common.BaseRepository;
+import com.entropyteam.entropay.employees.common.BaseService;
 import com.entropyteam.entropay.employees.project.dtos.ProjectDto;
 import com.entropyteam.entropay.employees.project.models.Project;
 import com.entropyteam.entropay.employees.project.models.ProjectType;
@@ -20,7 +15,7 @@ import com.entropyteam.entropay.employees.project.repositories.ProjectRepository
 import com.entropyteam.entropay.employees.project.repositories.ProjectTypeRepository;
 
 @Service
-public class ProjectService implements CrudService<ProjectDto, UUID> {
+public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
 
     private final ProjectRepository projectRepository;
     private final ProjectTypeRepository projectTypeRepository;
@@ -35,39 +30,14 @@ public class ProjectService implements CrudService<ProjectDto, UUID> {
     }
 
     @Override
-    public Optional<ProjectDto> findOne(UUID id) {
-        return projectRepository.findById(id)
-                .map(ProjectDto::new);
-    }
-
-    @Override
-    public List<ProjectDto> findAllActive(Filter filter, Sort sort, Range range) {
-        return projectRepository.findAllByDeletedIsFalse()
-                .stream()
-                .map(ProjectDto::new)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public ProjectDto delete(UUID id) {
-        Project project = projectRepository.findById(id).orElseThrow();
-        project.setDeleted(true);
-        return new ProjectDto(project);
-    }
-
-    @Override
     @Transactional
     public ProjectDto create(ProjectDto entity) {
-        Client client = clientRepository.findByIdAndDeletedIsFalse(entity.clientId()).orElseThrow();
+        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
         ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
 
-        Project project = new Project();
+        Project project = new Project(entity);
         project.setClient(client);
         project.setProjectType(projectType);
-        project.setName(entity.name());
-        project.setStartDate(entity.startDate());
-        project.setEndDate(entity.endDate());
 
         Project save = projectRepository.save(project);
 
@@ -77,19 +47,31 @@ public class ProjectService implements CrudService<ProjectDto, UUID> {
     @Override
     @Transactional
     public ProjectDto update(UUID id, ProjectDto entity) {
-        Project project = projectRepository.findById(id).orElseThrow();
-        Client client = clientRepository.findByIdAndDeletedIsFalse(entity.clientId()).orElseThrow();
+        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
         ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
 
+        Project project = new Project(entity);
+        project.setId(id);
         project.setClient(client);
         project.setProjectType(projectType);
-        project.setName(entity.name());
-        project.setStartDate(entity.startDate());
-        project.setEndDate(entity.endDate());
-        project.setNotes(entity.notes());
 
         Project save = projectRepository.save(project);
 
         return new ProjectDto(save);
+    }
+
+    @Override
+    protected BaseRepository<Project, UUID> getRepository() {
+        return projectRepository;
+    }
+
+    @Override
+    protected ProjectDto toDTO(Project entity) {
+        return new ProjectDto(entity);
+    }
+
+    @Override
+    protected Project toEntity(ProjectDto entity) {
+        return new Project(entity);
     }
 }

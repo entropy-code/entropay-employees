@@ -3,15 +3,15 @@ package com.entropyteam.entropay.employees.common;
 import java.util.List;
 import java.util.Optional;
 
-public interface CrudService<T, K> {
+public interface CrudService<DTO, Key> {
 
-    Optional<T> findOne(K id);
+    Optional<DTO> findOne(Key id);
 
-    List<T> findAllActive(Filter filter, Sort sort, Range range);
+    List<DTO> findAllActive(Filter filter, Sort sort, Range range);
 
-    T delete(K id);
+    DTO delete(Key id);
 
-    T create(T entity);
+    DTO create(DTO entity);
 
-    T update(K id, T entity);
+    DTO update(Key id, DTO entity);
 }
