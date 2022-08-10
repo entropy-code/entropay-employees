@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.entropyteam.entropay.employees.common.BaseController;
+import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.project.dtos.ProjectTypeDto;
 import com.entropyteam.entropay.employees.project.services.ProjectTypeService;
 

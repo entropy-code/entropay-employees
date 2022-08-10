@@ -7,8 +7,8 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.clients.models.Client;
-import com.entropyteam.entropay.employees.common.BaseEntity;
 import com.entropyteam.entropay.employees.project.dtos.ProjectDto;
 
 @Entity(name = "Project")

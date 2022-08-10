@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.common.exceptions;
+package com.entropyteam.entropay.common.exceptions;
 
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 

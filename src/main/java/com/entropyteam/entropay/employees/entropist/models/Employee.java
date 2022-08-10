@@ -3,7 +3,7 @@ package com.entropyteam.entropay.employees.entropist.models;
 import java.time.LocalDate;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import com.entropyteam.entropay.employees.common.BaseEntity;
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.entropist.dtos.EmployeeDto;
 
 @Entity(name = "Employee")

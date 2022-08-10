@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.common;
+package com.entropyteam.entropay.common;
 
 import java.util.List;
 import java.util.Optional;
