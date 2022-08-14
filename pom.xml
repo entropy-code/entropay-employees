@@ -30,13 +30,6 @@
 	</properties>
 
 	<dependencies>
-    <!-- Internal dependencies -->
-    <dependency>
-      <groupId>com.entropyteam</groupId>
-      <artifactId>entropay-common-java</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-
     <!-- Spring dependencies -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -138,13 +131,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<distributionManagement>
-		<repository>
-			<id>entropay-mvn-entropay</id>
-			<name>entropay-mvn-entropay</name>
-			<url>https://entropay-mvn-479189987585.d.codeartifact.us-east-1.amazonaws.com/maven/entropay/</url>
-		</repository>
-	</distributionManagement>
-
 </project>

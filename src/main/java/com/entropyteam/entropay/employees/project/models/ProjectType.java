@@ -7,7 +7,7 @@ import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.project.dtos.ProjectTypeDto;
 
 @Entity(name = "ProjectType")
-@Table(name = "project_type", schema = "employees")
+@Table(name = "project_type")
 public class ProjectType extends BaseEntity {
 
     @Column

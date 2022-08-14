@@ -7,7 +7,7 @@ import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.entropist.dtos.EmployeeDto;
 
 @Entity(name = "Employee")
-@Table(name = "employee", schema = "employees")
+@Table(name = "employee")
 public class Employee extends BaseEntity {
 
     private String firstName;

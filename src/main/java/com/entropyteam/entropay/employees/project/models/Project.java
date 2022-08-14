@@ -12,7 +12,7 @@ import com.entropyteam.entropay.employees.clients.models.Client;
 import com.entropyteam.entropay.employees.project.dtos.ProjectDto;
 
 @Entity(name = "Project")
-@Table(name = "project", schema = "employees")
+@Table(name = "project")
 public class Project extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
