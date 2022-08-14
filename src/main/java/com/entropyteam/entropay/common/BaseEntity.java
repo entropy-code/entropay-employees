@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.common;
+package com.entropyteam.entropay.common;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

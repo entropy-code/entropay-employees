@@ -3,8 +3,8 @@ package com.entropyteam.entropay.employees.clients.models;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
-import com.entropyteam.entropay.employees.common.BaseEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
