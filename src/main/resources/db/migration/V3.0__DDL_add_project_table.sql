@@ -1,4 +1,4 @@
-CREATE TABLE employees.project_type (
+CREATE TABLE project_type (
     id uuid
         CONSTRAINT project_type_pk
         PRIMARY KEY,
@@ -9,16 +9,16 @@ CREATE TABLE employees.project_type (
 )
 ;
 
-CREATE TABLE employees.project (
+CREATE TABLE project (
     id uuid
         CONSTRAINT project_pk
         PRIMARY KEY,
     client_id uuid NOT NULL
         CONSTRAINT project_client_id_fk
-        REFERENCES employees.client,
+        REFERENCES client,
     project_type_id uuid NOT NULL
         CONSTRAINT project_project_type_id_fk
-        REFERENCES employees.project_type,
+        REFERENCES project_type,
     name         varchar(100) NOT NULL,
     start_date   timestamp,
     end_date     timestamp,
