@@ -8,7 +8,7 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: entropay-employees
-  ECS_SERVICE: entropay-employees
+  ECS_SERVICE: entropay-dev-employees
   ECS_CLUSTER: entropay-dev
   CONTAINER_NAME: entropay-employees
 
