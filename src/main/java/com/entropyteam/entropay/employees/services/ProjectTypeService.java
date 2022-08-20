@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.project.services;
+package com.entropyteam.entropay.employees.services;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.employees.project.dtos.ProjectTypeDto;
-import com.entropyteam.entropay.employees.project.models.ProjectType;
-import com.entropyteam.entropay.employees.project.repositories.ProjectTypeRepository;
+import com.entropyteam.entropay.employees.dtos.ProjectTypeDto;
+import com.entropyteam.entropay.employees.models.ProjectType;
+import com.entropyteam.entropay.employees.repositories.ProjectTypeRepository;
 
 @Service
 public class ProjectTypeService extends BaseService<ProjectType, ProjectTypeDto, UUID> {

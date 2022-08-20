@@ -1,9 +1,9 @@
-package com.entropyteam.entropay.employees.project.dtos;
+package com.entropyteam.entropay.employees.dtos;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import com.entropyteam.entropay.employees.project.models.Project;
+import com.entropyteam.entropay.employees.models.Project;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public record ProjectDto(

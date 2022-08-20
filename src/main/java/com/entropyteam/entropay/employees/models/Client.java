@@ -1,10 +1,10 @@
-package com.entropyteam.entropay.employees.clients.models;
+package com.entropyteam.entropay.employees.models;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
+import com.entropyteam.entropay.employees.dtos.ClientDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

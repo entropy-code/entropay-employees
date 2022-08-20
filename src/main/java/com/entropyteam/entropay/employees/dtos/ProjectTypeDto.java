@@ -1,7 +1,7 @@
-package com.entropyteam.entropay.employees.project.dtos;
+package com.entropyteam.entropay.employees.dtos;
 
 import java.util.UUID;
-import com.entropyteam.entropay.employees.project.models.ProjectType;
+import com.entropyteam.entropay.employees.models.ProjectType;
 
 public record ProjectTypeDto(
         UUID id,

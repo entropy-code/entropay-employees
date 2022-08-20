@@ -1,10 +1,10 @@
-package com.entropyteam.entropay.employees.entropist.models;
+package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.entropist.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
 @Entity(name = "Employee")
 @Table(name = "employee")

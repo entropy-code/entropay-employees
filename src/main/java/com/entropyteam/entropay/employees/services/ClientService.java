@@ -1,13 +1,13 @@
-package com.entropyteam.entropay.employees.clients.services;
+package com.entropyteam.entropay.employees.services;
 
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.employees.clients.dtos.ClientDto;
-import com.entropyteam.entropay.employees.clients.models.Client;
-import com.entropyteam.entropay.employees.clients.repositories.ClientRepository;
+import com.entropyteam.entropay.employees.dtos.ClientDto;
+import com.entropyteam.entropay.employees.models.Client;
+import com.entropyteam.entropay.employees.repositories.ClientRepository;
 
 import lombok.extern.log4j.Log4j2;
 

@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.entropist.services;
+package com.entropyteam.entropay.employees.services;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.employees.entropist.dtos.EmployeeDto;
-import com.entropyteam.entropay.employees.entropist.models.Employee;
-import com.entropyteam.entropay.employees.entropist.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 
 @Service
 public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {

@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.project.models;
+package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
 import javax.persistence.Column;
@@ -8,8 +8,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.clients.models.Client;
-import com.entropyteam.entropay.employees.project.dtos.ProjectDto;
+import com.entropyteam.entropay.employees.dtos.ProjectDto;
 
 @Entity(name = "Project")
 @Table(name = "project")

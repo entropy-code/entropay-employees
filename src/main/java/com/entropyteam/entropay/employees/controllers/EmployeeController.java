@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.entropist.controllers;
+package com.entropyteam.entropay.employees.controllers;
 
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
-import com.entropyteam.entropay.employees.entropist.dtos.EmployeeDto;
-import com.entropyteam.entropay.employees.entropist.services.EmployeeService;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.services.EmployeeService;
 
 @RestController
 @CrossOrigin
