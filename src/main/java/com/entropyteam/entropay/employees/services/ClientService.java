@@ -7,19 +7,20 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ClientDto;
 import com.entropyteam.entropay.employees.models.Client;
+import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.repositories.ClientRepository;
-
-import lombok.extern.log4j.Log4j2;
+import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 
 @Service
-@Log4j2
 public class ClientService extends BaseService<Client, ClientDto, UUID> {
 
     private final ClientRepository clientRepository;
+    private final CompanyRepository companyRepository;
 
     @Autowired
-    public ClientService(ClientRepository clientRepository) {
+    public ClientService(ClientRepository clientRepository, CompanyRepository companyRepository) {
         this.clientRepository = clientRepository;
+        this.companyRepository = companyRepository;
     }
 
     @Override
@@ -34,6 +35,9 @@ public class ClientService extends BaseService<Client, ClientDto, UUID> {
 
     @Override
     protected Client toEntity(ClientDto entity) {
-        return new Client(entity);
+        Company company = companyRepository.findById(entity.companyId()).orElseThrow();
+        Client client = new Client(entity);
+        client.setCompany(company);
+        return client;
     }
 }

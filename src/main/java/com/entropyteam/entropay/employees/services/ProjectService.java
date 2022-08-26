@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.util.UUID;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -30,37 +29,6 @@ public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
     }
 
     @Override
-    @Transactional
-    public ProjectDto create(ProjectDto entity) {
-        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
-        ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
-
-        Project project = new Project(entity);
-        project.setClient(client);
-        project.setProjectType(projectType);
-
-        Project save = projectRepository.save(project);
-
-        return new ProjectDto(save);
-    }
-
-    @Override
-    @Transactional
-    public ProjectDto update(UUID id, ProjectDto entity) {
-        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
-        ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
-
-        Project project = new Project(entity);
-        project.setId(id);
-        project.setClient(client);
-        project.setProjectType(projectType);
-
-        Project save = projectRepository.save(project);
-
-        return new ProjectDto(save);
-    }
-
-    @Override
     protected BaseRepository<Project, UUID> getRepository() {
         return projectRepository;
     }
@@ -72,6 +40,13 @@ public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
 
     @Override
     protected Project toEntity(ProjectDto entity) {
-        return new Project(entity);
+        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
+        ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
+
+        Project project = new Project(entity);
+        project.setClient(client);
+        project.setProjectType(projectType);
+
+        return project;
     }
 }

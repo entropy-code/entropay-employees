@@ -7,6 +7,8 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public record EmployeeDto(UUID id,
+                          UUID companyId,
+                          String internalId,
                           String firstName,
                           String lastName,
                           String email,
@@ -22,8 +24,9 @@ public record EmployeeDto(UUID id,
                           boolean deleted) {
 
     public EmployeeDto(Employee employee) {
-        this(employee.getId(), employee.getFirstName(), employee.getLastName(), employee.getEmail(), employee.getPhone(),
-                employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(),
+        this(employee.getId(), employee.getCompany().getId(), employee.getInternalId(), employee.getFirstName(),
+                employee.getLastName(), employee.getEmail(), employee.getPhone(), employee.getAddress(),
+                employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(),
                 employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(), employee.isDeleted());
     }
 }

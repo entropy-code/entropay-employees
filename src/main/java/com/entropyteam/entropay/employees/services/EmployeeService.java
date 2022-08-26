@@ -7,17 +7,21 @@ import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 
 @Service
 public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     private final EmployeeRepository employeeRepository;
+    private final CompanyRepository companyRepository;
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository, CompanyRepository companyRepository) {
         this.employeeRepository = Objects.requireNonNull(employeeRepository);
+        this.companyRepository = companyRepository;
     }
 
     @Override
@@ -32,6 +36,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Override
     protected Employee toEntity(EmployeeDto entity) {
-        return new Employee(entity);
+        Company company = companyRepository.findById(entity.companyId()).orElseThrow();
+        Employee employee = new Employee(entity);
+        employee.setCompany(company);
+        return employee;
     }
 }

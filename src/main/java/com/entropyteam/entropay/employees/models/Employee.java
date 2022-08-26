@@ -2,6 +2,9 @@ package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
@@ -10,6 +13,7 @@ import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 @Table(name = "employee")
 public class Employee extends BaseEntity {
 
+    private String internalId;
     private String firstName;
     private String lastName;
     private String email;
@@ -21,10 +25,15 @@ public class Employee extends BaseEntity {
     private String country;
     private LocalDate birthDate;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
     public Employee() {
     }
 
     public Employee(EmployeeDto entity) {
+        this.internalId = entity.internalId();
         this.firstName = entity.firstName();
         this.lastName = entity.lastName();
         this.email = entity.email();
@@ -115,5 +124,21 @@ public class Employee extends BaseEntity {
 
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+
+    public String getInternalId() {
+        return internalId;
+    }
+
+    public void setInternalId(String internalId) {
+        this.internalId = internalId;
     }
 }
