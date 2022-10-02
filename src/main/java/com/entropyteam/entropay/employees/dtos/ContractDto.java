@@ -11,8 +11,8 @@ public record ContractDto(
         UUID id,
         UUID companyId,
         UUID employeeId,
-        String role,
-        String seniority,
+        UUID positionId,
+        UUID seniorityId,
         Integer hoursPerWeek,
         BigDecimal costRate,
         Integer vacations,
@@ -29,7 +29,7 @@ public record ContractDto(
     public ContractDto(Contract contract) {
         this(
                 contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole(), contract.getSeniority(), contract.getHoursPerWeek(), contract.getCostRate(),
+                contract.getPosition().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(), contract.getCostRate(),
                 contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.isDeleted(),
                 contract.getCreatedAt(), contract.getModifiedAt()
         );

@@ -21,15 +21,17 @@ public class Contract extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "position_id")
+    private Position position;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seniority_id")
+    private Seniority seniority;
 
     @Column
     private LocalDate startDate;
     @Column
     private LocalDate endDate;
-    @Column
-    private String role;
-    @Column
-    private String seniority;
     @Column
     private Integer hoursPerWeek;
     @Column
@@ -43,8 +45,6 @@ public class Contract extends BaseEntity {
     public Contract(ContractDto entity) {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
-        this.role = entity.role();
-        this.seniority = entity.seniority();
         this.hoursPerWeek = entity.hoursPerWeek();
         this.costRate = entity.costRate();
         this.vacations = entity.vacations();
@@ -82,19 +82,19 @@ public class Contract extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public String getRole() {
-        return role;
+    public Position getPosition() {
+        return position;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setPosition(Position position) {
+        this.position = position;
     }
 
-    public String getSeniority() {
+    public Seniority getSeniority() {
         return seniority;
     }
 
-    public void setSeniority(String seniority) {
+    public void setSeniority(Seniority seniority) {
         this.seniority = seniority;
     }
 
