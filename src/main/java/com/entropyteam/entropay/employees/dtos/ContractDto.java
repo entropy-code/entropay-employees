@@ -29,7 +29,7 @@ public record ContractDto(
     public ContractDto(Contract contract) {
         this(
                 contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getPosition().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(), contract.getCostRate(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(), contract.getCostRate(),
                 contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.isDeleted(),
                 contract.getCreatedAt(), contract.getModifiedAt()
         );
