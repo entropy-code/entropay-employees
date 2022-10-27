@@ -20,7 +20,7 @@ public class Role extends BaseEntity {
                 joinColumns = @JoinColumn (name = "role_id", referencedColumnName = "id"),
                 inverseJoinColumns = @JoinColumn (name = "employee_id" , referencedColumnName = "id")
     )
-    private Set<Employee> empleados = new HashSet<Employee>();
+    private Set<Employee> employees = new HashSet<Employee>();
 
     public Role() {
     }
@@ -37,7 +37,7 @@ public class Role extends BaseEntity {
         this.name = name;
     }
 
-    public Set<Employee> getEmpleados() {return empleados;}
+    public Set<Employee> getEmployees() {return employees;}
 
-    public void setEmpleados(Set<Employee> empleados) {this.empleados = empleados;}
+    public void setEmployees(Set<Employee> employees) {this.employees = employees;}
 }

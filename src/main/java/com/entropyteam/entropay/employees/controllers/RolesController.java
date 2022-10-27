@@ -14,8 +14,8 @@ import com.entropyteam.entropay.employees.services.RoleService;
 @RequestMapping(value = "/roles", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RolesController extends BaseController<RoleDto, UUID> {
 
-    public RolesController(RoleService positionService) {
-        super(positionService);
+    public RolesController(RoleService roleService) {
+        super(roleService);
     }
 }
 

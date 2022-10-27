@@ -122,7 +122,6 @@ public class Employee extends BaseEntity {
     public String getCountry() {
         return country;
     }
-
     public void setCountry(String country) {
         this.country = country;
     }
@@ -130,35 +129,29 @@ public class Employee extends BaseEntity {
     public LocalDate getBirthDate() {
         return birthDate;
     }
-
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
-
     public String getInternalId() {
         return internalId;
     }
-
     public void setInternalId(String internalId) {
         this.internalId = internalId;
     }
 
     public String getPersonalNumber() {return personalNumber;}
-    public void setPersonalNumber(String dni) {this.personalNumber = dni;}
+    public void setPersonalNumber(String personalNumber) {this.personalNumber = personalNumber;}
 
     public String getTaxId() {return taxId;}
     public void setTaxId(String taxId) {this.taxId = taxId;}
 
     public String getEmergencyContactFullName() {return emergencyContactFullName;}
-
     public void setEmergencyContactFullName(String emergencyContactFullName) {this.emergencyContactFullName = emergencyContactFullName;}
 
     public String getEmergencyContactPhone() {return emergencyContactPhone;}
-
     public void setEmergencyContactPhone(String emergencyContactPhone) {this.emergencyContactPhone = emergencyContactPhone;}
 
     public List<Role> getRolesList() {return rolesList;}
-
     public void setRolesList(List<Role> rolesList) {this.rolesList = rolesList;}
 }
