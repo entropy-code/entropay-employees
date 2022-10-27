@@ -2,7 +2,9 @@ package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.persistence.*;
 
 import com.entropyteam.entropay.common.BaseEntity;
@@ -32,7 +34,7 @@ public class Employee extends BaseEntity {
     @JoinTable(name = "employee_role",joinColumns = @JoinColumn (name = "employee_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn (name = "role_id" , referencedColumnName = "id")
     )
-    private List<Role> rolesList = new ArrayList<>();
+    private Set<Role> rolesList = new HashSet<>();
 
     public Employee() {
     }
@@ -136,22 +138,50 @@ public class Employee extends BaseEntity {
     public String getInternalId() {
         return internalId;
     }
+
     public void setInternalId(String internalId) {
+
         this.internalId = internalId;
     }
 
-    public String getPersonalNumber() {return personalNumber;}
-    public void setPersonalNumber(String personalNumber) {this.personalNumber = personalNumber;}
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
 
-    public String getTaxId() {return taxId;}
-    public void setTaxId(String taxId) {this.taxId = taxId;}
+    public void setPersonalNumber(String personalNumber) {
+        this.personalNumber = personalNumber;
+    }
 
-    public String getEmergencyContactFullName() {return emergencyContactFullName;}
-    public void setEmergencyContactFullName(String emergencyContactFullName) {this.emergencyContactFullName = emergencyContactFullName;}
+    public String getTaxId() {
+        return taxId;
+    }
 
-    public String getEmergencyContactPhone() {return emergencyContactPhone;}
-    public void setEmergencyContactPhone(String emergencyContactPhone) {this.emergencyContactPhone = emergencyContactPhone;}
+    public void setTaxId(String taxId) {
+        this.taxId = taxId;
+    }
 
-    public List<Role> getRolesList() {return rolesList;}
-    public void setRolesList(List<Role> rolesList) {this.rolesList = rolesList;}
+    public String getEmergencyContactFullName() {
+        return emergencyContactFullName;
+    }
+
+    public void setEmergencyContactFullName(String emergencyContactFullName) {
+        this.emergencyContactFullName = emergencyContactFullName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public Set<Role> getRolesList() {
+        return rolesList;
+    }
+
+    public void setRolesList(Set<Role> rolesList) {
+        this.rolesList = rolesList;
+    }
+
 }

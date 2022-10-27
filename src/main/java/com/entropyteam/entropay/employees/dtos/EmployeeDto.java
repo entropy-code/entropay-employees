@@ -34,9 +34,9 @@ public record EmployeeDto(UUID id,
     public EmployeeDto(Employee employee) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(),
                 employee.getLastName(), employee.getPersonalEmail(), employee.getPhone(), employee.getAddress(),
-                employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(),employee.getPersonalNumber(),employee.getTaxId(),employee.getEmergencyContactFullName(),
-                employee.getEmergencyContactPhone(),employee.getRolesList().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(),
-                employee.isDeleted()
-                );
+                employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(), employee.getPersonalNumber(),
+                employee.getTaxId(), employee.getEmergencyContactFullName(), employee.getEmergencyContactPhone(),
+                employee.getRolesList().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getBirthDate(),
+                employee.getCreatedAt(), employee.getModifiedAt(), employee.isDeleted());
     }
 }

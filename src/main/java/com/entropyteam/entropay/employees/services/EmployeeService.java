@@ -2,6 +2,7 @@ package com.entropyteam.entropay.employees.services;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Override
     protected Employee toEntity(EmployeeDto entity) {
         Employee employee = new Employee(entity);
-        List<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(entity.profile());
+        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(entity.profile());
         employee.setRolesList(roles);
         return employee;
     }
