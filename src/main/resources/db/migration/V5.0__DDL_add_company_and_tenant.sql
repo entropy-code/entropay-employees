@@ -43,12 +43,11 @@ alter table client
 ;
 
 INSERT INTO tenant
-SELECT gen_random_uuid(), 'entropy', 'Entropy Team', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE
+SELECT '8a6c45de-a257-4f07-95e1-9e163f71f2f1', 'entropy', 'Entropy Team', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE
 ;
 
 INSERT into company
-SELECT
-    gen_random_uuid(), (SELECT id from tenant where name = 'entropy'), 'EntropyLLC', '2035 Sunset Lake Road, Suite b-2'
+SELECT 'c671d478-aefb-407c-be73-af5bf78db18b', (SELECT id from tenant where name = 'entropy'), 'EntropyLLC', '2035 Sunset Lake Road, Suite b-2'
     , '19702', 'Newark', 'Delaware', 'United States', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE
 ;
 
