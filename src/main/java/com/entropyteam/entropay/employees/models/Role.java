@@ -9,18 +9,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "Role")
-@Table(name = "Role")
+@Table(name = "role")
 public class Role extends BaseEntity {
 
     @Column
     private String name;
 
-    @ManyToMany
-    @JoinTable(name = "employee_role",
-                joinColumns = @JoinColumn (name = "role_id", referencedColumnName = "id"),
-                inverseJoinColumns = @JoinColumn (name = "employee_id" , referencedColumnName = "id")
-    )
-    private Set<Employee> employees = new HashSet<Employee>();
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "roles")
+    private Set<Employee> employees = new HashSet<>();
 
     public Role() {
     }

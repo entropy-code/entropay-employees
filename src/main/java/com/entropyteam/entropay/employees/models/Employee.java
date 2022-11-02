@@ -1,14 +1,16 @@
 package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.persistence.*;
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+
 
 @Entity(name = "Employee")
 @Table(name = "employee")
@@ -30,11 +32,13 @@ public class Employee extends BaseEntity {
     private String emergencyContactFullName;
     private String emergencyContactPhone;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    @JoinTable(name = "employee_role",joinColumns = @JoinColumn (name = "employee_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn (name = "role_id" , referencedColumnName = "id")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "employee_role",
+            joinColumns = { @JoinColumn(name = "employee_id") },
+            inverseJoinColumns = { @JoinColumn(name = "role_id") }
     )
-    private Set<Role> rolesList = new HashSet<>();
+    Set<Role> roles = new HashSet<>();
 
     public Employee() {
     }
@@ -176,12 +180,12 @@ public class Employee extends BaseEntity {
         this.emergencyContactPhone = emergencyContactPhone;
     }
 
-    public Set<Role> getRolesList() {
-        return rolesList;
+    public Set<Role> getRoles() {
+        return roles;
     }
 
-    public void setRolesList(Set<Role> rolesList) {
-        this.rolesList = rolesList;
+    public void setRoles(Set<Role> rolesList) {
+        this.roles = rolesList;
     }
 
 }

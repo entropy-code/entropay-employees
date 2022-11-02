@@ -18,14 +18,11 @@ ALTER TABLE employee
     add emergency_contact_phone VARCHAR(255);
 
 ALTER TABLE employee
-    add tax_id VARCHAR(255) set not null; ;
+    add tax_id VARCHAR(255) not null;
 
 ALTER TABLE employee
 DROP COLUMN company_id;
 
 alter table employee
-    alter column dni set not null;
-
-ALTER TABLE employee
-    RENAME COLUMN dni TO personal_number;
+    add column personal_number VARCHAR(255) not null;
 
