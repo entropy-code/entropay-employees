@@ -29,8 +29,11 @@ public class WebSecurityConfig {
 
     private static final String ACTUATOR_URL = "/actuator/**";
 
-    @Autowired
-    private TokenService tokenService;
+    private final TokenService tokenService;
+
+    public WebSecurityConfig(TokenService tokenService) {
+        this.tokenService = tokenService;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
