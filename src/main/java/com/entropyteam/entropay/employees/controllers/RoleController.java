@@ -12,9 +12,9 @@ import com.entropyteam.entropay.employees.services.RoleService;
 @RestController
 @CrossOrigin
 @RequestMapping(value = "/roles", produces = MediaType.APPLICATION_JSON_VALUE)
-public class RolesController extends BaseController<RoleDto, UUID> {
+public class RoleController extends BaseController<RoleDto, UUID> {
 
-    public RolesController(RoleService roleService) {
+    public RoleController(RoleService roleService) {
         super(roleService);
     }
 }
