@@ -2,10 +2,7 @@ package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.persistence.*;
 
 import com.entropyteam.entropay.common.BaseEntity;
