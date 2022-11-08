@@ -1,3 +1,5 @@
+CREATE EXTENSION pgcrypto;
+
 CREATE TABLE tenant (
     id           UUID                        NOT NULL,
     name         VARCHAR(255),
