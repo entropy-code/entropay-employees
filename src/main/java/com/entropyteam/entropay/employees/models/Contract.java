@@ -23,7 +23,7 @@ public class Contract extends BaseEntity {
     private Employee employee;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "position_id")
-    private Position position;
+    private Role role;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seniority_id")
     private Seniority seniority;
@@ -82,12 +82,12 @@ public class Contract extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public Position getPosition() {
-        return position;
+    public Role getRole() {
+        return role;
     }
 
-    public void setPosition(Position position) {
-        this.position = position;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public Seniority getSeniority() {

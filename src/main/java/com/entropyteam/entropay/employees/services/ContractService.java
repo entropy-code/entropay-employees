@@ -9,12 +9,12 @@ import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Position;
+import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.PositionRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
 @Service
@@ -23,17 +23,17 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     private final ContractRepository contractRepository;
     private final CompanyRepository companyRepository;
     private final EmployeeRepository employeeRepository;
-    private final PositionRepository positionRepository;
+    private final RoleRepository roleRepository;
     private final SeniorityRepository seniorityRepository;
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
-            EmployeeRepository employeeRepository, PositionRepository positionRepository,
+            EmployeeRepository employeeRepository, RoleRepository roleRepository,
             SeniorityRepository seniorityRepository) {
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
         this.employeeRepository = employeeRepository;
-        this.positionRepository = positionRepository;
+        this.roleRepository = roleRepository;
         this.seniorityRepository = seniorityRepository;
 
     }
@@ -52,13 +52,13 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     protected Contract toEntity(ContractDto entity) {
         Company company = companyRepository.findById(entity.companyId()).orElseThrow();
         Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
-        Position position = positionRepository.findById(entity.positionId()).orElseThrow();
+        Role position = roleRepository.findById(entity.positionId()).orElseThrow();
         Seniority seniority = seniorityRepository.findById(entity.seniorityId()).orElseThrow();
 
         Contract contract = new Contract(entity);
         contract.setCompany(company);
         contract.setEmployee(employee);
-        contract.setPosition(position);
+        contract.setRole(position);
         contract.setSeniority(seniority);
 
         return contract;

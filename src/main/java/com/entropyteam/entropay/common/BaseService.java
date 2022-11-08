@@ -4,17 +4,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
     @Override
+    @Transactional
     public Optional<DTO> findOne(Key id) {
         return getRepository().findById(id)
                 .map(this::toDTO);
     }
 
     @Override
+    @Transactional
     public List<DTO> findAllActive(Filter filter, Sort sort, Range range) {
         return getRepository().findAllByDeletedIsFalse()
                 .stream()

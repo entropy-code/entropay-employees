@@ -6,16 +6,16 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
-import com.entropyteam.entropay.employees.dtos.PositionDto;
-import com.entropyteam.entropay.employees.services.PositionService;
+import com.entropyteam.entropay.employees.dtos.RoleDto;
+import com.entropyteam.entropay.employees.services.RoleService;
 
 @RestController
 @CrossOrigin
-@RequestMapping(value = "/positions", produces = MediaType.APPLICATION_JSON_VALUE)
-public class PositionController extends BaseController<PositionDto, UUID> {
+@RequestMapping(value = "/roles", produces = MediaType.APPLICATION_JSON_VALUE)
+public class RoleController extends BaseController<RoleDto, UUID> {
 
-    public PositionController(PositionService positionService) {
-        super(positionService);
+    public RoleController(RoleService roleService) {
+        super(roleService);
     }
 }
 

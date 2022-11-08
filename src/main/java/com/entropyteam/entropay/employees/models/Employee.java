@@ -1,13 +1,13 @@
 package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
+import javax.persistence.*;
+
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+
 
 @Entity(name = "Employee")
 @Table(name = "employee")
@@ -16,7 +16,7 @@ public class Employee extends BaseEntity {
     private String internalId;
     private String firstName;
     private String lastName;
-    private String email;
+    private String personalEmail;
     private String phone;
     private String address;
     private String city;
@@ -24,10 +24,18 @@ public class Employee extends BaseEntity {
     private String zip;
     private String country;
     private LocalDate birthDate;
+    private String personalNumber;
+    private String taxId;
+    private String emergencyContactFullName;
+    private String emergencyContactPhone;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
-    private Company company;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "employee_role",
+            joinColumns = { @JoinColumn(name = "employee_id") },
+            inverseJoinColumns = { @JoinColumn(name = "role_id") }
+    )
+    Set<Role> roles = new HashSet<>();
 
     public Employee() {
     }
@@ -36,7 +44,7 @@ public class Employee extends BaseEntity {
         this.internalId = entity.internalId();
         this.firstName = entity.firstName();
         this.lastName = entity.lastName();
-        this.email = entity.email();
+        this.personalEmail = entity.personalEmail();
         this.phone = entity.phone();
         this.address = entity.address();
         this.city = entity.city();
@@ -44,6 +52,10 @@ public class Employee extends BaseEntity {
         this.zip = entity.zip();
         this.country = entity.country();
         this.birthDate = entity.birthDate();
+        this.personalNumber = entity.personalNumber();
+        this.taxId = entity.taxId();
+        this.emergencyContactFullName = entity.emergencyContactFullName();
+        this.emergencyContactPhone = entity.emergencyContactPhone();
     }
 
     public String getFirstName() {
@@ -62,12 +74,12 @@ public class Employee extends BaseEntity {
         this.lastName = lastName;
     }
 
-    public String getEmail() {
-        return email;
+    public String getPersonalEmail() {
+        return personalEmail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setPersonalEmail(String personalEmail) {
+        this.personalEmail = personalEmail;
     }
 
     public String getPhone() {
@@ -113,7 +125,6 @@ public class Employee extends BaseEntity {
     public String getCountry() {
         return country;
     }
-
     public void setCountry(String country) {
         this.country = country;
     }
@@ -121,17 +132,8 @@ public class Employee extends BaseEntity {
     public LocalDate getBirthDate() {
         return birthDate;
     }
-
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
-    }
-
-    public Company getCompany() {
-        return company;
-    }
-
-    public void setCompany(Company company) {
-        this.company = company;
     }
 
     public String getInternalId() {
@@ -139,6 +141,48 @@ public class Employee extends BaseEntity {
     }
 
     public void setInternalId(String internalId) {
+
         this.internalId = internalId;
     }
+
+    public String getPersonalNumber() {
+        return personalNumber;
+    }
+
+    public void setPersonalNumber(String personalNumber) {
+        this.personalNumber = personalNumber;
+    }
+
+    public String getTaxId() {
+        return taxId;
+    }
+
+    public void setTaxId(String taxId) {
+        this.taxId = taxId;
+    }
+
+    public String getEmergencyContactFullName() {
+        return emergencyContactFullName;
+    }
+
+    public void setEmergencyContactFullName(String emergencyContactFullName) {
+        this.emergencyContactFullName = emergencyContactFullName;
+    }
+
+    public String getEmergencyContactPhone() {
+        return emergencyContactPhone;
+    }
+
+    public void setEmergencyContactPhone(String emergencyContactPhone) {
+        this.emergencyContactPhone = emergencyContactPhone;
+    }
+
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> rolesList) {
+        this.roles = rolesList;
+    }
+
 }
