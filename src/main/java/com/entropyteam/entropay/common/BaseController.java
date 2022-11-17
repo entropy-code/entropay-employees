@@ -1,9 +1,12 @@
 package com.entropyteam.entropay.common;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+
 import java.util.List;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +26,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping
+    @Secured(ROLE_ADMIN)
     public ResponseEntity<List<T>> getList(Filter filter, Sort sort, Range range) {
         List<T> entities = crudService.findAllActive(filter, sort, range);
         return ResponseEntity.ok()
@@ -32,6 +36,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping("/{id}")
+    @Secured(ROLE_ADMIN)
     public ResponseEntity<T> getOne(@PathVariable(value = "id") K id) {
         return crudService.findOne(id)
                 .map(ResponseEntity::ok)
@@ -40,18 +45,21 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @PostMapping
+    @Secured(ROLE_ADMIN)
     public ResponseEntity<T> create(@RequestBody T entity) {
         return ResponseEntity.ok(crudService.create(entity));
     }
 
     @Override
     @DeleteMapping("/{id}")
+    @Secured(ROLE_ADMIN)
     public ResponseEntity<T> delete(@PathVariable(value = "id") K id) {
         return ResponseEntity.ok(crudService.delete(id));
     }
 
     @Override
     @PutMapping("/{id}")
+    @Secured(ROLE_ADMIN)
     public ResponseEntity<T> update(@PathVariable(value = "id") K id, @RequestBody T entity) {
         return crudService.findOne(id)
                 .map(e -> {
