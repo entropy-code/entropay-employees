@@ -22,7 +22,7 @@ public class Contract extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "position_id")
+    @JoinColumn(name = "role_id")
     private Role role;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seniority_id")

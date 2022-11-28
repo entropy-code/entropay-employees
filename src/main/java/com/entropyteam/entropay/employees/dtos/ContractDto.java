@@ -11,7 +11,7 @@ public record ContractDto(
         UUID id,
         UUID companyId,
         UUID employeeId,
-        UUID positionId,
+        UUID roleId,
         UUID seniorityId,
         Integer hoursPerWeek,
         BigDecimal costRate,
