@@ -17,3 +17,6 @@ CREATE TABLE "assignment" (
     CONSTRAINT assignment_project_fk FOREIGN KEY (project_id) REFERENCES project(id),
     CONSTRAINT assignment_seniority_fk FOREIGN KEY (seniority_id) REFERENCES seniority(id)
 );
+
+ALTER TABLE contract RENAME COLUMN position_id TO role_id;
+
