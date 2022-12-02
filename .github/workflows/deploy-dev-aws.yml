@@ -64,7 +64,7 @@ jobs:
         aws lambda invoke \
         --function-name dev-db-migration out \
         --log-type Tail \
-        --payload '{ "dbName": "employees" }' \
+        --payload '{ "appName": "employees" }' \
         --cli-binary-format raw-in-base64-out
 
 #    - name: Download task definition
