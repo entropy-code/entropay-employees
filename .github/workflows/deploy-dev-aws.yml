@@ -66,7 +66,7 @@ jobs:
         --log-type Tail \
         --payload '{ "appName": "employees" }' \
         --cli-binary-format raw-in-base64-out
-        echo cat out
+        cat out
 
 #    - name: Download task definition
 #      run: |
