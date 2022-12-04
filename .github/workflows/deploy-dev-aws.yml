@@ -62,11 +62,15 @@ jobs:
         # Synchronise s3 bucket with sql directory (--delete deletes any files on the target which no longer exist)
         aws s3 sync src/main/resources/db/migration/ s3://entropay-envs/dev/employees/migrations/ --delete
         aws lambda invoke \
-        --function-name dev-db-migration out \
+        --function-name dev-db-migration response \
         --log-type Tail \
         --payload '{ "appName": "employees" }' \
         --cli-binary-format raw-in-base64-out
-        cat out
+        if grep -q Error response; then
+          cat response
+          exit 1
+        fi
+
 
 #    - name: Download task definition
 #      run: |
