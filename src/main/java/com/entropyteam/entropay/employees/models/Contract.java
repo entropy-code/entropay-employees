@@ -39,6 +39,9 @@ public class Contract extends BaseEntity {
     @Column
     private Integer vacations;
 
+    @Column
+    private boolean active;
+
     public Contract() {
     }
 
@@ -48,6 +51,7 @@ public class Contract extends BaseEntity {
         this.hoursPerWeek = entity.hoursPerWeek();
         this.costRate = entity.costRate();
         this.vacations = entity.vacations();
+        this.active = entity.active();
     }
 
     public Company getCompany() {
@@ -121,4 +125,13 @@ public class Contract extends BaseEntity {
     public void setVacations(Integer vacations) {
         this.vacations = vacations;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
 }

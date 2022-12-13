@@ -20,7 +20,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import com.entropyteam.entropay.auth.TokenService;
 
-import lombok.AllArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
