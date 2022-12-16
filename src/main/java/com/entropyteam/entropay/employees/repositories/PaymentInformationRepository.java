@@ -8,6 +8,6 @@ import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 
 public interface PaymentInformationRepository extends BaseRepository<PaymentInformation, UUID>{
-    // EmployeeId
+   
     List<PaymentInformation> findAllByEmployeeIdAndDeletedIsFalse(UUID id);
 }
