@@ -3,11 +3,13 @@ package com.entropyteam.entropay.employees.dtos;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public record EmployeeDto(UUID id,
@@ -15,7 +17,8 @@ public record EmployeeDto(UUID id,
                           String firstName,
                           String lastName,
                           String personalEmail,
-                          String phone,
+                          String phoneNumber,
+                          String mobileNumber,
                           String address,
                           String city,
                           String state,
@@ -26,17 +29,21 @@ public record EmployeeDto(UUID id,
                           String emergencyContactFullName,
                           String emergencyContactPhone,
                           List<UUID> profile,
+                          String notes,
+                          String healthInsurance,
+                          List<PaymentInformationDto> paymentInformation,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthDate,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt,
                           boolean deleted) {
 
-    public EmployeeDto(Employee employee) {
+    public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(),
-                employee.getLastName(), employee.getPersonalEmail(), employee.getPhone(), employee.getAddress(),
-                employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(), employee.getPersonalNumber(),
-                employee.getTaxId(), employee.getEmergencyContactFullName(), employee.getEmergencyContactPhone(),
-                employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getBirthDate(),
-                employee.getCreatedAt(), employee.getModifiedAt(), employee.isDeleted());
+                employee.getLastName(), employee.getPersonalEmail(), employee.getPhoneNumber(),employee.getMobileNumber(),
+                employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(),
+                employee.getPersonalNumber(), employee.getTaxId(), employee.getEmergencyContactFullName(),
+                employee.getEmergencyContactPhone(), employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()),
+                employee.getNotes(), employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
+                employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(), employee.isDeleted());
     }
 }

@@ -17,7 +17,8 @@ public class Employee extends BaseEntity {
     private String firstName;
     private String lastName;
     private String personalEmail;
-    private String phone;
+    private String phoneNumber;
+    private String mobileNumber;
     private String address;
     private String city;
     private String state;
@@ -28,6 +29,11 @@ public class Employee extends BaseEntity {
     private String taxId;
     private String emergencyContactFullName;
     private String emergencyContactPhone;
+    private String healthInsurance;
+    private String notes;
+
+    @OneToMany(mappedBy="employee")
+    private Set<PaymentInformation> paymentsInformation = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
@@ -45,7 +51,8 @@ public class Employee extends BaseEntity {
         this.firstName = entity.firstName();
         this.lastName = entity.lastName();
         this.personalEmail = entity.personalEmail();
-        this.phone = entity.phone();
+        this.phoneNumber = entity.phoneNumber();
+        this.mobileNumber = entity.mobileNumber();
         this.address = entity.address();
         this.city = entity.city();
         this.state = entity.state();
@@ -56,6 +63,8 @@ public class Employee extends BaseEntity {
         this.taxId = entity.taxId();
         this.emergencyContactFullName = entity.emergencyContactFullName();
         this.emergencyContactPhone = entity.emergencyContactPhone();
+        this.notes = entity.notes();
+        this.healthInsurance = entity.healthInsurance();
     }
 
     public String getFirstName() {
@@ -82,12 +91,12 @@ public class Employee extends BaseEntity {
         this.personalEmail = personalEmail;
     }
 
-    public String getPhone() {
-        return phone;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setPhoneNumber(String phone) {
+        this.phoneNumber = phone;
     }
 
     public String getAddress() {
@@ -185,4 +194,35 @@ public class Employee extends BaseEntity {
         this.roles = rolesList;
     }
 
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
+
+    public String getHealthInsurance() {
+        return healthInsurance;
+    }
+
+    public void setHealthInsurance(String healthInsurance) {
+        this.healthInsurance = healthInsurance;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Set<PaymentInformation> getPaymentsInformation() {
+        return paymentsInformation;
+    }
+
+    public void setPaymentsInformation(Set<PaymentInformation> paymentsInformation) {
+        this.paymentsInformation = paymentsInformation;
+    }
 }
