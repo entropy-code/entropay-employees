@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.*;
 
@@ -41,7 +40,7 @@ public class Employee extends BaseEntity {
             joinColumns = { @JoinColumn(name = "employee_id") },
             inverseJoinColumns = { @JoinColumn(name = "role_id") }
     )
-    Set<Role> roles = new HashSet<>();
+    private Set<Role> roles;
 
     public Employee() {
     }

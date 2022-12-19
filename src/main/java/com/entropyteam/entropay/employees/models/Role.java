@@ -5,7 +5,6 @@ import javax.persistence.*;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.RoleDto;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "Role")
@@ -16,7 +15,7 @@ public class Role extends BaseEntity {
     private String name;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "roles")
-    private Set<Employee> employees = new HashSet<>();
+    private Set<Employee> employees;
 
     public Role() {
     }
