@@ -1,6 +1,9 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.*;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.employees.models.PaymentInformation;
@@ -30,7 +33,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository, PaymentInformationRepository paymentInformationRepository, PaymentInformationService paymentInformationService) {
-        this.employeeRepository = Objects.requireNonNull(employeeRepository);
+        this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.paymentRepository = paymentInformationRepository;
         this.paymentInformationService = paymentInformationService;
@@ -60,8 +63,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto create(EmployeeDto employeeDto){
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
-        Set<PaymentInformation> paymentInformationSet = paymentInformationService.create(employeeDto.paymentInformation(),savedEntity);
-        savedEntity.setPaymentsInformation(paymentInformationSet);
+        paymentInformationService.create(employeeDto.paymentInformation(),savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -72,8 +74,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         entityToUpdate.setId(employeeId);
         Set<PaymentInformation> paymentInformationSet = paymentInformationService.update(employeeDto.paymentInformation(),employeeId);
         paymentInformationSet = paymentInformationSet.stream().peek( p -> p.setEmployee(entityToUpdate)).collect(Collectors.toSet());
+        paymentRepository.saveAll(paymentInformationSet);
         Employee savedEntity = getRepository().save(entityToUpdate);
-        savedEntity.setPaymentsInformation(new HashSet<>(paymentRepository.saveAll(paymentInformationSet)));
         return toDTO(savedEntity);
     }
 

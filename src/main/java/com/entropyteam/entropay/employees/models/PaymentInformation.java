@@ -13,6 +13,7 @@ public class PaymentInformation extends BaseEntity {
     private String platform;
     private String country;
     private String cbu;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;

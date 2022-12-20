@@ -10,7 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,8 +24,8 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
     private final PaymentInformationRepository paymentInformationRepository;
 
     @Autowired
-    public PaymentInformationService(PaymentInformationRepository PaymentInformationRepository) {
-        this.paymentInformationRepository = Objects.requireNonNull(PaymentInformationRepository);
+    public PaymentInformationService(PaymentInformationRepository paymentInformationRepository) {
+        this.paymentInformationRepository = paymentInformationRepository;
     }
 
     @Override
@@ -49,17 +54,15 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
 
     @Transactional
     protected Set<PaymentInformation> update(List<PaymentInformationDto> paymentInformationDtos, UUID id){
-        List<PaymentInformation> paymentsInformationListRepository = paymentInformationRepository.findAllByEmployeeIdAndDeletedIsFalse(id);
-        List<PaymentInformation> paymentInformationRequest = paymentInformationDtos.stream().map(this::toEntity).toList();
-        List<PaymentInformation> paymentInformationToDelete = new ArrayList<>();
+        List<PaymentInformation> paymentsInformationList = paymentInformationRepository.findAllByEmployeeIdAndDeletedIsFalse(id);
+        List<PaymentInformation> paymentInformationRequest = new ArrayList<>(paymentInformationDtos.stream().map(this::toEntity).toList());
 
-        for(PaymentInformation paymentInformation: paymentsInformationListRepository){
-            if(!paymentInformationRequest.contains(paymentInformation) && paymentInformationRepository.existsById(paymentInformation.getId())){
+        for(PaymentInformation paymentInformation: paymentsInformationList){
+            if(!paymentInformationRequest.contains(paymentInformation)){
                 paymentInformation.setDeleted(true);
-                paymentInformationToDelete.add(paymentInformation);
+                paymentInformationRequest.add(paymentInformation);
             }
         }
-        paymentInformationRepository.saveAll(paymentInformationToDelete);
         return new HashSet<>(paymentInformationRequest);
     }
 
