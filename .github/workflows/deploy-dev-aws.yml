@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     outputs:
-      version: ${{ steps.get-version.outputs.version }}
+      version: ${{ steps.get-version.outputs.VERSION }}
 
     steps:
     - name: Checkout
@@ -37,7 +37,7 @@ jobs:
       id: get-version
       run: |
         export VERSION=$(mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout)
-        echo "::set-output name=version::${VERSION}"
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
 
   package-build-deploy:
@@ -87,7 +87,7 @@ jobs:
         # Build a docker container and push it to ECR so that it can be deployed to ECS.
         docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$VERSION"
+        echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${VERSION}" >> $GITHUB_OUTPUT
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
