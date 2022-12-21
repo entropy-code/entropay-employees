@@ -2,13 +2,13 @@ ALTER TABLE employee
     RENAME COLUMN phone TO phone_number;
 
 ALTER TABLE employee
-    add mobile_number VARCHAR(255) not null;
+    add mobile_number VARCHAR(255);
 
 ALTER TABLE employee
-    add notes VARCHAR(255) not null;
+    add notes VARCHAR(255);
 
 ALTER TABLE employee
-    add health_insurance VARCHAR(255) not null;
+    add health_insurance VARCHAR(255);
 
 CREATE TABLE payment_information(
                                     id  UUID NOT NULL,
