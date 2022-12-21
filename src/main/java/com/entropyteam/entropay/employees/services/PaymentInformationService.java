@@ -53,17 +53,20 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
     }
 
     @Transactional
-    protected Set<PaymentInformation> update(List<PaymentInformationDto> paymentInformationDtos, UUID id){
-        List<PaymentInformation> paymentsInformationList = paymentInformationRepository.findAllByEmployeeIdAndDeletedIsFalse(id);
-        List<PaymentInformation> paymentInformationRequest = new ArrayList<>(paymentInformationDtos.stream().map(this::toEntity).toList());
+    protected void update(List<PaymentInformationDto> paymentInformationDtos, Employee employee){
+        List<PaymentInformation> paymentsInformationList = paymentInformationRepository.findAllByEmployeeIdAndDeletedIsFalse(employee.getId());
+        List<PaymentInformation> paymentInformationRequest = paymentInformationDtos.stream().map(this::toEntity).toList();
+        List<PaymentInformation> paymentInformationToDelete = new ArrayList<>();
 
         for(PaymentInformation paymentInformation: paymentsInformationList){
             if(!paymentInformationRequest.contains(paymentInformation)){
                 paymentInformation.setDeleted(true);
-                paymentInformationRequest.add(paymentInformation);
+                paymentInformationToDelete.add(paymentInformation);
             }
         }
-        return new HashSet<>(paymentInformationRequest);
+        paymentInformationRequest = paymentInformationRequest.stream().peek(p -> p.setEmployee(employee)).collect(Collectors.toList());
+        paymentInformationRepository.saveAll(paymentInformationRequest);
+        paymentInformationRepository.saveAll(paymentInformationToDelete);
     }
 
 

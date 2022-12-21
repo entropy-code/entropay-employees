@@ -72,10 +72,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto update(UUID employeeId, EmployeeDto employeeDto) {
         Employee entityToUpdate = toEntity(employeeDto);
         entityToUpdate.setId(employeeId);
-        Set<PaymentInformation> paymentInformationSet = paymentInformationService.update(employeeDto.paymentInformation(),employeeId);
-        paymentInformationSet = paymentInformationSet.stream().peek( p -> p.setEmployee(entityToUpdate)).collect(Collectors.toSet());
-        paymentRepository.saveAll(paymentInformationSet);
         Employee savedEntity = getRepository().save(entityToUpdate);
+        paymentInformationService.update(employeeDto.paymentInformation(),savedEntity);
         return toDTO(savedEntity);
     }
 
