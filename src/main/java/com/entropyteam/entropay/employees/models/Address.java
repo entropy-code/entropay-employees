@@ -10,6 +10,9 @@ public class Address {
     private String zipCode;
     private String addressLine;
 
+    public Address() {
+    }
+
     public String getCountry() {
         return country;
     }
