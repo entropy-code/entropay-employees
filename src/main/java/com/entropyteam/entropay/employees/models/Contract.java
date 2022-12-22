@@ -38,7 +38,10 @@ public class Contract extends BaseEntity {
     private BigDecimal costRate;
     @Column
     private Integer vacations;
-
+    @Column
+    private String benefits;
+    @Column
+    private String notes;
     @Column
     private boolean active;
 
@@ -51,6 +54,8 @@ public class Contract extends BaseEntity {
         this.hoursPerWeek = entity.hoursPerWeek();
         this.costRate = entity.costRate();
         this.vacations = entity.vacations();
+        this.benefits = entity.benefits();
+        this.notes = entity.notes();
         this.active = entity.active();
     }
 
@@ -124,6 +129,22 @@ public class Contract extends BaseEntity {
 
     public void setVacations(Integer vacations) {
         this.vacations = vacations;
+    }
+
+    public String getBenefits() {
+        return benefits;
+    }
+
+    public void setBenefits(String benefits) {
+        this.benefits = benefits;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public boolean isActive() {
