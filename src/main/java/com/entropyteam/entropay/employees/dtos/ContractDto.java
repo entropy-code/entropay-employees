@@ -42,7 +42,7 @@ public record ContractDto(
                 this.id,
                 this.companyId,
                 this.employeeId,
-                this.positionId,
+                this.roleId,
                 this.seniorityId,
                 this.hoursPerWeek,
                 this.costRate,
