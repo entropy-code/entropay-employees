@@ -103,4 +103,6 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
         return contract;
     }
+
+
 }
