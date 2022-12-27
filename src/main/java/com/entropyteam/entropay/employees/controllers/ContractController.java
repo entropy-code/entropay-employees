@@ -28,7 +28,7 @@ public class ContractController extends BaseController<ContractDto, UUID> {
         return ResponseEntity.ok(contractService.modifyStatus(id, active));
     }
 
-    @GetMapping("/contractTypes")
+    @GetMapping("/contract-types")
     public ResponseEntity<ContractType[]> getContractTypes() {
         return ResponseEntity.ok().header(BaseController.X_TOTAL_COUNT, String.valueOf(ContractType.values().length))
                 .body(ContractType.values());
