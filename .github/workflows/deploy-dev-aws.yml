@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     outputs:
-      version: ${{ steps.get-version.outputs.version }}
+      version: ${{ steps.get-version.outputs.VERSION }}
 
     steps:
     - name: Checkout
@@ -37,7 +37,7 @@ jobs:
       id: get-version
       run: |
         export VERSION=$(mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout)
-        echo "::set-output name=version::${VERSION}"
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
 
   package-build-deploy:
@@ -57,6 +57,19 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    - name: Run flyway migrations
+      run: |
+        # Synchronise s3 bucket with sql directory (--delete deletes any files on the target which no longer exist)
+        aws s3 sync src/main/resources/db/migration/ s3://entropay-envs/employees/migrations/ --delete
+        aws lambda invoke \
+        --function-name dev-db-migration response \
+        --payload '{ "appName": "employees" }' \
+        --cli-binary-format raw-in-base64-out
+        if grep -q Error response; then
+          cat response
+          exit 1
+        fi
+
     - name: Download task definition
       run: |
         aws ecs describe-task-definition --task-definition entropay-employees --query taskDefinition > task-definition.json
@@ -74,7 +87,7 @@ jobs:
         # Build a docker container and push it to ECR so that it can be deployed to ECS.
         docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$VERSION"
+        echo "image=${ECR_REGISTRY}/${ECR_REPOSITORY}:${VERSION}" >> $GITHUB_OUTPUT
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
