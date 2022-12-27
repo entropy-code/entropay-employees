@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.services;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.ContractType;
 import com.entropyteam.entropay.employees.repositories.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,8 +51,10 @@ class ContractServiceTest {
     public void setUp() {
         existentContract = aContract();
         existentContract.setId(EXISTENT_CONTRACT_ID);
+        existentContract.setContractType(ContractType.CONTRACTOR);
         activeContract = aContract();
         activeContract.setId(ACTIVE_CONTRACT_ID);
+        activeContract.setContractType(ContractType.CONTRACTOR);
     }
 
     @DisplayName("When employee has existent active contract deactivate it, create new active contract and save")
@@ -133,6 +136,7 @@ class ContractServiceTest {
         Contract activated = aContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
+        activated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(activated);
 
         // when
@@ -165,6 +169,7 @@ class ContractServiceTest {
         Contract activated = aContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
+        activated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(activated);
 
         // when
@@ -235,6 +240,7 @@ class ContractServiceTest {
         Contract deactivated = aContract();
         deactivated.setId(EXISTENT_CONTRACT_ID);
         deactivated.setActive(false);
+        deactivated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(deactivated);
 
         // when
