@@ -1,9 +1,13 @@
 package com.entropyteam.entropay.common;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
@@ -54,4 +58,11 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     protected abstract DTO toDTO(Entity entity);
 
     protected abstract Entity toEntity(DTO entity);
+
+    protected Set<String> getUserRoles(){
+        Collection<SimpleGrantedAuthority> authorities =
+                (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication()
+                        .getAuthorities();
+        return authorities.stream().map(SimpleGrantedAuthority::getAuthority).collect(Collectors.toSet());
+    }
 }
