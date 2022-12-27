@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -22,7 +24,7 @@ public class Contract extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "position_id")
+    @JoinColumn(name = "role_id")
     private Role role;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seniority_id")
@@ -38,7 +40,13 @@ public class Contract extends BaseEntity {
     private BigDecimal costRate;
     @Column
     private Integer vacations;
-
+    @Column
+    private String benefits;
+    @Column
+    private String notes;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "contractType", nullable = false)
+    private ContractType contractType;
     @Column
     private boolean active;
 
@@ -51,8 +59,12 @@ public class Contract extends BaseEntity {
         this.hoursPerWeek = entity.hoursPerWeek();
         this.costRate = entity.costRate();
         this.vacations = entity.vacations();
+        this.benefits = entity.benefits();
+        this.notes = entity.notes();
+        this.contractType = ContractType.valueOf(entity.contractType());
         this.active = entity.active();
     }
+
 
     public Company getCompany() {
         return company;
@@ -124,6 +136,30 @@ public class Contract extends BaseEntity {
 
     public void setVacations(Integer vacations) {
         this.vacations = vacations;
+    }
+
+    public String getBenefits() {
+        return benefits;
+    }
+
+    public void setBenefits(String benefits) {
+        this.benefits = benefits;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public ContractType getContractType() {
+        return contractType;
+    }
+
+    public void setContractType(ContractType contractType) {
+        this.contractType = contractType;
     }
 
     public boolean isActive() {

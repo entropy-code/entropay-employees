@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
-    private static final String X_TOTAL_COUNT = "X-Total-Count";
+    public static final String X_TOTAL_COUNT = "X-Total-Count";
     private final CrudService<T, K> crudService;
 
     public BaseController(CrudService<T, K> crudService) {

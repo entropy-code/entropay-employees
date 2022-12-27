@@ -12,7 +12,7 @@ public record ContractDto(
         UUID id,
         UUID companyId,
         UUID employeeId,
-        UUID positionId,
+        UUID roleId,
         UUID seniorityId,
         Integer hoursPerWeek,
         BigDecimal costRate,
@@ -20,6 +20,9 @@ public record ContractDto(
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
         @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+        String benefits,
+        String notes,
+        String contractType,
         boolean deleted,
         boolean active,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -31,8 +34,13 @@ public record ContractDto(
     public ContractDto(Contract contract) {
         this(
                 contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(), contract.getCostRate(),
-                contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.isDeleted(), contract.isActive(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(),
+                contract.getCostRate(),
+                contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.getBenefits(),
+                contract.getNotes(),
+                contract.getContractType().name(),
+                contract.isDeleted(),
+                contract.isActive(),
                 contract.getCreatedAt(), contract.getModifiedAt()
         );
     }
@@ -42,13 +50,16 @@ public record ContractDto(
                 this.id,
                 this.companyId,
                 this.employeeId,
-                this.positionId,
+                this.roleId,
                 this.seniorityId,
                 this.hoursPerWeek,
                 this.costRate,
                 this.vacations,
                 this.startDate,
                 this.endDate,
+                this.benefits,
+                this.notes,
+                this.contractType,
                 this.deleted,
                 active,
                 this.createdAt,
