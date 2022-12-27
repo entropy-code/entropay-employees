@@ -2,7 +2,7 @@ package com.entropyteam.entropay.employees.controllers;
 
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.services.ContractService;
-import com.entropyteam.entropay.employees.testUtils.testUtils;
+import com.entropyteam.entropay.employees.testUtils.TestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +27,7 @@ class ContractControllerTest {
     @Test
     public void testCreate() {
         // given
-        ContractDto contractDto = new ContractDto(testUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.aContract());
         ResponseEntity<ContractDto> expected = ResponseEntity.ok(contractDto);
 
         // when
@@ -45,7 +45,7 @@ class ContractControllerTest {
     @Test
     public void testCreateWhenContractServiceThrowsException() {
         // given
-        ContractDto contractDto = new ContractDto(testUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.aContract());
 
         // when
         when(contractService.create(any())).thenThrow(new RuntimeException("Test exception thrown!!"));
@@ -61,7 +61,7 @@ class ContractControllerTest {
     @Test
     public void testModifyStatus() {
         // given
-        ContractDto contractDto = new ContractDto(testUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.aContract());
         boolean setActive = true;
         ResponseEntity<ContractDto> expected = ResponseEntity.ok(contractDto);
 
@@ -80,7 +80,7 @@ class ContractControllerTest {
     @Test
     public void testModifyStatusWhenContractServiceThrowsException() {
         // given
-        ContractDto contractDto = new ContractDto(testUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.aContract());
         boolean setActive = true;
 
         // when
