@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
-public class testUtils {
+public class TestUtils {
     public static Contract aContract() {
         Contract contract = new Contract();
         contract.setCompany(aCompany());
@@ -18,6 +18,7 @@ public class testUtils {
         contract.setCostRate(BigDecimal.valueOf(21, 4));
         contract.setVacations(15);
         contract.setActive(true);
+        contract.setContractType(ContractType.CONTRACTOR);
         return contract;
     }
 
