@@ -95,8 +95,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Override
     public ContractDto toDTO(Contract entity) {
-        entity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRoles());
-        return new ContractDto(entity);
+        Contract securedEntity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRole());
+        return new ContractDto(securedEntity);
     }
 
     @Override
@@ -114,6 +114,4 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
         return contract;
     }
-
-
 }
