@@ -16,6 +16,8 @@ public record ContractDto(
         UUID seniorityId,
         Integer hoursPerWeek,
         BigDecimal costRate,
+        BigDecimal monthlySalary,
+        String currency,
         Integer vacations,
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
@@ -35,13 +37,11 @@ public record ContractDto(
         this(
                 contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(),
-                contract.getCostRate(),
+                contract.getCostRate(), contract.getMonthlySalary(), contract.getCurrency().name(),
                 contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.getBenefits(),
-                contract.getNotes(),
-                contract.getContractType().name(),
-                contract.isDeleted(),
-                contract.isActive(),
-                contract.getCreatedAt(), contract.getModifiedAt()
+                contract.getNotes(), contract.getContractType().name(), contract.isDeleted(), contract.isActive(),
+                contract.getCreatedAt(),
+                contract.getModifiedAt()
         );
     }
 
@@ -54,6 +54,8 @@ public record ContractDto(
                 this.seniorityId,
                 this.hoursPerWeek,
                 this.costRate,
+                this.monthlySalary,
+                this.currency,
                 this.vacations,
                 this.startDate,
                 this.endDate,

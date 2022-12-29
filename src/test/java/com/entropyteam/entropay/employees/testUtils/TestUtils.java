@@ -19,6 +19,7 @@ public class TestUtils {
         contract.setVacations(15);
         contract.setActive(true);
         contract.setContractType(ContractType.CONTRACTOR);
+        contract.setCurrency(Currency.USD);
         return contract;
     }
 

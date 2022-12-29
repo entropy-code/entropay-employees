@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.ContractType;
+import com.entropyteam.entropay.employees.models.Currency;
 import com.entropyteam.entropay.employees.services.ContractService;
 
 @RestController
@@ -32,6 +33,13 @@ public class ContractController extends BaseController<ContractDto, UUID> {
     public ResponseEntity<ContractType[]> getContractTypes() {
         return ResponseEntity.ok().header(BaseController.X_TOTAL_COUNT, String.valueOf(ContractType.values().length))
                 .body(ContractType.values());
+
+    }
+
+    @GetMapping("/currencies")
+    public ResponseEntity<Currency[]> getCurrencies() {
+        return ResponseEntity.ok().header(BaseController.X_TOTAL_COUNT, String.valueOf(Currency.values().length))
+                .body(Currency.values());
 
     }
 

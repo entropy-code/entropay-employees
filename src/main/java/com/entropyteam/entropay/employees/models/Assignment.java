@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -35,7 +37,12 @@ public class Assignment extends BaseEntity {
     @Column
     private Integer hoursPerWeek;
     @Column
+    private String labourHours;
+    @Column
     private BigDecimal billableRate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency")
+    private Currency currency;
 
     public Assignment() {
     }
@@ -45,6 +52,8 @@ public class Assignment extends BaseEntity {
         this.endDate = assignmentDto.endDate();
         this.hoursPerWeek = assignmentDto.hoursPerWeek();
         this.billableRate = assignmentDto.billableRate();
+        this.currency = Currency.valueOf(assignmentDto.currency());
+        this.labourHours = assignmentDto.labourHours();
     }
 
     public Project getProject() {
@@ -109,5 +118,21 @@ public class Assignment extends BaseEntity {
 
     public void setBillableRate(BigDecimal billableRate) {
         this.billableRate = billableRate;
+    }
+
+    public String getLabourHours() {
+        return labourHours;
+    }
+
+    public void setLabourHours(String labourHours) {
+        this.labourHours = labourHours;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
     }
 }
