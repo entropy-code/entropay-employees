@@ -2,11 +2,16 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
@@ -31,16 +36,18 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final SeniorityRepository seniorityRepository;
+    private final SecureObjectService secureObjectService;
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
-                           EmployeeRepository employeeRepository, RoleRepository roleRepository,
-                           SeniorityRepository seniorityRepository) {
+            EmployeeRepository employeeRepository, RoleRepository roleRepository,
+            SeniorityRepository seniorityRepository, SecureObjectService secureObjectService) {
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.seniorityRepository = seniorityRepository;
+        this.secureObjectService = secureObjectService;
     }
 
     @Transactional
@@ -61,17 +68,20 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         Contract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found"));
 
-        if ((!setActive && !contract.isActive()) || (setActive && contract.isActive()))
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Contract " + contract.getId() + " already " + (setActive ? "active" : "inactive")
-                    + " for employee " + contract.getEmployee().getId());
+        if ((!setActive && !contract.isActive()) || (setActive && contract.isActive())) {
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT,
+                    "Contract " + contract.getId() + " already " + (setActive ? "active" : "inactive")
+                            + " for employee " + contract.getEmployee().getId());
+        }
 
         if (setActive) {
-            contractRepository.findContractByEmployeeIdAndActiveIsTrue(contract.getEmployee().getId()).ifPresent(existent -> {
-                existent.setActive(false);
-                existent.setModifiedAt(LocalDateTime.now());
-                existent.setEndDate(LocalDate.now());
-                contractRepository.saveAndFlush(existent);
-            });
+            contractRepository.findContractByEmployeeIdAndActiveIsTrue(contract.getEmployee().getId())
+                    .ifPresent(existent -> {
+                        existent.setActive(false);
+                        existent.setModifiedAt(LocalDateTime.now());
+                        existent.setEndDate(LocalDate.now());
+                        contractRepository.saveAndFlush(existent);
+                    });
         }
         contract.setActive(setActive);
         contract.setModifiedAt(LocalDateTime.now());
@@ -85,7 +95,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Override
     public ContractDto toDTO(Contract entity) {
-        return new ContractDto(entity);
+        Contract securedEntity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRole());
+        return new ContractDto(securedEntity);
     }
 
     @Override
@@ -103,6 +114,4 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
         return contract;
     }
-
-
 }

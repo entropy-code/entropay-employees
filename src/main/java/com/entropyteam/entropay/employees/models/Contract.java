@@ -1,5 +1,8 @@
 package com.entropyteam.entropay.employees.models;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import javax.persistence.Column;
@@ -10,6 +13,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import com.entropyteam.entropay.auth.SecureField;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 
@@ -37,11 +41,13 @@ public class Contract extends BaseEntity {
     @Column
     private Integer hoursPerWeek;
     @Column
+    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR})
     private BigDecimal costRate;
     @Enumerated(EnumType.STRING)
     @Column(name = "currency")
     private Currency currency;
     @Column
+    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR})
     private BigDecimal monthlySalary;
     @Column
     private Integer vacations;

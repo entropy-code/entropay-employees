@@ -3,10 +3,8 @@ package com.entropyteam.entropay.employees.dtos;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;

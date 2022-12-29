@@ -1,6 +1,9 @@
 package com.entropyteam.entropay.common;
 
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +29,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping
-    @Secured(ROLE_ADMIN)
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
     public ResponseEntity<List<T>> getList(Filter filter, Sort sort, Range range) {
         List<T> entities = crudService.findAllActive(filter, sort, range);
         return ResponseEntity.ok()
@@ -36,7 +39,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping("/{id}")
-    @Secured(ROLE_ADMIN)
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
     public ResponseEntity<T> getOne(@PathVariable(value = "id") K id) {
         return crudService.findOne(id)
                 .map(ResponseEntity::ok)
@@ -45,21 +48,21 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @PostMapping
-    @Secured(ROLE_ADMIN)
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
     public ResponseEntity<T> create(@RequestBody T entity) {
         return ResponseEntity.ok(crudService.create(entity));
     }
 
     @Override
     @DeleteMapping("/{id}")
-    @Secured(ROLE_ADMIN)
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
     public ResponseEntity<T> delete(@PathVariable(value = "id") K id) {
         return ResponseEntity.ok(crudService.delete(id));
     }
 
     @Override
     @PutMapping("/{id}")
-    @Secured(ROLE_ADMIN)
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
     public ResponseEntity<T> update(@PathVariable(value = "id") K id, @RequestBody T entity) {
         return crudService.findOne(id)
                 .map(e -> {
