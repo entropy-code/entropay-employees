@@ -66,7 +66,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                         .getAuthorities();
         Optional<AppRole> appRole =  authorities.stream().map(a -> AppRole.valueOf(a.getAuthority()))
                 .min(Comparator.comparing(r -> r.score));
-        //return appRole.orElseThrow();
-        return AppRole.ROLE_ADMIN;
+        return appRole.orElseThrow();
     }
 }
