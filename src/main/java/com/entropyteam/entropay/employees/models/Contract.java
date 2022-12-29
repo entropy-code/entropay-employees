@@ -38,6 +38,11 @@ public class Contract extends BaseEntity {
     private Integer hoursPerWeek;
     @Column
     private BigDecimal costRate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency")
+    private Currency currency;
+    @Column
+    private BigDecimal monthlySalary;
     @Column
     private Integer vacations;
     @Column
@@ -58,6 +63,8 @@ public class Contract extends BaseEntity {
         this.endDate = entity.endDate();
         this.hoursPerWeek = entity.hoursPerWeek();
         this.costRate = entity.costRate();
+        this.currency = Currency.valueOf(entity.currency());
+        this.monthlySalary = entity.monthlySalary();
         this.vacations = entity.vacations();
         this.benefits = entity.benefits();
         this.notes = entity.notes();
@@ -170,4 +177,19 @@ public class Contract extends BaseEntity {
         this.active = active;
     }
 
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
+    }
+
+    public BigDecimal getMonthlySalary() {
+        return monthlySalary;
+    }
+
+    public void setMonthlySalary(BigDecimal monthlySalary) {
+        this.monthlySalary = monthlySalary;
+    }
 }

@@ -15,7 +15,9 @@ public record AssignmentDto(
         UUID roleId,
         UUID seniorityId,
         Integer hoursPerWeek,
+        String labourHours,
         BigDecimal billableRate,
+        String currency,
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
         @JsonFormat(pattern = "yyyy-MM-dd")
@@ -32,8 +34,9 @@ public record AssignmentDto(
         this(
                 assignment.getId(), assignment.getProject().getId(), assignment.getEmployee().getId(),
                 assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerWeek(),
-                assignment.getBillableRate(), assignment.getStartDate(), assignment.getEndDate(),
-                assignment.isDeleted(), assignment.getCreatedAt(), assignment.getModifiedAt()
+                assignment.getLabourHours(), assignment.getBillableRate(), assignment.getCurrency().name(),
+                assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(), assignment.getCreatedAt(),
+                assignment.getModifiedAt()
         );
     }
 

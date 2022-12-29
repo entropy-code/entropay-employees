@@ -30,6 +30,7 @@ class ContractControllerTest {
         ContractDto contractDto = new ContractDto(TestUtils.aContract());
         ResponseEntity<ContractDto> expected = ResponseEntity.ok(contractDto);
 
+
         // when
         when(contractService.create(any())).thenReturn(contractDto);
 
