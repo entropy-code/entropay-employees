@@ -4,7 +4,7 @@ WORKDIR /app
 COPY pom.xml ./
 RUN mvn dependency:go-offline
 COPY . ./
-RUN mvn package
+RUN mvn package -Dmaven.test.skip
 # Run
 FROM openjdk:17
 WORKDIR /app

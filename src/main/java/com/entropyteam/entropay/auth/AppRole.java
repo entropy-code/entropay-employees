@@ -17,7 +17,6 @@ public enum AppRole {
         this.value = value;
         this.score = score;
     }
-
     public static AppRole getByValue(String value) {
         return Arrays.stream(AppRole.values()).filter(r -> StringUtils.equalsIgnoreCase(r.value, value)).findFirst()
                 .orElseThrow();
