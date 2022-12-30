@@ -64,7 +64,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         Collection<SimpleGrantedAuthority> authorities =
                 (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication()
                         .getAuthorities();
-        Optional<AppRole> appRole =  authorities.stream().map(a -> AppRole.valueOf(a.getAuthority()))
+        Optional<AppRole> appRole =  authorities.stream().map(a -> AppRole.getByValue(a.getAuthority()))
                 .min(Comparator.comparing(r -> r.score));
         return appRole.orElseThrow();
     }
