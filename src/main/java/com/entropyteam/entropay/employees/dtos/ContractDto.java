@@ -14,7 +14,7 @@ public record ContractDto(
         UUID employeeId,
         UUID roleId,
         UUID seniorityId,
-        Integer hoursPerWeek,
+        Integer hoursPerMonth,
         BigDecimal costRate,
         BigDecimal monthlySalary,
         String currency,
@@ -36,7 +36,7 @@ public record ContractDto(
     public ContractDto(Contract contract) {
         this(
                 contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerWeek(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
                 contract.getCostRate(), contract.getMonthlySalary(), contract.getCurrency().name(),
                 contract.getVacations(), contract.getStartDate(), contract.getEndDate(), contract.getBenefits(),
                 contract.getNotes(), contract.getContractType().name(), contract.isDeleted(), contract.isActive(),
@@ -52,7 +52,7 @@ public record ContractDto(
                 this.employeeId,
                 this.roleId,
                 this.seniorityId,
-                this.hoursPerWeek,
+                this.hoursPerMonth,
                 this.costRate,
                 this.monthlySalary,
                 this.currency,

@@ -39,7 +39,7 @@ public class Contract extends BaseEntity {
     @Column
     private LocalDate endDate;
     @Column
-    private Integer hoursPerWeek;
+    private Integer hoursPerMonth;
     @Column
     @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR})
     private BigDecimal costRate;
@@ -67,7 +67,7 @@ public class Contract extends BaseEntity {
     public Contract(ContractDto entity) {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
-        this.hoursPerWeek = entity.hoursPerWeek();
+        this.hoursPerMonth = entity.hoursPerMonth();
         this.costRate = entity.costRate();
         this.currency = Currency.valueOf(entity.currency());
         this.monthlySalary = entity.monthlySalary();
@@ -127,12 +127,12 @@ public class Contract extends BaseEntity {
         this.seniority = seniority;
     }
 
-    public Integer getHoursPerWeek() {
-        return hoursPerWeek;
+    public Integer getHoursPerMonth() {
+        return hoursPerMonth;
     }
 
-    public void setHoursPerWeek(Integer hoursPerWeek) {
-        this.hoursPerWeek = hoursPerWeek;
+    public void setHoursPerMonth(Integer hoursPerMonth) {
+        this.hoursPerMonth = hoursPerMonth;
     }
 
     public BigDecimal getCostRate() {
