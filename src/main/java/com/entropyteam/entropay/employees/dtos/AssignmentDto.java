@@ -14,7 +14,7 @@ public record AssignmentDto(
         UUID employeeId,
         UUID roleId,
         UUID seniorityId,
-        Integer hoursPerWeek,
+        Integer hoursPerMonth,
         String labourHours,
         BigDecimal billableRate,
         String currency,
@@ -33,7 +33,7 @@ public record AssignmentDto(
     public AssignmentDto(Assignment assignment) {
         this(
                 assignment.getId(), assignment.getProject().getId(), assignment.getEmployee().getId(),
-                assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerWeek(),
+                assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerMonth(),
                 assignment.getLabourHours(), assignment.getBillableRate(), assignment.getCurrency().name(),
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(), assignment.getCreatedAt(),
                 assignment.getModifiedAt()

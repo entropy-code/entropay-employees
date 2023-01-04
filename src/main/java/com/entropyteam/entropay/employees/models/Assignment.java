@@ -39,7 +39,7 @@ public class Assignment extends BaseEntity {
     @Column
     private LocalDate endDate;
     @Column
-    private Integer hoursPerWeek;
+    private Integer hoursPerMonth;
     @Column
     private String labourHours;
     @Column
@@ -55,7 +55,7 @@ public class Assignment extends BaseEntity {
     public Assignment(AssignmentDto assignmentDto) {
         this.startDate = assignmentDto.startDate();
         this.endDate = assignmentDto.endDate();
-        this.hoursPerWeek = assignmentDto.hoursPerWeek();
+        this.hoursPerMonth = assignmentDto.hoursPerMonth();
         this.billableRate = assignmentDto.billableRate();
         this.currency = Currency.valueOf(assignmentDto.currency());
         this.labourHours = assignmentDto.labourHours();
@@ -109,12 +109,12 @@ public class Assignment extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public Integer getHoursPerWeek() {
-        return hoursPerWeek;
+    public Integer getHoursPerMonth() {
+        return hoursPerMonth;
     }
 
-    public void setHoursPerWeek(Integer hoursPerWeek) {
-        this.hoursPerWeek = hoursPerWeek;
+    public void setHoursPerMonth(Integer hoursPerMonth) {
+        this.hoursPerMonth = hoursPerMonth;
     }
 
     public BigDecimal getBillableRate() {
