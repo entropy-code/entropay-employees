@@ -26,14 +26,17 @@ public class Client extends BaseEntity {
     private Address address;
 
     @Column
-    private String contact;
+    private String contactFullName;
+
+    private String contactEmail;
 
     @Column(nullable = false)
     private String preferredCurrency;
 
     public Client(ClientDto clientDto) {
         this.name = clientDto.name();
-        this.contact = clientDto.contact();
+        this.contactFullName = clientDto.contactFullName();
+        this.contactEmail = clientDto.contactEmail();
         this.preferredCurrency = clientDto.preferredCurrency();
         address = new Address();
         address.setCountry(clientDto.country());
@@ -62,12 +65,12 @@ public class Client extends BaseEntity {
         this.address = address;
     }
 
-    public String getContact() {
-        return contact;
+    public String getContactFullName() {
+        return contactFullName;
     }
 
-    public void setContact(String contact) {
-        this.contact = contact;
+    public void setContactFullName(String contactFullName) {
+        this.contactFullName = contactFullName;
     }
 
     public String getPreferredCurrency() {
@@ -108,5 +111,13 @@ public class Client extends BaseEntity {
 
     public UUID getCompanyId() {
         return company.getId();
+    }
+
+    public String getContactEmail() {
+        return contactEmail;
+    }
+
+    public void setContactEmail(String contactEmail) {
+        this.contactEmail = contactEmail;
     }
 }
