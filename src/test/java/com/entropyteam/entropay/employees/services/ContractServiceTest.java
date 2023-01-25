@@ -4,7 +4,6 @@ import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.ContractType;
-import com.entropyteam.entropay.employees.models.Currency;
 import com.entropyteam.entropay.employees.repositories.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

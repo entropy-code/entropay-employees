@@ -2,7 +2,6 @@ package com.entropyteam.entropay.employees.testUtils;
 
 import com.entropyteam.entropay.employees.models.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
