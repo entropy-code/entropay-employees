@@ -1,21 +1,13 @@
 package com.entropyteam.entropay.employees.models;
 
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
-
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import com.entropyteam.entropay.auth.SecureField;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
+
+import javax.persistence.*;
 
 @Entity(name = "Contract")
 @Table(name = "contract")
@@ -33,22 +25,12 @@ public class Contract extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seniority_id")
     private Seniority seniority;
-
     @Column
     private LocalDate startDate;
     @Column
     private LocalDate endDate;
     @Column
     private Integer hoursPerMonth;
-    @Column
-    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR})
-    private BigDecimal costRate;
-    @Enumerated(EnumType.STRING)
-    @Column(name = "currency")
-    private Currency currency;
-    @Column
-    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR})
-    private BigDecimal monthlySalary;
     @Column
     private Integer vacations;
     @Column
@@ -60,6 +42,8 @@ public class Contract extends BaseEntity {
     private ContractType contractType;
     @Column
     private boolean active;
+    @OneToMany(mappedBy="contract")
+    private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
 
     public Contract() {
     }
@@ -68,9 +52,6 @@ public class Contract extends BaseEntity {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
         this.hoursPerMonth = entity.hoursPerMonth();
-        this.costRate = entity.costRate();
-        this.currency = Currency.valueOf(entity.currency());
-        this.monthlySalary = entity.monthlySalary();
         this.vacations = entity.vacations();
         this.benefits = entity.benefits();
         this.notes = entity.notes();
@@ -135,14 +116,6 @@ public class Contract extends BaseEntity {
         this.hoursPerMonth = hoursPerMonth;
     }
 
-    public BigDecimal getCostRate() {
-        return costRate;
-    }
-
-    public void setCostRate(BigDecimal costRate) {
-        this.costRate = costRate;
-    }
-
     public Integer getVacations() {
         return vacations;
     }
@@ -183,19 +156,12 @@ public class Contract extends BaseEntity {
         this.active = active;
     }
 
-    public Currency getCurrency() {
-        return currency;
+    public Set<PaymentSettlement> getPaymentsSettlement() {
+        return paymentsSettlement;
     }
 
-    public void setCurrency(Currency currency) {
-        this.currency = currency;
+    public void setPaymentsSettlement(Set<PaymentSettlement> paymentsSettlement) {
+        this.paymentsSettlement = paymentsSettlement;
     }
 
-    public BigDecimal getMonthlySalary() {
-        return monthlySalary;
-    }
-
-    public void setMonthlySalary(BigDecimal monthlySalary) {
-        this.monthlySalary = monthlySalary;
-    }
 }

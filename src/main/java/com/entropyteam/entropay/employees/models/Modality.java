@@ -4,23 +4,16 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonFormat(shape= JsonFormat.Shape.OBJECT)
-public enum ContractType {
-
-    CONTRACTOR("Contractor"),
-    EMPLOYEE_RELATIONSHIP("Employee Relationship"),
-    EMPLOYEE_RELATIONSHIP_CONTRACTOR("Employee Relationship and Contractor"),
-    TRAINEE("Trainee");
+public enum Modality {
+    HOUR("Hour"),
+    MONTHLY("Monthly");
 
     @JsonProperty(value="id")
     private final String name = this.name();
     @JsonProperty()
     private final String value;
 
-
-    ContractType(String value) {
+    Modality(String value) {
         this.value = value;
     }
-
-
-
 }
