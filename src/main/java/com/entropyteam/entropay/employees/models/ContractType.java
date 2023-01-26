@@ -8,7 +8,7 @@ public enum ContractType {
 
     CONTRACTOR("Contractor"),
     EMPLOYEE_RELATIONSHIP("Employee Relationship"),
-    EMPLOYEE_RELATIONSHIP_CONTRACTOR("Employee Relationship and Contractor"),
+    MIX("Employee Relationship and Contractor"),
     TRAINEE("Trainee");
 
     @JsonProperty(value="id")
@@ -16,11 +16,8 @@ public enum ContractType {
     @JsonProperty()
     private final String value;
 
-
     ContractType(String value) {
         this.value = value;
     }
-
-
 
 }

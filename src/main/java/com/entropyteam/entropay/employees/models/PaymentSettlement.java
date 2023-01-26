@@ -36,10 +36,10 @@ public class PaymentSettlement extends BaseEntity {
     private Contract contract;
 
     public PaymentSettlement(PaymentSettlementDto entity){
-    this.salary = entity.salary();
-    this.modality = Modality.valueOf(entity.modality());
-    this.currency = Currency.valueOf(entity.currency());
-    this.setId(entity.id());
+        this.salary = entity.salary();
+        this.modality = Modality.valueOf(entity.modality());
+        this.currency = Currency.valueOf(entity.currency());
+        this.setId(entity.id());
     }
     public PaymentSettlement(){
     }

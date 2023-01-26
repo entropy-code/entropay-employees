@@ -33,8 +33,7 @@ public record ContractDto(
 
 
     public ContractDto(Contract contract) {
-        this(
-                contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
+        this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth()
                 ,contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
@@ -66,8 +65,7 @@ public record ContractDto(
     }
 
     public ContractDto(Contract contract, List<PaymentSettlement> paymentSettlementList ) {
-        this(
-                contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
+        this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth()
                 ,contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
