@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.employees.models.*;
 import com.entropyteam.entropay.employees.repositories.*;
@@ -104,7 +105,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractDto toDTO(Contract entity) {
         Contract securedEntity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRole());
         List<PaymentSettlement> paymentsSettlementList = paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
-        return new ContractDto(securedEntity, paymentsSettlementList);
+        List<PaymentSettlement> securedPaymentSettlementList = paymentsSettlementList.stream().map( p -> (PaymentSettlement) secureObjectService.secureObjectByRole(p, getUserRole())).collect(Collectors.toList());
+        return new ContractDto(securedEntity, securedPaymentSettlementList);
     }
 
     @Override
