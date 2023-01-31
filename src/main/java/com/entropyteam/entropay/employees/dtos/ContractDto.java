@@ -34,12 +34,11 @@ public record ContractDto(
 
     public ContractDto(Contract contract) {
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth()
-                ,contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
+                contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 contract.getPaymentsSettlement().stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
-                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt()
-        );
+                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());
     }
 
     public ContractDto withActive(boolean active) {
@@ -66,12 +65,11 @@ public record ContractDto(
 
     public ContractDto(Contract contract, List<PaymentSettlement> paymentSettlementList ) {
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth()
-                ,contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
+                contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 paymentSettlementList.stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
-                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt()
-        );
+                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());
     }
 
 }
