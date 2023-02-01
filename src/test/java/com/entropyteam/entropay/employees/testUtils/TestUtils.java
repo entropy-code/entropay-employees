@@ -2,7 +2,6 @@ package com.entropyteam.entropay.employees.testUtils;
 
 import com.entropyteam.entropay.employees.models.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -15,11 +14,9 @@ public class TestUtils {
         contract.setSeniority(aSeniority());
         contract.setStartDate(LocalDate.of(2019, 5, 22));
         contract.setHoursPerMonth(48);
-        contract.setCostRate(BigDecimal.valueOf(21, 4));
         contract.setVacations(15);
         contract.setActive(true);
         contract.setContractType(ContractType.CONTRACTOR);
-        contract.setCurrency(Currency.USD);
         return contract;
     }
 
