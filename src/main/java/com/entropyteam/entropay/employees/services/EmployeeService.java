@@ -7,8 +7,10 @@ import java.util.UUID;
 
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
+import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -27,15 +29,19 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final RoleRepository roleRepository;
     private final PaymentInformationRepository paymentRepository;
     private final PaymentInformationService paymentInformationService;
+    private final TechnologyRepository technologyRepository;
 
 
 
     @Autowired
-    public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository, PaymentInformationRepository paymentInformationRepository, PaymentInformationService paymentInformationService) {
+    public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
+                           PaymentInformationRepository paymentInformationRepository,
+                           PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository) {
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.paymentRepository = paymentInformationRepository;
         this.paymentInformationService = paymentInformationService;
+        this.technologyRepository = technologyRepository;
     }
 
     @Override
@@ -53,7 +59,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected Employee toEntity(EmployeeDto entity) {
         Employee employee = new Employee(entity);
         Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(entity.profile());
+        Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(entity.technologies());
+
         employee.setRoles(roles);
+        employee.setTechnologies(technologies);
         return employee;
     }
 

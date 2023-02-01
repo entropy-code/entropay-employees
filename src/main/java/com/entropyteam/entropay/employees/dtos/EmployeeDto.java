@@ -30,18 +30,20 @@ public record EmployeeDto(UUID id,
                           String notes,
                           String healthInsurance,
                           List<PaymentInformationDto> paymentInformation,
+                          List<UUID> technologies,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthDate,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt,
                           boolean deleted) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
-        this(employee.getId(), employee.getInternalId(), employee.getFirstName(),
-                employee.getLastName(), employee.getPersonalEmail(), employee.getPhoneNumber(),employee.getMobileNumber(),
-                employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(), employee.getCountry(),
-                employee.getPersonalNumber(), employee.getTaxId(), employee.getEmergencyContactFullName(),
-                employee.getEmergencyContactPhone(), employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()),
-                employee.getNotes(), employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
+        this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(), employee.getPersonalEmail(),
+                employee.getPhoneNumber(),employee.getMobileNumber(), employee.getAddress(), employee.getCity(),
+                employee.getState(), employee.getZip(), employee.getCountry(), employee.getPersonalNumber(), employee.getTaxId(),
+                employee.getEmergencyContactFullName(), employee.getEmergencyContactPhone(),
+                employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getNotes(),
+                employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
+                employee.getTechnologies().stream().map(BaseEntity::getId).collect(Collectors.toList()),
                 employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(), employee.isDeleted());
     }
 }

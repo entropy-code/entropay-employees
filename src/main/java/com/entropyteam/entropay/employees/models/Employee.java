@@ -3,10 +3,16 @@ package com.entropyteam.entropay.employees.models;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-import javax.persistence.*;
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.FetchType;
+import javax.persistence.JoinTable;
+import javax.persistence.JoinColumn;
 
 
 @Entity(name = "Employee")
@@ -42,6 +48,14 @@ public class Employee extends BaseEntity {
             inverseJoinColumns = { @JoinColumn(name = "role_id") }
     )
     private Set<Role> roles;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "employee_technology",
+            joinColumns = { @JoinColumn(name = "employee_id") },
+            inverseJoinColumns = { @JoinColumn(name = "technology_id") }
+    )
+    private Set<Technology> technologies;
 
     public Employee() {
     }
@@ -224,5 +238,13 @@ public class Employee extends BaseEntity {
 
     public void setPaymentsInformation(Set<PaymentInformation> paymentsInformation) {
         this.paymentsInformation = paymentsInformation;
+    }
+
+    public Set<Technology> getTechnologies() {
+        return technologies;
+    }
+
+    public void setTechnologies(Set<Technology> technologies) {
+        this.technologies = technologies;
     }
 }
