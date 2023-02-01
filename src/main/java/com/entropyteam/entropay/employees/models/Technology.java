@@ -1,10 +1,15 @@
 package com.entropyteam.entropay.employees.models;
 
-import javax.persistence.*;
+
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.TechnologyDto;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.persistence.ManyToMany;
+import javax.persistence.FetchType;
 import java.util.Set;
 
 @Entity(name = "Technology")
