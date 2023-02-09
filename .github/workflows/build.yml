@@ -1,8 +1,9 @@
 name: Run build
 
 on:
-  pull_request
-
+  pull_request:
+    branches-ignore:
+      - 'next-version-**'
 
 permissions:
   contents: read
