@@ -30,6 +30,7 @@ import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersExcept
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
     public static final String ID = "id";
+
     @PersistenceContext
     private EntityManager entityManager;
 
