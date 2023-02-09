@@ -1,6 +1,8 @@
 name: Run build
 
-on: [push, pull_request]
+on:
+  pull_request
+
 
 permissions:
   contents: read
@@ -12,16 +14,16 @@ jobs:
     environment: development
     services:
       postgres:
-        image: postgres
-        env:
-          POSTGRES_DB: db
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        image: 'postgres:10.2-alpine'
+        environment:
+          - 'POSTGRES_DB=employees'
+          - 'POSTGRES_USER=entropay'
+          - 'POSTGRES_PASSWORD=entropay'
+          - 'PGDATA=/var/lib/postgresql/data/employees'
+        ports:
+          - '5432:5432'
+        volumes:
+          - 'postgres:/var/lib/postgresql/data/employees'
 
     steps:
     - name: Checkout
@@ -36,11 +38,4 @@ jobs:
     - name: Run build
       run: |
         mvn package
-
-    - name: Run flyway migrations
-      uses: joshuaavalon/flyway-action@v3.0.0
-      with:
-        url: jdbc:postgresql://postgres:5432/db
-        user: user
-        password: password
-        locations: 'db/migration'
+        mvn flyway:migrate
