@@ -2,7 +2,9 @@ package com.entropyteam.entropay.employees.services;
 
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
+import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
@@ -24,7 +26,9 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
     private final PaymentInformationRepository paymentInformationRepository;
 
     @Autowired
-    public PaymentInformationService(PaymentInformationRepository paymentInformationRepository) {
+    public PaymentInformationService(PaymentInformationRepository paymentInformationRepository,
+            ReactAdminMapper reactAdminMapper) {
+        super(PaymentInformation.class, reactAdminMapper);
         this.paymentInformationRepository = paymentInformationRepository;
     }
 

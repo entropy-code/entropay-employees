@@ -3,17 +3,21 @@ package com.entropyteam.entropay.employees.services;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.Filter;
-import com.entropyteam.entropay.common.Range;
-import com.entropyteam.entropay.common.Sort;
+import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.ConfigDto;
 import com.entropyteam.entropay.employees.dtos.MenuItemDto;
 import com.entropyteam.entropay.employees.dtos.PermissionDto;
+import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Config;
 import com.entropyteam.entropay.employees.repositories.ConfigRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,18 +31,20 @@ public class ConfigService extends BaseService<Config, ConfigDto, UUID> {
     private final ConfigRepository configRepository;
 
 
-    public ConfigService(ConfigRepository configRepository) {
+    public ConfigService(ConfigRepository configRepository, ReactAdminMapper reactAdminMapper) {
+        super(Config.class, reactAdminMapper);
         this.configRepository = configRepository;
     }
 
     @Override
     @Transactional
-    public List<ConfigDto> findAllActive(Filter filter, Sort sort, Range range) {
+    public Page<ConfigDto> findAllActive(ReactAdminParams params) {
         AppRole userRole = getUserRole();
-        return configRepository.findAllByDeletedIsFalseAndRole(userRole)
+        List<ConfigDto> dtoResponse = configRepository.findAllByDeletedIsFalseAndRole(userRole)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
+        return new PageImpl<ConfigDto>(dtoResponse, Pageable.unpaged(), dtoResponse.size());
     }
 
     @Override

@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.TechnologyDto;
+import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 
@@ -15,7 +17,8 @@ public class TechnologyService extends BaseService<Technology, TechnologyDto, UU
     private final TechnologyRepository technologyRepository;
 
     @Autowired
-    public TechnologyService(TechnologyRepository technologyRepository) {
+    public TechnologyService(TechnologyRepository technologyRepository, ReactAdminMapper reactAdminMapper) {
+        super(Technology.class, reactAdminMapper);
         this.technologyRepository = technologyRepository;
     }
 

@@ -2,8 +2,11 @@ package com.entropyteam.entropay.employees.services;
 
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.PaymentSettlementDto;
+import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +26,9 @@ public class PaymentSettlementService  extends BaseService<PaymentSettlement, Pa
     private final PaymentSettlementRepository paymentSettlementRepository;
 
     @Autowired
-    public PaymentSettlementService(PaymentSettlementRepository paymentSettlementRepository) {
+    public PaymentSettlementService(PaymentSettlementRepository paymentSettlementRepository,
+            ReactAdminMapper reactAdminMapper) {
+        super(PaymentSettlement.class, reactAdminMapper);
         this.paymentSettlementRepository = paymentSettlementRepository;
     }
 

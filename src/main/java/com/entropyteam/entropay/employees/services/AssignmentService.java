@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Role;
@@ -33,7 +33,9 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
             RoleRepository roleRepository, SeniorityRepository seniorityRepository,
-            ProjectRepository projectRepository, SecureObjectService secureObjectService) {
+            ProjectRepository projectRepository, SecureObjectService secureObjectService,
+            ReactAdminMapper reactAdminMapper) {
+        super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;

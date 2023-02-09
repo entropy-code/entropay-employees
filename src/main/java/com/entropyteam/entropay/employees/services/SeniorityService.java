@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.SeniorityDto;
+import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
@@ -15,7 +17,8 @@ public class SeniorityService extends BaseService<Seniority, SeniorityDto, UUID>
     private final SeniorityRepository seniorityRepository;
 
     @Autowired
-    public SeniorityService(SeniorityRepository seniorityRepository) {
+    public SeniorityService(SeniorityRepository seniorityRepository, ReactAdminMapper reactAdminMapper) {
+        super(Seniority.class, reactAdminMapper);
         this.seniorityRepository = seniorityRepository;
     }
 

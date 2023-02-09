@@ -10,4 +10,7 @@ public class InvalidRequestParametersException extends RuntimeException {
         super(message);
     }
 
+    public InvalidRequestParametersException(String message, Exception e) {
+        super(message, e);
+    }
 }

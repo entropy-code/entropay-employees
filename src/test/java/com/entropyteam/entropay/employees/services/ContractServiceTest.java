@@ -1,32 +1,53 @@
 package com.entropyteam.entropay.employees.services;
 
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.employees.dtos.ContractDto;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.ContractType;
-import com.entropyteam.entropay.employees.repositories.*;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aContract;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.anEmployee;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.entropyteam.entropay.auth.AppRole;
+import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.employees.dtos.ContractDto;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.ContractType;
+import com.entropyteam.entropay.employees.repositories.CompanyRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ContractServiceTest {
+
     private final UUID ACTIVE_CONTRACT_ID = UUID.fromString("6616a253-a57c-4bb2-817e-32215ab71eee");
     private final UUID EXISTENT_CONTRACT_ID = UUID.fromString("5516a253-a57c-4bb2-817e-32215ab71fff");
     @Mock
@@ -69,9 +90,12 @@ class ContractServiceTest {
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.of(existentContract));
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(
+                Optional.of(existentContract));
 
         // then
+        ContractService cs = Mockito.spy(underTest);
+        Mockito.doReturn(AppRole.ROLE_ADMIN).when(cs).getUserRole();
         ContractDto response = underTest.create(new ContractDto(existentContract));
 
         assertEquals(new ContractDto(existentContract), response);
@@ -116,7 +140,8 @@ class ContractServiceTest {
         ContractDto requestedContract = new ContractDto(existentContract);
 
         // when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenThrow(new RuntimeException("Test exception thrown!!"));
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenThrow(
+                new RuntimeException("Test exception thrown!!"));
 
         // then
         assertThrows(RuntimeException.class, () ->
@@ -126,7 +151,8 @@ class ContractServiceTest {
         verifyNoMoreInteractions(contractRepository);
     }
 
-    @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should deactivate existing and activate current.")
+    @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should "
+            + "deactivate existing and activate current.")
     @Test
     public void testModifyStatusWhenSetActiveIsTrueAndExistentContractIsActive() {
         // given
@@ -149,14 +175,17 @@ class ContractServiceTest {
 
         Assertions.assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(existentContract.getEmployee().getId());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+                existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
         verifyNoMoreInteractions(contractRepository);
 
         List<Contract> capturedValues = contractCaptor.getAllValues();
-        assertTrue(capturedValues.stream().anyMatch(contract -> existentContract.getId().equals(contract.getId()) && contract.isActive() == setActive));
-        assertTrue(capturedValues.stream().anyMatch(contract -> activeContract.getId().equals(contract.getId()) && !contract.isActive()));
+        assertTrue(capturedValues.stream().anyMatch(
+                contract -> existentContract.getId().equals(contract.getId()) && contract.isActive() == setActive));
+        assertTrue(capturedValues.stream()
+                .anyMatch(contract -> activeContract.getId().equals(contract.getId()) && !contract.isActive()));
     }
 
     @DisplayName("Test modifyStatus when setActive is true and there is not active contracts, should activate current.")
@@ -181,7 +210,8 @@ class ContractServiceTest {
 
         assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(existentContract.getEmployee().getId());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+                existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
         verifyNoMoreInteractions(contractRepository);
 

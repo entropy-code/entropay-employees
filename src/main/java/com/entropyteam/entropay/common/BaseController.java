@@ -7,6 +7,7 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 import java.util.List;
 import java.util.Objects;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -30,11 +31,11 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @Override
     @GetMapping
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
-    public ResponseEntity<List<T>> getList(Filter filter, Sort sort, Range range) {
-        List<T> entities = crudService.findAllActive(filter, sort, range);
+    public ResponseEntity<List<T>> getList(ReactAdminParams params) {
+        Page<T> response = crudService.findAllActive(params);
         return ResponseEntity.ok()
-                .header(X_TOTAL_COUNT, String.valueOf(entities.size()))
-                .body(entities);
+                .header(X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
     }
 
     @Override
