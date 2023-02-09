@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ClientDto;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Company;
@@ -18,7 +19,9 @@ public class ClientService extends BaseService<Client, ClientDto, UUID> {
     private final CompanyRepository companyRepository;
 
     @Autowired
-    public ClientService(ClientRepository clientRepository, CompanyRepository companyRepository) {
+    public ClientService(ClientRepository clientRepository, CompanyRepository companyRepository,
+            ReactAdminMapper reactAdminMapper) {
+        super(Client.class, reactAdminMapper);
         this.clientRepository = clientRepository;
         this.companyRepository = companyRepository;
     }

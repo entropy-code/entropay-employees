@@ -1,22 +1,21 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.stream.Collectors;
 
 @Service
 public class PaymentInformationService extends BaseService<PaymentInformation, PaymentInformationDto, UUID> {
@@ -24,7 +23,9 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
     private final PaymentInformationRepository paymentInformationRepository;
 
     @Autowired
-    public PaymentInformationService(PaymentInformationRepository paymentInformationRepository) {
+    public PaymentInformationService(PaymentInformationRepository paymentInformationRepository,
+            ReactAdminMapper reactAdminMapper) {
+        super(PaymentInformation.class, reactAdminMapper);
         this.paymentInformationRepository = paymentInformationRepository;
     }
 
