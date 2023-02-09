@@ -16,14 +16,15 @@ jobs:
       postgres:
         image: 'postgres:10.2-alpine'
         env:
-          - 'POSTGRES_DB=employees'
-          - 'POSTGRES_USER=entropay'
-          - 'POSTGRES_PASSWORD=entropay'
-          - 'PGDATA=/var/lib/postgresql/data/employees'
-        ports:
-          - '5432:5432'
-        volumes:
-          - 'postgres:/var/lib/postgresql/data/employees'
+          'POSTGRES_DB=employees'
+          'POSTGRES_USER=entropay'
+          'POSTGRES_PASSWORD=entropay'
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - name: Checkout
