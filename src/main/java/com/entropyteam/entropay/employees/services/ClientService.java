@@ -7,7 +7,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ClientDto;
-import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.repositories.ClientRepository;

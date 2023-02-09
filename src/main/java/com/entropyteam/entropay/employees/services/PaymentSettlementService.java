@@ -1,24 +1,21 @@
 package com.entropyteam.entropay.employees.services;
 
-import com.entropyteam.entropay.common.BaseRepository;
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.dtos.PaymentSettlementDto;
-import com.entropyteam.entropay.employees.models.Company;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.PaymentInformation;
-import com.entropyteam.entropay.employees.models.PaymentSettlement;
-import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.entropyteam.entropay.common.BaseRepository;
+import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.employees.dtos.PaymentSettlementDto;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.PaymentSettlement;
+import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 
 @Service
 public class PaymentSettlementService  extends BaseService<PaymentSettlement, PaymentSettlementDto, UUID> {
