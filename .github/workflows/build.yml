@@ -15,7 +15,7 @@ jobs:
     services:
       postgres:
         image: 'postgres:10.2-alpine'
-        environment:
+        env:
           - 'POSTGRES_DB=employees'
           - 'POSTGRES_USER=entropay'
           - 'POSTGRES_PASSWORD=entropay'
