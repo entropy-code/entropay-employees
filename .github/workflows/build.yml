@@ -13,7 +13,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     environment: development
-    container: node:latest
     services:
       postgres:
         image: postgres:latest
