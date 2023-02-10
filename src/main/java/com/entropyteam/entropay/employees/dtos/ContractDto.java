@@ -8,20 +8,31 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.beans.factory.annotation.Value;
+
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 public record ContractDto(
         UUID id,
+        @NotNull(message = "Company is mandatory")
         UUID companyId,
         UUID employeeId,
+        @NotNull(message = "Role is mandatory")
         UUID roleId,
+        @NotNull(message = "Role is mandatory")
         UUID seniorityId,
         Integer hoursPerMonth,
         Integer vacations,
+        @NotNull(message = "Start date is mandatory")
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate startDate,
-        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate endDate,
         String benefits,
         String notes,
+        @NotNull(message = "Contract type is mandatory")
         String contractType,
         List<PaymentSettlementDto> paymentSettlement,
         boolean deleted,

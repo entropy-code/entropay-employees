@@ -6,10 +6,15 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Project;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import javax.validation.constraints.NotNull;
+
 public record ProjectDto(
         UUID id,
+        @NotNull(message = "Client is mandatory")
         UUID clientId,
+        @NotNull(message = "Name is mandatory")
         String name,
+        @NotNull(message = "Project TypeP is mandatory")
         UUID projectTypeId,
         @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
         @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,

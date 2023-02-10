@@ -9,8 +9,19 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 
-public record ClientDto(UUID id, @NotNull(message = "Company is mandatory") UUID companyId, @NotBlank(message = "Name is mandatory") String name, String address, String zipCode, String city, String state,
-                        String country, String contactFullName, String contactEmail, String preferredCurrency,
+public record ClientDto(UUID id,
+                        @NotNull(message = "Company is mandatory")
+                        UUID companyId,
+                        @NotBlank(message = "Name is mandatory")
+                        String name,
+                        String address,
+                        String zipCode,
+                        String city,
+                        String state,
+                        String country,
+                        String contactFullName,
+                        String contactEmail,
+                        String preferredCurrency,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
 
