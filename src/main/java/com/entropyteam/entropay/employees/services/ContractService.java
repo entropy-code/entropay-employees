@@ -69,17 +69,17 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
                 });
         Contract entityToCreate = toEntity(contractDto.withActive(true));
         Contract savedEntity = getRepository().save(entityToCreate);
-        paymentSettlementService.create(contractDto.paymentSettlement(),savedEntity);
+        paymentSettlementService.create(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
     @Override
     @Transactional
-    public ContractDto update(UUID contractId, ContractDto contractDto){
+    public ContractDto update(UUID contractId, ContractDto contractDto) {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
         Contract savedEntity = getRepository().save(entityToUpdate);
-        paymentSettlementService.update(contractDto.paymentSettlement(),savedEntity);
+        paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -116,8 +116,11 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Override
     public ContractDto toDTO(Contract entity) {
         Contract securedEntity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRole());
-        List<PaymentSettlement> paymentsSettlementList = paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
-        List<PaymentSettlement> securedPaymentSettlementList = paymentsSettlementList.stream().map( p -> (PaymentSettlement) secureObjectService.secureObjectByRole(p, getUserRole())).collect(Collectors.toList());
+        List<PaymentSettlement> paymentsSettlementList =
+                paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
+        List<PaymentSettlement> securedPaymentSettlementList = paymentsSettlementList.stream()
+                .map(p -> (PaymentSettlement) secureObjectService.secureObjectByRole(p, getUserRole()))
+                .collect(Collectors.toList());
         return new ContractDto(securedEntity, securedPaymentSettlementList);
     }
 
