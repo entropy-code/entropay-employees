@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,11 +42,16 @@ public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
     @Override
     protected Project toEntity(ProjectDto entity) {
         Client client = clientRepository.findById(entity.clientId()).orElseThrow();
-        ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
-
         Project project = new Project(entity);
         project.setClient(client);
-        project.setProjectType(projectType);
+        if(entity.projectTypeId() != null){
+            ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
+            project.setProjectType(projectType);
+        }
+        else
+        {
+            project.setProjectType(null);
+        }
 
         return project;
     }

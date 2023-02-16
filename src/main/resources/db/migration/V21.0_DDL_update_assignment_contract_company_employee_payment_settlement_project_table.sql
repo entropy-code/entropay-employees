@@ -1,0 +1,25 @@
+ALTER TABLE project ALTER COLUMN project_type_id DROP NOT NULL;
+
+ALTER TABLE assignment ALTER COLUMN start_date SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN first_name SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN last_name SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN personal_email SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN internal_id SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN personal_number SET NOT NULL;
+
+ALTER TABLE employee ALTER COLUMN tax_id DROP NOT NULL;
+
+ALTER TABLE contract ALTER COLUMN start_date SET NOT NULL;
+
+ALTER TABLE company ALTER COLUMN name SET NOT NULL;
+
+ALTER TABLE assignment ALTER COLUMN role_id SET NOT NULL;
+
+ALTER TABLE payment_settlement ALTER COLUMN currency SET NOT NULL;
+
+ALTER TABLE payment_settlement ALTER COLUMN salary SET NOT NULL;
