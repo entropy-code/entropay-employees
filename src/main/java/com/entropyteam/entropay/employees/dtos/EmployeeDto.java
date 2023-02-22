@@ -10,10 +10,18 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+
 public record EmployeeDto(UUID id,
+                          @NotNull(message = "Internal ID is mandatory")
                           String internalId,
+                          @NotNull(message = "First Name is mandatory")
                           String firstName,
+                          @NotNull(message = "Last Name is mandatory")
                           String lastName,
+                          @Email
+                          @NotNull(message = "Email is mandatory")
                           String personalEmail,
                           String phoneNumber,
                           String mobileNumber,
@@ -22,6 +30,7 @@ public record EmployeeDto(UUID id,
                           String state,
                           String zip,
                           String country,
+                          @NotNull(message = "Personal Number is mandatory")
                           String personalNumber,
                           String taxId,
                           String emergencyContactFullName,

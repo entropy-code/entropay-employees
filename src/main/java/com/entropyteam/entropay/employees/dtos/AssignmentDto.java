@@ -7,26 +7,31 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public record AssignmentDto(
+import javax.validation.constraints.NotNull;
 
-        UUID id,
-        UUID projectId,
-        UUID employeeId,
-        UUID roleId,
-        UUID seniorityId,
-        Integer hoursPerMonth,
-        String labourHours,
-        BigDecimal billableRate,
-        String currency,
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        LocalDate startDate,
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        LocalDate endDate,
-        boolean deleted,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime createdAt,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime modifiedAt
+public record AssignmentDto(UUID id,
+                            @NotNull(message ="Project is mandatory")
+                            UUID projectId,
+                            @NotNull(message ="Employee is mandatory")
+                            UUID employeeId,
+                            @NotNull(message ="Role is mandatory")
+                            UUID roleId,
+                            @NotNull(message ="Seniority is mandatory")
+                            UUID seniorityId,
+                            Integer hoursPerMonth,
+                            String labourHours,
+                            BigDecimal billableRate,
+                            String currency,
+                            @NotNull(message ="Start Date is mandatory")
+                            @JsonFormat(pattern = "yyyy-MM-dd")
+                            LocalDate startDate,
+                            @JsonFormat(pattern = "yyyy-MM-dd")
+                            LocalDate endDate,
+                            boolean deleted,
+                            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                            LocalDateTime createdAt,
+                            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                            LocalDateTime modifiedAt
 ) {
 
 
@@ -34,7 +39,8 @@ public record AssignmentDto(
         this(
                 assignment.getId(), assignment.getProject().getId(), assignment.getEmployee().getId(),
                 assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerMonth(),
-                assignment.getLabourHours(), assignment.getBillableRate(), assignment.getCurrency().name(),
+                assignment.getLabourHours(), assignment.getBillableRate(),
+                assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(), assignment.getCreatedAt(),
                 assignment.getModifiedAt()
         );

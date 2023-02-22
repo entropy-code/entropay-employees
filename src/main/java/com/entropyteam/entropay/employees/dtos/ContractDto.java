@@ -9,26 +9,34 @@ import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public record ContractDto(
-        UUID id,
-        UUID companyId,
-        UUID employeeId,
-        UUID roleId,
-        UUID seniorityId,
-        Integer hoursPerMonth,
-        Integer vacations,
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        LocalDate startDate,
-        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-        String benefits,
-        String notes,
-        String contractType,
-        List<PaymentSettlementDto> paymentSettlement,
-        boolean deleted,
-        boolean active,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime createdAt,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt
+import javax.validation.constraints.NotNull;
+
+public record ContractDto(UUID id,
+                          @NotNull(message = "Company is mandatory")
+                          UUID companyId,
+                          @NotNull(message ="Employee is mandatory")
+                          UUID employeeId,
+                          @NotNull(message = "Role is mandatory")
+                          UUID roleId,
+                          @NotNull(message = "Seniority is mandatory")
+                          UUID seniorityId,
+                          Integer hoursPerMonth,
+                          Integer vacations,
+                          @NotNull(message = "Start date is mandatory")
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate startDate,
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate endDate,
+                          String benefits,
+                          String notes,
+                          @NotNull(message = "Contract type is mandatory")
+                          String contractType,
+                          List<PaymentSettlementDto> paymentSettlement,
+                          boolean deleted,
+                          boolean active,
+                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                          LocalDateTime createdAt,
+                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt
 ) {
 
 

@@ -16,6 +16,7 @@ import javax.persistence.Table;
 import com.entropyteam.entropay.auth.SecureField;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
+import io.micrometer.core.instrument.util.StringUtils;
 
 @Entity(name = "Assignment")
 @Table(name = "assignment")
@@ -57,7 +58,7 @@ public class Assignment extends BaseEntity {
         this.endDate = assignmentDto.endDate();
         this.hoursPerMonth = assignmentDto.hoursPerMonth();
         this.billableRate = assignmentDto.billableRate();
-        this.currency = Currency.valueOf(assignmentDto.currency());
+        this.currency = Currency.findByName(assignmentDto.currency());
         this.labourHours = assignmentDto.labourHours();
     }
 
