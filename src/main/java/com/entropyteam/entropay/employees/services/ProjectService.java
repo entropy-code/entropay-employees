@@ -40,17 +40,13 @@ public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
     }
 
     @Override
-    protected Project toEntity(ProjectDto entity) {
-        Client client = clientRepository.findById(entity.clientId()).orElseThrow();
-        Project project = new Project(entity);
+    protected Project toEntity(ProjectDto projectDto) {
+        Client client = clientRepository.findById(projectDto.clientId()).orElseThrow();
+        Project project = new Project(projectDto);
         project.setClient(client);
-        if(entity.projectTypeId() != null){
-            ProjectType projectType = projectTypeRepository.findById(entity.projectTypeId()).orElseThrow();
+        if(projectDto.projectTypeId() != null){
+            ProjectType projectType = projectTypeRepository.findById(projectDto.projectTypeId()).orElseThrow();
             project.setProjectType(projectType);
-        }
-        else
-        {
-            project.setProjectType(null);
         }
 
         return project;
