@@ -6,20 +6,24 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Project;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public record ProjectDto(
-        UUID id,
-        UUID clientId,
-        String name,
-        UUID projectTypeId,
-        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-        String notes,
-        boolean deleted,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
+import javax.validation.constraints.NotNull;
+
+public record ProjectDto(UUID id,
+                        @NotNull(message = "Client is mandatory")
+                        UUID clientId,
+                        @NotNull(message = "Name is mandatory")
+                        String name,
+                        UUID projectTypeId,
+                        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                        @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+                        String notes,
+                        boolean deleted,
+                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
+                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
 
     public ProjectDto(Project project) {
-        this(project.getId(), project.getClient().getId(), project.getName(), project.getProjectType().getId(),
+        this(project.getId(), project.getClient().getId(), project.getName(),
+                project.getProjectType() != null ? project.getProjectType().getId() : null,
                 project.getStartDate(), project.getEndDate(), project.getNotes(),
                 project.isDeleted(), project.getCreatedAt(), project.getModifiedAt());
     }

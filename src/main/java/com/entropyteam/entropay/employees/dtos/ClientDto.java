@@ -5,8 +5,22 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Client;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-public record ClientDto(UUID id, UUID companyId, String name, String address, String zipCode, String city, String state,
-                        String country, String contactFullName, String contactEmail, String preferredCurrency,
+import javax.validation.constraints.NotNull;
+
+
+public record ClientDto(UUID id,
+                        @NotNull(message = "Company is mandatory")
+                        UUID companyId,
+                        @NotNull(message = "Name is mandatory")
+                        String name,
+                        String address,
+                        String zipCode,
+                        String city,
+                        String state,
+                        String country,
+                        String contactFullName,
+                        String contactEmail,
+                        String preferredCurrency,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
 

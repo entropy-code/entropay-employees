@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
+
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
     public static final String X_TOTAL_COUNT = "X-Total-Count";
@@ -50,7 +52,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @Override
     @PostMapping
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
-    public ResponseEntity<T> create(@RequestBody T entity) {
+    public ResponseEntity<T> create(@Valid @RequestBody T entity) {
         return ResponseEntity.ok(crudService.create(entity));
     }
 
@@ -64,7 +66,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @Override
     @PutMapping("/{id}")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
-    public ResponseEntity<T> update(@PathVariable(value = "id") K id, @RequestBody T entity) {
+    public ResponseEntity<T> update(@PathVariable(value = "id") K id, @Valid @RequestBody T entity) {
         return crudService.findOne(id)
                 .map(e -> {
                     crudService.update(id, entity);
