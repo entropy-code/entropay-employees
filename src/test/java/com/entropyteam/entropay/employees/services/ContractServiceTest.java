@@ -1,49 +1,81 @@
 package com.entropyteam.entropay.employees.services;
 
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.employees.dtos.ContractDto;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.ContractType;
-import com.entropyteam.entropay.employees.repositories.*;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aContract;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.anEmployee;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.entropyteam.entropay.auth.AppRole;
+import com.entropyteam.entropay.auth.SecureObjectService;
+import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.employees.dtos.ContractDto;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.ContractType;
+import com.entropyteam.entropay.employees.repositories.CompanyRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
+import com.entropyteam.entropay.employees.testUtils.SecurityContextFactory;
 
 @ExtendWith(MockitoExtension.class)
 class ContractServiceTest {
+
     private final UUID ACTIVE_CONTRACT_ID = UUID.fromString("6616a253-a57c-4bb2-817e-32215ab71eee");
     private final UUID EXISTENT_CONTRACT_ID = UUID.fromString("5516a253-a57c-4bb2-817e-32215ab71fff");
     @Mock
-    EmployeeRepository employeeRepository;
+    private EmployeeRepository employeeRepository;
     @Mock
-    ContractRepository contractRepository;
+    private ContractRepository contractRepository;
     @Mock
-    CompanyRepository companyRepository;
+    private CompanyRepository companyRepository;
     @Mock
-    RoleRepository roleRepository;
+    private RoleRepository roleRepository;
     @Mock
-    SeniorityRepository seniorityRepository;
+    private SeniorityRepository seniorityRepository;
+    @Mock
+    private PaymentSettlementService paymentSettlementService;
+
+    @Mock
+    private PaymentSettlementRepository paymentSettlementRepository;
+    @Mock
+    private SecureObjectService secureObjectService;
     @Captor
-    ArgumentCaptor<Contract> contractCaptor;
+    private ArgumentCaptor<Contract> contractCaptor;
     @InjectMocks
     @Spy
-    ContractService underTest;
+    private ContractService underTest;
     private Contract existentContract;
     private Contract activeContract;
 
@@ -51,10 +83,9 @@ class ContractServiceTest {
     public void setUp() {
         existentContract = aContract();
         existentContract.setId(EXISTENT_CONTRACT_ID);
-        existentContract.setContractType(ContractType.CONTRACTOR);
         activeContract = aContract();
         activeContract.setId(ACTIVE_CONTRACT_ID);
-        activeContract.setContractType(ContractType.CONTRACTOR);
+        SecurityContextFactory.createSecurityContext();
     }
 
     @DisplayName("When employee has existent active contract deactivate it, create new active contract and save")
@@ -69,7 +100,12 @@ class ContractServiceTest {
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.of(existentContract));
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(
+                Optional.of(existentContract));
+        when(paymentSettlementService.create(any(), any())).thenReturn(null);
+        when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
+                Collections.emptyList());
+        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto response = underTest.create(new ContractDto(existentContract));
@@ -97,6 +133,10 @@ class ContractServiceTest {
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.empty());
+        when(paymentSettlementService.create(any(), any())).thenReturn(null);
+        when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
+                Collections.emptyList());
+        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto response = underTest.create(new ContractDto(existentContract));
@@ -116,7 +156,8 @@ class ContractServiceTest {
         ContractDto requestedContract = new ContractDto(existentContract);
 
         // when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenThrow(new RuntimeException("Test exception thrown!!"));
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenThrow(
+                new RuntimeException("Test exception thrown!!"));
 
         // then
         assertThrows(RuntimeException.class, () ->
@@ -126,7 +167,8 @@ class ContractServiceTest {
         verifyNoMoreInteractions(contractRepository);
     }
 
-    @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should deactivate existing and activate current.")
+    @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should "
+            + "deactivate existing and activate current.")
     @Test
     public void testModifyStatusWhenSetActiveIsTrueAndExistentContractIsActive() {
         // given
@@ -136,27 +178,32 @@ class ContractServiceTest {
         Contract activated = aContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
-        activated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(activated);
 
         // when
         when(contractRepository.findById(any())).thenReturn(Optional.of(existentContract));
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.of(activeContract));
         when(contractRepository.save(any())).thenReturn(activated);
+        when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
+                Collections.emptyList());
+        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
 
         Assertions.assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(existentContract.getEmployee().getId());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+                existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
         verifyNoMoreInteractions(contractRepository);
 
         List<Contract> capturedValues = contractCaptor.getAllValues();
-        assertTrue(capturedValues.stream().anyMatch(contract -> existentContract.getId().equals(contract.getId()) && contract.isActive() == setActive));
-        assertTrue(capturedValues.stream().anyMatch(contract -> activeContract.getId().equals(contract.getId()) && !contract.isActive()));
+        assertTrue(capturedValues.stream().anyMatch(
+                contract -> existentContract.getId().equals(contract.getId()) && contract.isActive() == setActive));
+        assertTrue(capturedValues.stream()
+                .anyMatch(contract -> activeContract.getId().equals(contract.getId()) && !contract.isActive()));
     }
 
     @DisplayName("Test modifyStatus when setActive is true and there is not active contracts, should activate current.")
@@ -169,19 +216,22 @@ class ContractServiceTest {
         Contract activated = aContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
-        activated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(activated);
 
         // when
         when(contractRepository.findById(any())).thenReturn(Optional.of(existentContract));
         when(contractRepository.save(any())).thenReturn(activated);
+        when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
+                Collections.emptyList());
+        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
 
         assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(existentContract.getEmployee().getId());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+                existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
         verifyNoMoreInteractions(contractRepository);
 
@@ -240,12 +290,14 @@ class ContractServiceTest {
         Contract deactivated = aContract();
         deactivated.setId(EXISTENT_CONTRACT_ID);
         deactivated.setActive(false);
-        deactivated.setContractType(ContractType.CONTRACTOR);
         ContractDto expected = new ContractDto(deactivated);
 
         // when
         when(contractRepository.findById(any())).thenReturn(Optional.of(existentContract));
         when(contractRepository.save(any())).thenReturn(deactivated);
+        when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
+                Collections.emptyList());
+        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);

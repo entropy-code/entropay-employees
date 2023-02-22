@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ProjectDto;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Project;
@@ -23,7 +24,8 @@ public class ProjectService extends BaseService<Project, ProjectDto, UUID> {
 
     @Autowired
     public ProjectService(ProjectRepository projectRepository, ProjectTypeRepository projectTypeRepository,
-            ClientRepository clientRepository) {
+            ClientRepository clientRepository, ReactAdminMapper reactAdminMapper) {
+        super(Project.class, reactAdminMapper);
         this.projectRepository = projectRepository;
         this.projectTypeRepository = projectTypeRepository;
         this.clientRepository = clientRepository;

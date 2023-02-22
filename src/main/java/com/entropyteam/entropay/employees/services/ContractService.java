@@ -5,18 +5,28 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.entropyteam.entropay.employees.models.*;
-import com.entropyteam.entropay.employees.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.entropyteam.entropay.employees.models.Company;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.PaymentSettlement;
+import com.entropyteam.entropay.employees.models.Role;
+import com.entropyteam.entropay.employees.models.Seniority;
+import com.entropyteam.entropay.employees.repositories.CompanyRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
@@ -34,7 +44,9 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
             EmployeeRepository employeeRepository, RoleRepository roleRepository,
             SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
-            PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository) {
+            PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
+            ReactAdminMapper reactAdminMapper) {
+        super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
         this.employeeRepository = employeeRepository;
@@ -57,17 +69,17 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
                 });
         Contract entityToCreate = toEntity(contractDto.withActive(true));
         Contract savedEntity = getRepository().save(entityToCreate);
-        paymentSettlementService.create(contractDto.paymentSettlement(),savedEntity);
+        paymentSettlementService.create(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
     @Override
     @Transactional
-    public ContractDto update(UUID contractId, ContractDto contractDto){
+    public ContractDto update(UUID contractId, ContractDto contractDto) {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
         Contract savedEntity = getRepository().save(entityToUpdate);
-        paymentSettlementService.update(contractDto.paymentSettlement(),savedEntity);
+        paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -104,8 +116,11 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Override
     public ContractDto toDTO(Contract entity) {
         Contract securedEntity = (Contract) secureObjectService.secureObjectByRole(entity, getUserRole());
-        List<PaymentSettlement> paymentsSettlementList = paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
-        List<PaymentSettlement> securedPaymentSettlementList = paymentsSettlementList.stream().map( p -> (PaymentSettlement) secureObjectService.secureObjectByRole(p, getUserRole())).collect(Collectors.toList());
+        List<PaymentSettlement> paymentsSettlementList =
+                paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
+        List<PaymentSettlement> securedPaymentSettlementList = paymentsSettlementList.stream()
+                .map(p -> (PaymentSettlement) secureObjectService.secureObjectByRole(p, getUserRole()))
+                .collect(Collectors.toList());
         return new ContractDto(securedEntity, securedPaymentSettlementList);
     }
 

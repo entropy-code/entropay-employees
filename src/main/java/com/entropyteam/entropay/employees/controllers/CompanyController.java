@@ -2,7 +2,6 @@ package com.entropyteam.entropay.employees.controllers;
 
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
