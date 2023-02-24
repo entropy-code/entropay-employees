@@ -60,23 +60,23 @@ public class Company extends BaseEntity {
     }
 
     public String getAddressLine() {
-        return address.getAddressLine();
+        return address != null ? address.getAddressLine() : null;
     }
 
     public String getZipCode() {
-        return address.getZipCode();
+        return address != null ? address.getZipCode() : null;
     }
 
     public String getState() {
-        return address.getState();
+        return address != null ? address.getState() : null;
     }
 
     public String getCountry() {
-        return address.getCountry();
+        return address != null ? address.getCountry() : null;
     }
 
     public String getCity() {
-        return address.getCity();
+        return address != null ? address.getCity() : null;
     }
 
     public UUID getTenantId() {

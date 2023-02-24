@@ -1,0 +1,1 @@
+ALTER TABLE client ALTER COLUMN preferred_currency DROP NOT NULL;
