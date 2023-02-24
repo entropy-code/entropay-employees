@@ -30,7 +30,6 @@ public class Client extends BaseEntity {
 
     private String contactEmail;
 
-    @Column(nullable = false)
     private String preferredCurrency;
 
     public Client(ClientDto clientDto) {
@@ -82,23 +81,23 @@ public class Client extends BaseEntity {
     }
 
     public String getCountry() {
-        return address.getCountry();
+        return address != null ? address.getCountry() : null;
     }
 
     public String getState() {
-        return address.getState();
+        return address != null ? address.getState() : null;
     }
 
     public String getCity() {
-        return address.getCity();
+        return address != null ? address.getCity() : null;
     }
 
     public String getZipCode() {
-        return address.getZipCode();
+        return address != null? address.getZipCode() : null;
     }
 
     public String getAddressLine() {
-        return address.getAddressLine();
+        return address != null ? address.getAddressLine() : null;
     }
 
     public Company getCompany() {
