@@ -1,11 +1,6 @@
 package com.entropyteam.entropay.common;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -13,8 +8,11 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.validation.valueextraction.Unwrapping;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.data.domain.Page;
@@ -111,8 +109,19 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         if (MapUtils.isEmpty(filter.getGetByFieldsFilter())) {
             return CollectionUtils.emptyCollection();
         }
-        return filter.getGetByFieldsFilter().entrySet().stream()
-                .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter( f -> f.getKey() != "q")
+                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+
+
+        if(filter.getGetByFieldsFilter().containsKey("q" )){
+            String searchInput = filter.getGetByFieldsFilter().get("q").toLowerCase();
+            Predicate searchContainsLastName = cb.like(cb.lower(root.get("lastName")), "%"+searchInput+"%");
+            Predicate searchContainsFirstName = cb.like(cb.lower(root.get("firstName")), "%"+searchInput+"%");
+            Predicate searchContainsInternalId = cb.like(cb.lower(root.get("internalId")),"%"+searchInput+"%");
+            Predicate searchPredicate = cb.or(searchContainsLastName, searchContainsFirstName,searchContainsInternalId);
+            predicates.add(searchPredicate);
+        }
+        return predicates;
     }
 
     private Collection<Predicate> buildEntityRelatedPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {

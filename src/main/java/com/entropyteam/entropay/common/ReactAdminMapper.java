@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ public class ReactAdminMapper {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     public final static String ID_FIELD = "id";
+    public static final String SEARCH_TERM_KEY = "q";
 
 
     /**
@@ -41,6 +43,7 @@ public class ReactAdminMapper {
             Map<String, List<UUID>> getByIdsFilter = new HashMap<>();
             Map<String, String> getByFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
+
             if (params.getFilter() != null) {
                 Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
                 for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
@@ -49,7 +52,7 @@ public class ReactAdminMapper {
                         List<String> ids = (List<String>) filter.getValue();
                         getByIdsFilter.put(filter.getKey(),
                                 ids.stream().map(UUID::fromString).collect(Collectors.toList()));
-                    } else if (isEntityField(entityClass, filter.getKey())) {
+                    } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
                         getByFieldsFilter.put(filter.getKey(), (String) filter.getValue());
                     } else {
@@ -85,7 +88,7 @@ public class ReactAdminMapper {
 
             List<String> sortList = MAPPER.readValue(params.getSort(), List.class);
             String sortField = sortList.get(0);
-            if (!isEntityField(entityClass, sortField)){
+            if (!isEntityField(entityClass, sortField)) {
                 // TODO: filter by related entities id
                 return PageRequest.of(page, size);
             }
