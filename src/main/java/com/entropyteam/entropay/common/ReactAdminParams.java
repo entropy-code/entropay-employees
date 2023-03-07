@@ -1,13 +1,10 @@
 package com.entropyteam.entropay.common;
 
-import java.util.ArrayList;
-
 public class ReactAdminParams {
 
     private String filter;
     private String range;
     private String sort;
-    private ArrayList<String> columns;
 
     public ReactAdminParams() {
     }
@@ -36,11 +33,4 @@ public class ReactAdminParams {
         this.sort = sort;
     }
 
-    public ArrayList<String> getColumns() {
-        return columns;
-    }
-
-    public void setColumns(ArrayList<String> columns) {
-        this.columns = columns;
-    }
 }
