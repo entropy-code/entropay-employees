@@ -1,6 +1,11 @@
 package com.entropyteam.entropay.common;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -8,11 +13,9 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.validation.valueextraction.Unwrapping;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.data.domain.Page;
@@ -31,9 +34,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     @PersistenceContext
     private EntityManager entityManager;
-
     private final Class<Entity> entityClass;
     private final ReactAdminMapper mapper;
+    public static final String SEARCH_TERM_KEY = "q";
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
@@ -62,7 +65,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("deleted"), false));
             predicates.addAll(buildIdPredicates(root, filter));
-            predicates.addAll(buildEntityPredicates(root, filter, cb));
+            predicates.addAll(buildEntityPredicates(root, filter, cb, params));
             predicates.addAll(buildEntityRelatedPredicates(root, filter, cb));
             entityQuery.select(root).where(cb.and(predicates.toArray(new Predicate[0])));
 
@@ -105,20 +108,22 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 .map(f -> root.get(f.getKey()).in(f.getValue())).toList();
     }
 
-    private Collection<Predicate> buildEntityPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
+    private Collection<Predicate> buildEntityPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb, ReactAdminParams params) {
         if (MapUtils.isEmpty(filter.getGetByFieldsFilter())) {
             return CollectionUtils.emptyCollection();
         }
-        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter( f -> f.getKey() != "q")
-                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
+                .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
 
-        if(filter.getGetByFieldsFilter().containsKey("q" )){
-            String searchInput = filter.getGetByFieldsFilter().get("q").toLowerCase();
-            Predicate searchContainsLastName = cb.like(cb.lower(root.get("lastName")), "%"+searchInput+"%");
-            Predicate searchContainsFirstName = cb.like(cb.lower(root.get("firstName")), "%"+searchInput+"%");
-            Predicate searchContainsInternalId = cb.like(cb.lower(root.get("internalId")),"%"+searchInput+"%");
-            Predicate searchPredicate = cb.or(searchContainsLastName, searchContainsFirstName,searchContainsInternalId);
+        if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
+            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toLowerCase();
+            ArrayList<Predicate> searchPredicates = new ArrayList<>();
+            for(String column: params.getColumns()){
+                Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%"+searchInput+"%");
+                searchPredicates.add(searchContainsColumn);
+            }
+            Predicate searchPredicate = cb.or(searchPredicates.toArray(new Predicate[0]));
             predicates.add(searchPredicate);
         }
         return predicates;
@@ -171,5 +176,10 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         Optional<AppRole> appRole = authorities.stream().map(a -> AppRole.getByValue(a.getAuthority()))
                 .min(Comparator.comparing(r -> r.score));
         return appRole.orElseThrow();
+    }
+    @Override
+    @Transactional
+    public Page<DTO> getList(ReactAdminParams params){
+        return findAllActive(params);
     }
 }

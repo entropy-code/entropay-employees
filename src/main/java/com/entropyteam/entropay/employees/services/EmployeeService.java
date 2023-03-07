@@ -1,14 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import com.entropyteam.entropay.common.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.entropyteam.entropay.common.BaseRepository;
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
@@ -18,6 +14,12 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Arrays;
 
 
 @Service
@@ -84,6 +86,14 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee savedEntity = getRepository().save(entityToUpdate);
         paymentInformationService.update(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
+    }
+
+    @Override
+    @Transactional
+    public Page<EmployeeDto> getList(ReactAdminParams params) {
+        params.setColumns(new ArrayList<>(Arrays.asList("firstName","lastName","internalId")));
+        Page<EmployeeDto> response = super.findAllActive(params);
+        return response;
     }
 
 }

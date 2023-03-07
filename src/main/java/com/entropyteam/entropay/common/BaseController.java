@@ -34,7 +34,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @GetMapping
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
     public ResponseEntity<List<T>> getList(ReactAdminParams params) {
-        Page<T> response = crudService.findAllActive(params);
+        Page<T> response = crudService.getList(params);
         return ResponseEntity.ok()
                 .header(X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());

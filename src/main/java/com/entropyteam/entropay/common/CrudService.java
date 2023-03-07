@@ -14,4 +14,6 @@ public interface CrudService<DTO, Key> {
     DTO create(DTO entity);
 
     DTO update(Key id, DTO entity);
+
+    Page<DTO> getList(ReactAdminParams params);
 }
