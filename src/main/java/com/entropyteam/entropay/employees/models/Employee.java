@@ -37,6 +37,7 @@ public class Employee extends BaseEntity {
     private String emergencyContactPhone;
     private String healthInsurance;
     private String notes;
+    private String labourEmail;
 
     @OneToMany(mappedBy="employee")
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
@@ -79,6 +80,7 @@ public class Employee extends BaseEntity {
         this.emergencyContactPhone = entity.emergencyContactPhone();
         this.notes = entity.notes();
         this.healthInsurance = entity.healthInsurance();
+        this.labourEmail = entity.labourEmail();
     }
 
     public String getFirstName() {
@@ -246,5 +248,13 @@ public class Employee extends BaseEntity {
 
     public void setTechnologies(Set<Technology> technologies) {
         this.technologies = technologies;
+    }
+
+    public String getLabourEmail() {
+        return labourEmail;
+    }
+
+    public void setLabourEmail(String labourEmail) {
+        this.labourEmail = labourEmail;
     }
 }
