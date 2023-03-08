@@ -1,18 +1,21 @@
 package com.entropyteam.entropay.common;
 
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.Comparator;
+import java.util.Collections;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.hibernate.Session;
@@ -33,9 +36,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     @PersistenceContext
     private EntityManager entityManager;
-
     private final Class<Entity> entityClass;
     private final ReactAdminMapper mapper;
+    public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
@@ -111,8 +114,20 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         if (MapUtils.isEmpty(filter.getGetByFieldsFilter())) {
             return CollectionUtils.emptyCollection();
         }
-        return filter.getGetByFieldsFilter().entrySet().stream()
+        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
                 .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+
+
+        if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
+            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toLowerCase();
+            ArrayList<Predicate> searchPredicates = new ArrayList<>();
+            for(String column: getColumnsForSearch()){
+                Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%"+searchInput+"%");
+                searchPredicates.add(searchContainsColumn);
+            }
+            predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+        }
+        return predicates;
     }
 
     private Collection<Predicate> buildEntityRelatedPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
@@ -162,5 +177,10 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         Optional<AppRole> appRole = authorities.stream().map(a -> AppRole.getByValue(a.getAuthority()))
                 .min(Comparator.comparing(r -> r.score));
         return appRole.orElseThrow();
+    }
+
+    @Transactional
+    public List<String> getColumnsForSearch() {
+        return Collections.emptyList();
     }
 }
