@@ -89,7 +89,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     @Override
-    @Transactional
     public List<String> getColumnsForSearch() {
         return Arrays.asList("firstName","lastName","internalId");
     }

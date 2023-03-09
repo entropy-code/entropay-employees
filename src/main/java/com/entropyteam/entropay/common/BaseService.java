@@ -179,7 +179,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return appRole.orElseThrow();
     }
 
-    @Transactional
     public List<String> getColumnsForSearch() {
         return Collections.emptyList();
     }
