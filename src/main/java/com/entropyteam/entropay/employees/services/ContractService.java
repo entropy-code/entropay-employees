@@ -2,9 +2,12 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,10 +45,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
-            EmployeeRepository employeeRepository, RoleRepository roleRepository,
-            SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
-            PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
-            ReactAdminMapper reactAdminMapper) {
+                           EmployeeRepository employeeRepository, RoleRepository roleRepository,
+                           SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
+                           PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
+                           ReactAdminMapper reactAdminMapper) {
         super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
@@ -60,16 +63,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Transactional
     @Override
     public ContractDto create(ContractDto contractDto) {
-        contractRepository.findContractByEmployeeIdAndActiveIsTrue(contractDto.employeeId())
-                .ifPresent(existent -> {
-                    existent.setActive(false);
-                    existent.setModifiedAt(LocalDateTime.now());
-                    existent.setEndDate(LocalDate.now());
-                    contractRepository.saveAndFlush(existent);
-                });
-        Contract entityToCreate = toEntity(contractDto.withActive(true));
+        Contract entityToCreate = toEntity(contractDto);
         Contract savedEntity = getRepository().save(entityToCreate);
-        paymentSettlementService.create(contractDto.paymentSettlement(), savedEntity);
+        paymentSettlementService.create(savedEntity.getPaymentsSettlement(), savedEntity);
+        checkActiveContract(savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -80,6 +77,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         entityToUpdate.setId(contractId);
         Contract savedEntity = getRepository().save(entityToUpdate);
         paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
+        checkActiveContract(savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -95,7 +93,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         }
 
         if (setActive) {
-            contractRepository.findContractByEmployeeIdAndActiveIsTrue(contract.getEmployee().getId())
+            contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contract.getEmployee().getId())
                     .ifPresent(existent -> {
                         existent.setActive(false);
                         existent.setModifiedAt(LocalDateTime.now());
@@ -136,7 +134,23 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEmployee(employee);
         contract.setRole(role);
         contract.setSeniority(seniority);
+        if(entity.paymentSettlement() == null) contract.setPaymentsSettlement(new HashSet<>());
 
         return contract;
+    }
+
+    protected void checkActiveContract(Contract contractToCheck) {
+        Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contractToCheck.getEmployee().getId());
+        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now()) ) {
+            contractToCheck.setActive(true);
+            activeContract.ifPresent(contract -> {
+                        contract.setActive(false);
+                        if (contract.getEndDate() == null) contract.setEndDate(LocalDate.now());
+                        contractRepository.saveAndFlush(contract);
+                    }
+            );
+        } else {
+            contractToCheck.setActive(false);
+        }
     }
 }

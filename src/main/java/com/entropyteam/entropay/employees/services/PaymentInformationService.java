@@ -47,8 +47,7 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
     }
 
     @Transactional
-    protected Set<PaymentInformation> create(List<PaymentInformationDto> paymentsInformation, Employee savedEntity) {
-        Set<PaymentInformation> paymentInformation = paymentsInformation.stream().map(PaymentInformation::new).collect(Collectors.toSet());
+    protected Set<PaymentInformation> create(Set<PaymentInformation> paymentInformation, Employee savedEntity) {
         paymentInformation = paymentInformation.stream().peek( p -> p.setEmployee(savedEntity)).collect(Collectors.toSet());
         return new HashSet<>(paymentInformationRepository.saveAll(paymentInformation));
     }

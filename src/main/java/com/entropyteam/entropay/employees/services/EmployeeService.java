@@ -74,7 +74,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto create(EmployeeDto employeeDto) {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
-        paymentInformationService.create(employeeDto.paymentInformation(), savedEntity);
+        paymentInformationService.create(savedEntity.getPaymentsInformation(), savedEntity);
         return toDTO(savedEntity);
     }
 

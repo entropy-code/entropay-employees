@@ -47,8 +47,7 @@ public class PaymentSettlementService  extends BaseService<PaymentSettlement, Pa
     }
 
     @Transactional
-    protected Set<PaymentSettlement> create(List<PaymentSettlementDto> paymentSettlementDtos, Contract savedEntity) {
-        Set<PaymentSettlement> paymentSettlement = paymentSettlementDtos.stream().map(PaymentSettlement::new).collect(Collectors.toSet());
+    protected Set<PaymentSettlement> create(Set<PaymentSettlement> paymentSettlement, Contract savedEntity) {
         paymentSettlement = paymentSettlement.stream().peek( p -> p.setContract(savedEntity)).collect(Collectors.toSet());
         return new HashSet<>(paymentSettlementRepository.saveAll(paymentSettlement));
     }

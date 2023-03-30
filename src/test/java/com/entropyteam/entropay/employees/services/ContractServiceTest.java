@@ -100,7 +100,7 @@ class ContractServiceTest {
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(
                 Optional.of(existentContract));
         when(paymentSettlementService.create(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
@@ -114,7 +114,7 @@ class ContractServiceTest {
 
         verify(employeeRepository, times(1)).findById(eq(requestedContract.employeeId()));
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(any());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any());
         verify((BaseService) underTest, times(1)).create(eq(requestedContract.withActive(true)));
 
         assertFalse(contractCaptor.getValue().isActive());
@@ -132,7 +132,7 @@ class ContractServiceTest {
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.empty());
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(Optional.empty());
         when(paymentSettlementService.create(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
@@ -145,7 +145,7 @@ class ContractServiceTest {
 
         verify(employeeRepository, times(1)).findById(eq(requestedContract.employeeId()));
         verify(contractRepository, never()).saveAndFlush(any());
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(any());
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any());
         verify((BaseService) underTest, times(1)).create(eq(requestedContract.withActive(true)));
     }
 
@@ -156,7 +156,7 @@ class ContractServiceTest {
         ContractDto requestedContract = new ContractDto(existentContract);
 
         // when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenThrow(
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenThrow(
                 new RuntimeException("Test exception thrown!!"));
 
         // then
@@ -182,7 +182,7 @@ class ContractServiceTest {
 
         // when
         when(contractRepository.findById(any())).thenReturn(Optional.of(existentContract));
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrue(any())).thenReturn(Optional.of(activeContract));
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(Optional.of(activeContract));
         when(contractRepository.save(any())).thenReturn(activated);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
@@ -193,7 +193,7 @@ class ContractServiceTest {
 
         Assertions.assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(
                 existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
@@ -230,7 +230,7 @@ class ContractServiceTest {
 
         assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
-        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrue(
+        verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(
                 existentContract.getEmployee().getId());
         verify(contractRepository, times(1)).save(contractCaptor.capture());
         verifyNoMoreInteractions(contractRepository);
