@@ -64,9 +64,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Override
     public ContractDto create(ContractDto contractDto) {
         Contract entityToCreate = toEntity(contractDto);
-        Contract savedEntity = getRepository().save(entityToCreate);
+        Contract savedEntity = getRepository().save(checkActiveContract(entityToCreate));
         paymentSettlementService.create(savedEntity.getPaymentsSettlement(), savedEntity);
-        checkActiveContract(savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -75,9 +74,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractDto update(UUID contractId, ContractDto contractDto) {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
-        Contract savedEntity = getRepository().save(entityToUpdate);
+        Contract savedEntity = getRepository().save(checkActiveContract(entityToUpdate));
         paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
-        checkActiveContract(savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -134,23 +132,26 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEmployee(employee);
         contract.setRole(role);
         contract.setSeniority(seniority);
-        if(entity.paymentSettlement() == null) contract.setPaymentsSettlement(new HashSet<>());
-
+        if (entity.paymentSettlement() == null) {
+            contract.setPaymentsSettlement(new HashSet<>());
+        } else {
+            contract.setPaymentsSettlement(new HashSet<>(entity.paymentSettlement().stream().map(PaymentSettlement::new).toList()));
+        }
         return contract;
     }
 
-    protected void checkActiveContract(Contract contractToCheck) {
+    protected Contract checkActiveContract(Contract contractToCheck) {
         Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contractToCheck.getEmployee().getId());
-        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now()) ) {
+        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now()) == !contractToCheck.getStartDate().isAfter(LocalDate.now())) {
             contractToCheck.setActive(true);
             activeContract.ifPresent(contract -> {
-                        contract.setActive(false);
-                        if (contract.getEndDate() == null) contract.setEndDate(LocalDate.now());
-                        contractRepository.saveAndFlush(contract);
-                    }
-            );
+                            contract.setActive(false);
+                            if (contract.getEndDate() == null) contract.setEndDate(LocalDate.now());
+                            contractRepository.saveAndFlush(contract);
+                            });
         } else {
             contractToCheck.setActive(false);
         }
+        return contractToCheck;
     }
 }

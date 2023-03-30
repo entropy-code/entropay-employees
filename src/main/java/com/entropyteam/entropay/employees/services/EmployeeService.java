@@ -3,14 +3,11 @@ package com.entropyteam.entropay.employees.services;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.employees.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.PaymentInformation;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
@@ -20,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Arrays;
+import java.util.HashSet;
 
 
 @Service
@@ -66,6 +64,11 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
         employee.setRoles(roles);
         employee.setTechnologies(technologies);
+        if (entity.paymentInformation() == null) {
+            employee.setPaymentsInformation(new HashSet<>());
+        } else {
+            employee.setPaymentsInformation(new HashSet<>(entity.paymentInformation().stream().map(PaymentInformation::new).toList()));
+        }
         return employee;
     }
 

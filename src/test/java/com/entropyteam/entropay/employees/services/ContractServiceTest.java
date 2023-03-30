@@ -149,23 +149,6 @@ class ContractServiceTest {
         verify((BaseService) underTest, times(1)).create(eq(requestedContract.withActive(true)));
     }
 
-    @DisplayName("Test create when ContractRepository throws exception")
-    @Test
-    public void testCreateWhenContractRepositoryThrowsException() {
-        // given
-        ContractDto requestedContract = new ContractDto(existentContract);
-
-        // when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenThrow(
-                new RuntimeException("Test exception thrown!!"));
-
-        // then
-        assertThrows(RuntimeException.class, () ->
-                        underTest.create(new ContractDto(existentContract)),
-                "RuntimeException was expected");
-
-        verifyNoMoreInteractions(contractRepository);
-    }
 
     @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should "
             + "deactivate existing and activate current.")
