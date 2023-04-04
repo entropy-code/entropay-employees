@@ -17,10 +17,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.entropyteam.entropay.employees.models.Employee;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,17 +33,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.ContractType;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -75,7 +75,7 @@ class ContractServiceTest {
     private ArgumentCaptor<Contract> contractCaptor;
     @InjectMocks
     @Spy
-    private ContractService underTest;
+    private ContractService contractService;
     private Contract existentContract;
     private Contract activeContract;
 
@@ -102,20 +102,20 @@ class ContractServiceTest {
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(
                 Optional.of(existentContract));
-        when(paymentSettlementService.create(any(), any())).thenReturn(null);
+        when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
         when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
-        ContractDto response = underTest.create(new ContractDto(existentContract));
+        ContractDto response = contractService.create(new ContractDto(existentContract));
 
         assertEquals(new ContractDto(existentContract), response);
 
         verify(employeeRepository, times(1)).findById(eq(requestedContract.employeeId()));
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
         verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any());
-        verify((BaseService) underTest, times(1)).create(eq(requestedContract.withActive(true)));
+        verify((BaseService) contractService, times(1)).create(eq(requestedContract.withActive(true)));
 
         assertFalse(contractCaptor.getValue().isActive());
     }
@@ -133,22 +133,40 @@ class ContractServiceTest {
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(Optional.empty());
-        when(paymentSettlementService.create(any(), any())).thenReturn(null);
+        when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
         when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
-        ContractDto response = underTest.create(new ContractDto(existentContract));
+        ContractDto response = contractService.create(new ContractDto(existentContract));
 
         assertEquals(new ContractDto(existentContract), response);
 
         verify(employeeRepository, times(1)).findById(eq(requestedContract.employeeId()));
         verify(contractRepository, never()).saveAndFlush(any());
         verify(contractRepository, times(1)).findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any());
-        verify((BaseService) underTest, times(1)).create(eq(requestedContract.withActive(true)));
+        verify((BaseService) contractService, times(1)).create(eq(requestedContract.withActive(true)));
     }
 
+    @DisplayName("Test create when ContractRepository throws exception")
+    @Test
+    public void testCreateWhenContractRepositoryThrowsException() {
+        // given
+        ContractDto requestedContract = new ContractDto(existentContract);
+
+        // when
+        // when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenThrow(
+        // new RuntimeException("Test exception thrown!!"));
+        // unnecessary stubbing drops an UnnecessaryStubbingException
+
+        // then
+        assertThrows(RuntimeException.class, () ->
+                        contractService.create(new ContractDto(existentContract)),
+                "RuntimeException was expected");
+
+        verifyNoMoreInteractions(contractRepository);
+    }
 
     @DisplayName("Test modifyStatus when setActive is true and there is an existing active contract, should "
             + "deactivate existing and activate current.")
@@ -172,7 +190,7 @@ class ContractServiceTest {
         when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
-        ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
+        ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
 
         Assertions.assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
@@ -209,7 +227,7 @@ class ContractServiceTest {
         when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
-        ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
+        ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
 
         assertEquals(expected, actual);
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
@@ -235,7 +253,7 @@ class ContractServiceTest {
 
         // then
         ResponseStatusException thrown = assertThrows(ResponseStatusException.class, () ->
-                        underTest.modifyStatus(existentContract.getId(), setActive),
+                        contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
         assertEquals(HttpStatus.NO_CONTENT, thrown.getStatus());
@@ -255,7 +273,7 @@ class ContractServiceTest {
 
         // then
         ResponseStatusException thrown = assertThrows(ResponseStatusException.class, () ->
-                        underTest.modifyStatus(existentContract.getId(), setActive),
+                        contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
         assertEquals(HttpStatus.NO_CONTENT, thrown.getStatus());
@@ -283,7 +301,7 @@ class ContractServiceTest {
         when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
-        ContractDto actual = underTest.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
+        ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
 
         Assertions.assertEquals(expected, actual);
         assertFalse(actual.active());
@@ -307,7 +325,7 @@ class ContractServiceTest {
 
         // then
         ResponseStatusException thrown = assertThrows(ResponseStatusException.class, () ->
-                        underTest.modifyStatus(existentContract.getId(), setActive),
+                        contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
         assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
@@ -326,8 +344,155 @@ class ContractServiceTest {
 
         // then
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
-                        underTest.modifyStatus(existentContract.getId(), setActive),
+                        contractService.modifyStatus(existentContract.getId(), setActive),
                 "RuntimeException was expected");
         verifyNoMoreInteractions(contractRepository);
     }
+
+    @DisplayName("when a new valid contract is created it is active")
+    @Test
+    public void testCreateNewActiveContract() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newContractWithValidStartDateAndEndDateAfterNow = new Contract(contractToCreate);
+        newContractWithValidStartDateAndEndDateAfterNow.setActive(false);
+        newContractWithValidStartDateAndEndDateAfterNow.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = anEmployee();
+        newContractWithValidStartDateAndEndDateAfterNow.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newContractWithValidStartDateAndEndDateAfterNow);
+        assertTrue(response.isActive());
+    }
+
+    @DisplayName("when a new contract has end date before now it is inactive")
+    @Test
+    public void testCreateNewInactiveContract() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newContractWithValidStartDateAndEndDateBeforeNow = new Contract(contractToCreate);
+        newContractWithValidStartDateAndEndDateBeforeNow.setActive(false);
+        newContractWithValidStartDateAndEndDateBeforeNow.setEndDate(LocalDate.now().plusDays(-2));
+        Employee employee = anEmployee();
+        newContractWithValidStartDateAndEndDateBeforeNow.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newContractWithValidStartDateAndEndDateBeforeNow);
+        assertTrue(!response.isActive());
+    }
+
+    @DisplayName("when a new contract has null end date it is active")
+    @Test
+    public void testContractWithNullEndDateIsActive() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newContractWithNullEndDate = new Contract(contractToCreate);
+        newContractWithNullEndDate.setActive(false);
+        newContractWithNullEndDate.setEndDate(null);
+        Employee employee = anEmployee();
+        newContractWithNullEndDate.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newContractWithNullEndDate);
+        assertTrue(response.isActive());
+    }
+
+    @DisplayName("when a new contract has start date after now and end date after start date is inactive")
+    @Test
+    public void testContractWithStartDateAfterNowAndEndDateAfterEndDate() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newContractWithStartDateAfterNowAndEndDateAfterStartDate = new Contract(contractToCreate);
+        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setActive(false);
+        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setStartDate(LocalDate.now().plusDays(2));
+        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = anEmployee();
+        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newContractWithStartDateAfterNowAndEndDateAfterStartDate);
+        assertTrue(!response.isActive());
+    }
+
+    @DisplayName("when a new active contract is created the last active contract is set inactive")
+    @Test
+    public void testInactiveLastActiveContractWhenNewActiveContractIsCreated() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newActiveContract = new Contract(contractToCreate);
+        newActiveContract.setActive(false);
+        newActiveContract.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = anEmployee();
+        newActiveContract.setEmployee(employee);
+        Contract activeContractToInactive = activeContract;
+        activeContractToInactive.setEmployee(employee);
+
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newActiveContract);
+
+        verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
+
+        assertTrue(!contractCaptor.getValue().isActive());
+        assertTrue(response.isActive());
+    }
+
+    @DisplayName("when a new inactive contract is created the last active contract stays active")
+    @Test
+    public void testLastActiveContractStaysActiveWhenNewInactiveContractIsCreated() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newInactiveContract = new Contract(contractToCreate);
+        newInactiveContract.setActive(false);
+        newInactiveContract.setEndDate(LocalDate.now().plusDays(-7));
+        Employee employee = anEmployee();
+        newInactiveContract.setEmployee(employee);
+        Contract activeContractStaysActive = activeContract;
+        activeContractStaysActive.setEmployee(employee);
+
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newInactiveContract);
+
+        assertTrue(activeContractStaysActive.isActive());
+        assertTrue(!response.isActive());
+    }
+
+    @DisplayName("when a new contract with null end date is created the last active contract is set inactive")
+    @Test
+    public void testLastActiveContractSetInactiveWhenNewContractWithNullEndDateIsCreated() {
+        //given
+        ContractDto contractToCreate = new ContractDto(existentContract);
+        Contract newContractWithNullEndDate = new Contract(contractToCreate);
+        newContractWithNullEndDate.setActive(false);
+        newContractWithNullEndDate.setEndDate(null);
+        Employee employee = anEmployee();
+        newContractWithNullEndDate.setEmployee(employee);
+        Contract activeContractToInactive = activeContract;
+        activeContractToInactive.setEmployee(employee);
+
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.checkActiveContract(newContractWithNullEndDate);
+
+        verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
+
+        assertTrue(!contractCaptor.getValue().isActive());
+        assertTrue(response.isActive());
+    }
+
 }

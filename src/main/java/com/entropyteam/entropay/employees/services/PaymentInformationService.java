@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -34,26 +33,22 @@ public class PaymentInformationService extends BaseService<PaymentInformation, P
         return paymentInformationRepository;
     }
 
-    @Transactional
     @Override
     protected PaymentInformationDto toDTO(PaymentInformation entity) {
         return new PaymentInformationDto(entity);
     }
 
-    @Transactional
     @Override
     protected PaymentInformation toEntity(PaymentInformationDto entity) {
         return new PaymentInformation(entity);
     }
 
-    @Transactional
-    protected Set<PaymentInformation> create(Set<PaymentInformation> paymentInformation, Employee savedEntity) {
+    public Set<PaymentInformation> createPaymentsInformation(Set<PaymentInformation> paymentInformation, Employee savedEntity) {
         paymentInformation = paymentInformation.stream().peek( p -> p.setEmployee(savedEntity)).collect(Collectors.toSet());
         return new HashSet<>(paymentInformationRepository.saveAll(paymentInformation));
     }
 
-    @Transactional
-    protected void update(List<PaymentInformationDto> paymentInformationDtos, Employee employee){
+    public void updatePaymentsInformation(List<PaymentInformationDto> paymentInformationDtos, Employee employee){
         List<PaymentInformation> paymentsInformationList = paymentInformationRepository.findAllByEmployeeIdAndDeletedIsFalse(employee.getId());
         List<PaymentInformation> paymentInformationRequest = paymentInformationDtos.stream().map(this::toEntity).toList();
         List<PaymentInformation> paymentInformationToDelete = new ArrayList<>();

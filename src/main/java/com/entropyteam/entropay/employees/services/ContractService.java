@@ -65,7 +65,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractDto create(ContractDto contractDto) {
         Contract entityToCreate = toEntity(contractDto);
         Contract savedEntity = getRepository().save(checkActiveContract(entityToCreate));
-        paymentSettlementService.create(savedEntity.getPaymentsSettlement(), savedEntity);
+        paymentSettlementService.createPaymentsSettlement(savedEntity.getPaymentsSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -75,7 +75,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
         Contract savedEntity = getRepository().save(checkActiveContract(entityToUpdate));
-        paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
+        paymentSettlementService.updatePaymentsSettlement(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -140,15 +140,17 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         return contract;
     }
 
-    protected Contract checkActiveContract(Contract contractToCheck) {
+    public Contract checkActiveContract(Contract contractToCheck) {
         Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contractToCheck.getEmployee().getId());
-        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now()) == !contractToCheck.getStartDate().isAfter(LocalDate.now())) {
+        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now())) {
             contractToCheck.setActive(true);
             activeContract.ifPresent(contract -> {
-                            contract.setActive(false);
-                            if (contract.getEndDate() == null) contract.setEndDate(LocalDate.now());
-                            contractRepository.saveAndFlush(contract);
-                            });
+                contract.setActive(false);
+                if (contract.getEndDate() == null) {
+                    contract.setEndDate(LocalDate.now());
+                }
+                contractRepository.saveAndFlush(contract);
+            });
         } else {
             contractToCheck.setActive(false);
         }
