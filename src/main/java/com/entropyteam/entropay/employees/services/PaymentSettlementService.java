@@ -8,7 +8,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -34,27 +33,22 @@ public class PaymentSettlementService  extends BaseService<PaymentSettlement, Pa
         return paymentSettlementRepository;
     }
 
-    @Transactional
     @Override
     protected PaymentSettlementDto toDTO(PaymentSettlement entity) {
         return new PaymentSettlementDto(entity);
     }
 
-    @Transactional
     @Override
     protected PaymentSettlement toEntity(PaymentSettlementDto entity) {
         return new PaymentSettlement(entity);
     }
 
-    @Transactional
-    protected Set<PaymentSettlement> create(List<PaymentSettlementDto> paymentSettlementDtos, Contract savedEntity) {
-        Set<PaymentSettlement> paymentSettlement = paymentSettlementDtos.stream().map(PaymentSettlement::new).collect(Collectors.toSet());
+    public Set<PaymentSettlement> createPaymentsSettlement(Set<PaymentSettlement> paymentSettlement, Contract savedEntity) {
         paymentSettlement = paymentSettlement.stream().peek( p -> p.setContract(savedEntity)).collect(Collectors.toSet());
         return new HashSet<>(paymentSettlementRepository.saveAll(paymentSettlement));
     }
 
-    @Transactional
-    protected void update(List<PaymentSettlementDto> paymentSettlementDtos, Contract contract){
+    public void updatePaymentsSettlement(List<PaymentSettlementDto> paymentSettlementDtos, Contract contract){
         List<PaymentSettlement> paymentsSettlementList = paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(contract.getId());
         List<PaymentSettlement> paymentSettlementRequest = paymentSettlementDtos.stream().map(this::toEntity).toList();
         List<PaymentSettlement> paymentSettlementToDelete = new ArrayList<>();

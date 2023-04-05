@@ -2,9 +2,10 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import com.entropyteam.entropay.employees.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,12 +16,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
-import com.entropyteam.entropay.employees.models.Company;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.PaymentSettlement;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -42,10 +37,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
-            EmployeeRepository employeeRepository, RoleRepository roleRepository,
-            SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
-            PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
-            ReactAdminMapper reactAdminMapper) {
+                           EmployeeRepository employeeRepository, RoleRepository roleRepository,
+                           SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
+                           PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
+                           ReactAdminMapper reactAdminMapper) {
         super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
@@ -60,16 +55,9 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Transactional
     @Override
     public ContractDto create(ContractDto contractDto) {
-        contractRepository.findContractByEmployeeIdAndActiveIsTrue(contractDto.employeeId())
-                .ifPresent(existent -> {
-                    existent.setActive(false);
-                    existent.setModifiedAt(LocalDateTime.now());
-                    existent.setEndDate(LocalDate.now());
-                    contractRepository.saveAndFlush(existent);
-                });
-        Contract entityToCreate = toEntity(contractDto.withActive(true));
-        Contract savedEntity = getRepository().save(entityToCreate);
-        paymentSettlementService.create(contractDto.paymentSettlement(), savedEntity);
+        Contract entityToCreate = toEntity(contractDto);
+        Contract savedEntity = getRepository().save(checkActiveContract(entityToCreate));
+        paymentSettlementService.createPaymentsSettlement(savedEntity.getPaymentsSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -78,8 +66,8 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractDto update(UUID contractId, ContractDto contractDto) {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
-        Contract savedEntity = getRepository().save(entityToUpdate);
-        paymentSettlementService.update(contractDto.paymentSettlement(), savedEntity);
+        Contract savedEntity = getRepository().save(checkActiveContract(entityToUpdate));
+        paymentSettlementService.updatePaymentsSettlement(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
 
@@ -95,7 +83,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         }
 
         if (setActive) {
-            contractRepository.findContractByEmployeeIdAndActiveIsTrue(contract.getEmployee().getId())
+            contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contract.getEmployee().getId())
                     .ifPresent(existent -> {
                         existent.setActive(false);
                         existent.setModifiedAt(LocalDateTime.now());
@@ -136,7 +124,24 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEmployee(employee);
         contract.setRole(role);
         contract.setSeniority(seniority);
-
+        contract.setPaymentsSettlement(entity.paymentSettlement() == null ?  Collections.emptySet() : entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
         return contract;
+    }
+
+    public Contract checkActiveContract(Contract contractToCheck) {
+        Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contractToCheck.getEmployee().getId());
+        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now())) {
+            contractToCheck.setActive(true);
+            activeContract.ifPresent(contract -> {
+                contract.setActive(false);
+                if (contract.getEndDate() == null) {
+                    contract.setEndDate(LocalDate.now());
+                }
+                contractRepository.saveAndFlush(contract);
+            });
+        } else {
+            contractToCheck.setActive(false);
+        }
+        return contractToCheck;
     }
 }

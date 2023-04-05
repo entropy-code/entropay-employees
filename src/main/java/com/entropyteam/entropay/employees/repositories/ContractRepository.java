@@ -9,5 +9,5 @@ import com.entropyteam.entropay.employees.models.Contract;
 public interface ContractRepository extends BaseRepository<Contract, UUID> {
 
     List<Contract> findAllByDeletedIsFalse();
-    Optional<Contract> findContractByEmployeeIdAndActiveIsTrue(UUID employeeId);
+    Optional<Contract> findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(UUID employeeId);
 }
