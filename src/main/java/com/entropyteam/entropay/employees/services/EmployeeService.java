@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -66,11 +67,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
         employee.setRoles(roles);
         employee.setTechnologies(technologies);
-        if (entity.paymentInformation() == null) {
-            employee.setPaymentsInformation(new HashSet<>());
-        } else {
-            employee.setPaymentsInformation(new HashSet<>(entity.paymentInformation().stream().map(PaymentInformation::new).toList()));
-        }
+        employee.setPaymentsInformation(entity.paymentInformation() == null ?  Collections.emptySet() : entity.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
         return employee;
     }
 

@@ -2,12 +2,10 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.entropyteam.entropay.employees.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,12 +16,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
-import com.entropyteam.entropay.employees.models.Company;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.PaymentSettlement;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -132,11 +124,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEmployee(employee);
         contract.setRole(role);
         contract.setSeniority(seniority);
-        if (entity.paymentSettlement() == null) {
-            contract.setPaymentsSettlement(new HashSet<>());
-        } else {
-            contract.setPaymentsSettlement(new HashSet<>(entity.paymentSettlement().stream().map(PaymentSettlement::new).toList()));
-        }
+        contract.setPaymentsSettlement(entity.paymentSettlement() == null ?  Collections.emptySet() : entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
         return contract;
     }
 

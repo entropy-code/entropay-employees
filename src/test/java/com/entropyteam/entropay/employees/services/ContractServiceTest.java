@@ -155,11 +155,6 @@ class ContractServiceTest {
         // given
         ContractDto requestedContract = new ContractDto(existentContract);
 
-        // when
-        // when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenThrow(
-        // new RuntimeException("Test exception thrown!!"));
-        // unnecessary stubbing drops an UnnecessaryStubbingException
-
         // then
         assertThrows(RuntimeException.class, () ->
                         contractService.create(new ContractDto(existentContract)),
