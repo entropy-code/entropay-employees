@@ -44,7 +44,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final ContractRepository contractRepository;
 
 
-
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
             PaymentInformationRepository paymentInformationRepository,
@@ -70,9 +69,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected EmployeeDto toDTO(Employee entity) {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
-        List<Assignment> assignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(entity.getId());
+        List<Assignment> assignments =
+                assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(entity.getId());
         Optional<Assignment> lastAssignment = assignments.stream().filter(a -> a.getEndDate() == null).findFirst();
-        if (lastAssignment.isEmpty()){
+        if (lastAssignment.isEmpty()) {
             lastAssignment = assignments.stream().max(Comparator.comparing(Assignment::getEndDate));
         }
 
@@ -88,7 +88,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(dto.technologies());
         employee.setRoles(roles);
         employee.setTechnologies(technologies);
-        employee.setPaymentsInformation(dto.paymentInformation() == null ?  Collections.emptySet() : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
+                : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
         return employee;
     }
 
@@ -113,7 +114,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Override
     public List<String> getColumnsForSearch() {
-        return Arrays.asList("firstName","lastName","internalId");
+        return Arrays.asList("firstName", "lastName", "internalId");
     }
 
 }
