@@ -4,10 +4,14 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
+import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
@@ -16,7 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Arrays;
@@ -32,12 +40,16 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final PaymentInformationRepository paymentRepository;
     private final PaymentInformationService paymentInformationService;
     private final TechnologyRepository technologyRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final ContractRepository contractRepository;
+
 
 
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
             PaymentInformationRepository paymentInformationRepository,
             PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
+            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
             ReactAdminMapper reactAdminMapper) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
@@ -45,6 +57,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.paymentRepository = paymentInformationRepository;
         this.paymentInformationService = paymentInformationService;
         this.technologyRepository = technologyRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.contractRepository = contractRepository;
     }
 
     @Override
@@ -56,18 +70,25 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected EmployeeDto toDTO(Employee entity) {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList);
+        List<Assignment> assignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(entity.getId());
+        Optional<Assignment> lastAssignment = assignments.stream().filter(a -> a.getEndDate() == null).findFirst();
+        if (lastAssignment.isEmpty()){
+            lastAssignment = assignments.stream().max(Comparator.comparing(Assignment::getEndDate));
+        }
+
+        List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
+        Optional<Contract> firstContract = contracts.stream().min(Comparator.comparing(Contract::getStartDate));
+        return new EmployeeDto(entity, paymentInformationList, lastAssignment.orElse(null), firstContract.orElse(null));
     }
 
     @Override
-    protected Employee toEntity(EmployeeDto entity) {
-        Employee employee = new Employee(entity);
-        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(entity.profile());
-        Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(entity.technologies());
-
+    protected Employee toEntity(EmployeeDto dto) {
+        Employee employee = new Employee(dto);
+        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.profile());
+        Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(dto.technologies());
         employee.setRoles(roles);
         employee.setTechnologies(technologies);
-        employee.setPaymentsInformation(entity.paymentInformation() == null ?  Collections.emptySet() : entity.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        employee.setPaymentsInformation(dto.paymentInformation() == null ?  Collections.emptySet() : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
         return employee;
     }
 
