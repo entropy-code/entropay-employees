@@ -144,4 +144,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         }
         return contractToCheck;
     }
+
+    @Transactional
+    public ContractDto getActiveContract(UUID id) {
+        Contract contractActiveToReturn = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(id).orElse(new Contract());
+        return new ContractDto(contractActiveToReturn);
+    }
 }

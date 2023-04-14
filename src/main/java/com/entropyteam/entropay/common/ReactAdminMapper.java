@@ -1,10 +1,6 @@
 package com.entropyteam.entropay.common;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +38,7 @@ public class ReactAdminMapper {
         try {
             Map<String, List<UUID>> getByIdsFilter = new HashMap<>();
             Map<String, String> getByFieldsFilter = new HashMap<>();
+            Map<String, Boolean> getByBooleanFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
 
             if (params.getFilter() != null) {
@@ -54,7 +51,11 @@ public class ReactAdminMapper {
                                 ids.stream().map(UUID::fromString).collect(Collectors.toList()));
                     } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
-                        getByFieldsFilter.put(filter.getKey(), (String) filter.getValue());
+                        if (filter.getKey() == "active") {
+                            getByBooleanFieldsFilter.put(filter.getKey(), true);
+                        } else {
+                            getByFieldsFilter.put(filter.getKey(), filter.getValue().toString());
+                        }
                     } else {
                         // getManyReference filter
                         String relatedEntity = StringUtils.removeEnd(filter.getKey(), "Id");
@@ -63,7 +64,7 @@ public class ReactAdminMapper {
                     }
                 }
             }
-            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter);
+            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByBooleanFieldsFilter);
         } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on filters");
         }
