@@ -119,7 +119,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
 
         if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
-            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toLowerCase();
+            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();
             ArrayList<Predicate> searchPredicates = new ArrayList<>();
             for(String column: getColumnsForSearch()){
                 Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%"+searchInput+"%");
