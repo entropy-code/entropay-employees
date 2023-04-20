@@ -1,7 +1,5 @@
 package com.entropyteam.entropay.employees.controllers;
 
-import java.io.Console;
-import java.sql.SQLOutput;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -49,11 +47,6 @@ public class ContractController extends BaseController<ContractDto, UUID> {
         return ResponseEntity.ok().header(BaseController.X_TOTAL_COUNT, String.valueOf(Currency.values().length))
                 .body(Currency.values());
 
-    }
-
-    @GetMapping("/{id}/active")
-    public ResponseEntity<ContractDto> getActiveContract(@PathVariable UUID id) {
-        return ResponseEntity.ok(contractService.getActiveContract(id));
     }
 
 }
