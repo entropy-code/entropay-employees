@@ -50,6 +50,7 @@ public record EmployeeDto(UUID id,
                           String project,
                           String client,
                           String role,
+                          AssignmentDto lastAssignment,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
@@ -62,7 +63,7 @@ public record EmployeeDto(UUID id,
                 employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
                 employee.getTechnologies().stream().map(BaseEntity::getId).collect(Collectors.toList()),
                 employee.getLabourEmail(), employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(),
-                employee.isDeleted(), null, null, null, null);
+                employee.isDeleted(), null, null, null, null, null);
     }
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
@@ -80,6 +81,7 @@ public record EmployeeDto(UUID id,
                 lastAssignment != null ? lastAssignment.getProject().getName() : "-",
                 lastAssignment != null ? lastAssignment.getProject().getClient().getName() : "-",
                 lastAssignment != null ? lastAssignment.getRole().getName() : "-",
+                lastAssignment != null? new AssignmentDto(lastAssignment): null,
                 firstContract != null ? firstContract.getStartDate() : null);
     }
 }
