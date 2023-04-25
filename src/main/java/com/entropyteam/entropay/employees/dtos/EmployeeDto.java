@@ -50,7 +50,7 @@ public record EmployeeDto(UUID id,
                           String project,
                           String client,
                           String role,
-                          AssignmentDto lastAssignment,
+                          UUID lastAssignmentId,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
@@ -81,7 +81,7 @@ public record EmployeeDto(UUID id,
                 lastAssignment != null ? lastAssignment.getProject().getName() : "-",
                 lastAssignment != null ? lastAssignment.getProject().getClient().getName() : "-",
                 lastAssignment != null ? lastAssignment.getRole().getName() : "-",
-                lastAssignment != null? new AssignmentDto(lastAssignment): null,
+                lastAssignment != null? lastAssignment.getId() : null,
                 firstContract != null ? firstContract.getStartDate() : null);
     }
 }
