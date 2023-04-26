@@ -8,10 +8,10 @@ import java.util.UUID;
 public class Filter {
 
     private Map<String, List<UUID>> getByIdsFilter;
-    private Map<String, String> getByFieldsFilter;
+    private Map<String, Object> getByFieldsFilter;
     private Map<String, UUID> getByRelatedFieldsFilter;
 
-    public Filter(Map<String, List<UUID>> getByIdsFilter, Map<String, String> getByFieldsFilter,
+    public Filter(Map<String, List<UUID>> getByIdsFilter, Map<String, Object> getByFieldsFilter,
             Map<String, UUID> getByRelatedFieldsFilter) {
         this.getByIdsFilter = getByIdsFilter;
         this.getByFieldsFilter = getByFieldsFilter;
@@ -26,11 +26,11 @@ public class Filter {
         this.getByIdsFilter = getByIdsFilter;
     }
 
-    public Map<String, String> getGetByFieldsFilter() {
+    public Map<String, Object> getGetByFieldsFilter() {
         return getByFieldsFilter;
     }
 
-    public void setGetByFieldsFilter(Map<String, String> getByFieldsFilter) {
+    public void setGetByFieldsFilter(Map<String, Object> getByFieldsFilter) {
         this.getByFieldsFilter = getByFieldsFilter;
     }
 
@@ -41,4 +41,5 @@ public class Filter {
     public void setGetByRelatedFieldsFilter(Map<String, UUID> getByRelatedFieldsFilter) {
         this.getByRelatedFieldsFilter = getByRelatedFieldsFilter;
     }
+
 }

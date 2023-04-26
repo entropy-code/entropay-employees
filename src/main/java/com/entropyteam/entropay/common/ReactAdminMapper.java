@@ -1,9 +1,9 @@
 package com.entropyteam.entropay.common;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,7 +41,7 @@ public class ReactAdminMapper {
     public Filter buildFilter(ReactAdminParams params, Class entityClass) {
         try {
             Map<String, List<UUID>> getByIdsFilter = new HashMap<>();
-            Map<String, String> getByFieldsFilter = new HashMap<>();
+            Map<String, Object> getByFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
 
             if (params.getFilter() != null) {
@@ -54,12 +54,11 @@ public class ReactAdminMapper {
                                 ids.stream().map(UUID::fromString).collect(Collectors.toList()));
                     } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
-                        getByFieldsFilter.put(filter.getKey(), (String) filter.getValue());
+                        getByFieldsFilter.put(filter.getKey(), filter.getValue());
                     } else {
                         // getManyReference filter
                         String relatedEntity = StringUtils.removeEnd(filter.getKey(), "Id");
                         getByRelatedFieldsFilter.put(relatedEntity, UUID.fromString((String) filter.getValue()));
-
                     }
                 }
             }
