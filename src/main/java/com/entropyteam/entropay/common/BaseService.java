@@ -1,14 +1,15 @@
 package com.entropyteam.entropay.common;
 
 
+import java.time.LocalDate;
+import java.util.UUID;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.UUID;
 import java.util.Comparator;
-import java.util.Collections;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -39,6 +40,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     private final Class<Entity> entityClass;
     private final ReactAdminMapper mapper;
     public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
+    public static final String DATE_TERM_KEY = ReactAdminMapper.DATE_TERM_KEY;
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
@@ -111,12 +113,19 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     }
 
     private Collection<Predicate> buildEntityPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
-        if (MapUtils.isEmpty(filter.getGetByFieldsFilter())) {
+        if (MapUtils.isEmpty(filter.getGetByFieldsFilter()) && MapUtils.isEmpty(filter.getGetByDateFieldsFilter())) {
             return CollectionUtils.emptyCollection();
         }
         Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
                 .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
+        if(filter.getGetByDateFieldsFilter().containsKey(DATE_TERM_KEY)){
+            String year = filter.getGetByDateFieldsFilter().get(DATE_TERM_KEY);
+            LocalDate dateFrom = LocalDate.parse(year+"-01-01");
+            LocalDate dateTo = LocalDate.parse(year+"-12-31");
+            Predicate predicate = cb.between(root.get("date"), dateFrom,dateTo);
+            predicates.add(predicate);
+        }
 
         if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
             String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();

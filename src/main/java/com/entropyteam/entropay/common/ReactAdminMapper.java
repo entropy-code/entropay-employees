@@ -27,6 +27,7 @@ public class ReactAdminMapper {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     public final static String ID_FIELD = "id";
     public static final String SEARCH_TERM_KEY = "q";
+    public static final String DATE_TERM_KEY = "dateKey";
 
 
     /**
@@ -43,6 +44,7 @@ public class ReactAdminMapper {
             Map<String, List<UUID>> getByIdsFilter = new HashMap<>();
             Map<String, Object> getByFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
+            Map<String, String> getByDateFieldsFilter = new HashMap<>();
 
             if (params.getFilter() != null) {
                 Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
@@ -55,6 +57,8 @@ public class ReactAdminMapper {
                     } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
                         getByFieldsFilter.put(filter.getKey(), filter.getValue());
+                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TERM_KEY)) {
+                        getByDateFieldsFilter.put(filter.getKey(), filter.getValue().toString());
                     } else {
                         // getManyReference filter
                         String relatedEntity = StringUtils.removeEnd(filter.getKey(), "Id");
@@ -62,7 +66,7 @@ public class ReactAdminMapper {
                     }
                 }
             }
-            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter);
+            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByDateFieldsFilter);
         } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on filters");
         }
