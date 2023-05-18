@@ -1,6 +1,5 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import com.entropyteam.entropay.common.BaseRepository;
@@ -20,7 +19,7 @@ public class CountryService extends BaseService<Country, CountryDto, UUID> {
     @Autowired
     public CountryService(CountryRepository countryRepository, ReactAdminMapper reactAdminMapper) {
         super(Country.class, reactAdminMapper);
-        this.countryRepository = Objects.requireNonNull(countryRepository);
+        this.countryRepository = countryRepository;
     }
 
     @Override

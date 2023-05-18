@@ -11,7 +11,7 @@ import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,8 +23,8 @@ public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
     @Autowired
     public HolidayService(HolidayRepository holidayRepository, CountryRepository countryRepository, ReactAdminMapper reactAdminMapper) {
         super(Holiday.class, reactAdminMapper);
-        this.countryRepository = Objects.requireNonNull(countryRepository);
-        this.holidayRepository = Objects.requireNonNull(holidayRepository);
+        this.countryRepository = countryRepository;
+        this.holidayRepository = holidayRepository;
     }
 
     @Override
@@ -44,6 +44,11 @@ public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
         Holiday holiday = new Holiday(entity);
         holiday.setCountry(country);
         return holiday;
+    }
+
+    @Override
+    public List<String> getColumnsForSearch() {
+        return List.of("date");
     }
 
 }
