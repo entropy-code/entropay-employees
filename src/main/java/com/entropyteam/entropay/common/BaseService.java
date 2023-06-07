@@ -40,6 +40,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     private final Class<Entity> entityClass;
     private final ReactAdminMapper mapper;
     public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
+    public static final String DATE_FROM_TERM_KEY = ReactAdminMapper.DATE_FROM_TERM_KEY;
+    public static final String DATE_TO_TERM_KEY = ReactAdminMapper.DATE_TO_TERM_KEY;
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
@@ -118,10 +120,10 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
                 .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
-        if( filter.getGetByDateFieldsFilter().containsKey("dateTo") && filter.getGetByDateFieldsFilter().containsKey("dateFrom") ){
+        if( filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter().containsKey(DATE_FROM_TERM_KEY) ){
             String column = getColumnsForSearch().get(0);
-            LocalDate dateFrom = filter.getGetByDateFieldsFilter().get("dateFrom");
-            LocalDate dateTo = filter.getGetByDateFieldsFilter().get("dateTo");
+            LocalDate dateFrom = filter.getGetByDateFieldsFilter().get(DATE_FROM_TERM_KEY);
+            LocalDate dateTo = filter.getGetByDateFieldsFilter().get(DATE_TO_TERM_KEY);
             Predicate predicate = cb.between(root.get(column), dateFrom,dateTo);
             predicates.add(predicate);
         }
