@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.common;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,9 @@ public class ReactAdminMapper {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     public final static String ID_FIELD = "id";
     public static final String SEARCH_TERM_KEY = "q";
+    public static final String YEAR_SEARCH_TERM_KEY = "year";
+    public static final String DATE_FROM_TERM_KEY = "dateFrom";
+    public static final String DATE_TO_TERM_KEY = "dateTo";
 
 
     /**
@@ -43,6 +47,7 @@ public class ReactAdminMapper {
             Map<String, List<UUID>> getByIdsFilter = new HashMap<>();
             Map<String, Object> getByFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
+            Map<String, LocalDate> getByDateFieldsFilter = new HashMap<>();
 
             if (params.getFilter() != null) {
                 Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
@@ -55,6 +60,15 @@ public class ReactAdminMapper {
                     } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
                         getByFieldsFilter.put(filter.getKey(), filter.getValue());
+                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), YEAR_SEARCH_TERM_KEY)) {
+                        String year = filter.getValue().toString();
+                        LocalDate dateFrom = LocalDate.parse(year+"-01-01");
+                        LocalDate dateTo = LocalDate.parse(year+"-12-31");
+                        getByDateFieldsFilter.put("dateFrom",dateFrom);
+                        getByDateFieldsFilter.put("dateTo",dateTo);
+                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY) || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY) ) {
+                        LocalDate date = LocalDate.parse(filter.getValue().toString());
+                        getByDateFieldsFilter.put(filter.getKey(), date);
                     } else {
                         // getManyReference filter
                         String relatedEntity = StringUtils.removeEnd(filter.getKey(), "Id");
@@ -62,7 +76,7 @@ public class ReactAdminMapper {
                     }
                 }
             }
-            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter);
+            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByDateFieldsFilter);
         } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on filters");
         }

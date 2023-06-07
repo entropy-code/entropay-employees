@@ -1,6 +1,5 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.Objects;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ public class ProjectTypeService extends BaseService<ProjectType, ProjectTypeDto,
     @Autowired
     public ProjectTypeService(ProjectTypeRepository projectTypeRepository, ReactAdminMapper reactAdminMapper) {
         super(ProjectType.class, reactAdminMapper);
-        this.projectTypeRepository = Objects.requireNonNull(projectTypeRepository);
+        this.projectTypeRepository = projectTypeRepository;
     }
 
     @Override
