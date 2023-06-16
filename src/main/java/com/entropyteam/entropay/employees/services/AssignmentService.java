@@ -67,6 +67,7 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         assignment.setRole(role);
         assignment.setSeniority(seniority);
         assignment.setProject(project);
+        assignment.setActive(true);
 
         return assignment;
     }
