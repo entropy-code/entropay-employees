@@ -49,7 +49,8 @@ public class Assignment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "currency")
     private Currency currency;
-
+    @Column
+    private boolean active;
     public Assignment() {
     }
 
@@ -141,4 +142,13 @@ public class Assignment extends BaseEntity {
     public void setCurrency(Currency currency) {
         this.currency = currency;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
 }

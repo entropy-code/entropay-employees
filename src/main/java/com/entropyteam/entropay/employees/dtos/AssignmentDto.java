@@ -41,8 +41,8 @@ public record AssignmentDto(UUID id,
                 assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerMonth(),
                 assignment.getLabourHours(), assignment.getBillableRate(),
                 assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
-                assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(), assignment.getCreatedAt(),
-                assignment.getModifiedAt()
+                assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(),
+                assignment.getModifiedAt(), assignment.getCreatedAt()
         );
     }
 
