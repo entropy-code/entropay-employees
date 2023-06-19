@@ -51,7 +51,8 @@ public record EmployeeDto(UUID id,
                           String client,
                           String role,
                           UUID lastAssignmentId,
-                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate) {
+                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                          @NotNull(message = "Active state is mandatory") boolean active) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
@@ -63,7 +64,7 @@ public record EmployeeDto(UUID id,
                 employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
                 employee.getTechnologies().stream().map(BaseEntity::getId).collect(Collectors.toList()),
                 employee.getLabourEmail(), employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(),
-                employee.isDeleted(), null, null, null, null, null);
+                employee.isDeleted(), null, null, null, null, null, employee.isActive());
     }
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
@@ -82,6 +83,6 @@ public record EmployeeDto(UUID id,
                 lastAssignment != null ? lastAssignment.getProject().getClient().getName() : "-",
                 lastAssignment != null ? lastAssignment.getRole().getName() : "-",
                 lastAssignment != null? lastAssignment.getId() : null,
-                firstContract != null ? firstContract.getStartDate() : null);
+                firstContract != null ? firstContract.getStartDate() : null, employee.isActive());
     }
 }

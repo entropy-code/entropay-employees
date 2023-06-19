@@ -38,6 +38,7 @@ public class Employee extends BaseEntity {
     private String healthInsurance;
     private String notes;
     private String labourEmail;
+    private boolean active;
 
     @OneToMany(mappedBy="employee")
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
@@ -81,6 +82,7 @@ public class Employee extends BaseEntity {
         this.notes = entity.notes();
         this.healthInsurance = entity.healthInsurance();
         this.labourEmail = entity.labourEmail();
+        this.active = entity.active();
     }
 
     public String getFirstName() {
@@ -257,4 +259,13 @@ public class Employee extends BaseEntity {
     public void setLabourEmail(String labourEmail) {
         this.labourEmail = labourEmail;
     }
+
+	public boolean isActive() {
+		return this.active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+    
 }
