@@ -40,7 +40,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
     protected Vacation toEntity(VacationDto entity) {
         Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
 
-        Vacation vacation = new Vacation();
+        Vacation vacation = new Vacation(entity);
         vacation.setEmployee(employee);
 
         return vacation;

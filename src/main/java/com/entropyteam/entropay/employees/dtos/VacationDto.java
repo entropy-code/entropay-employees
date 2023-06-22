@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record VacationDto(
+public record VacationDto(  UUID id,
                             @NotNull
                             String year,
                             Integer credit,
@@ -19,7 +19,7 @@ public record VacationDto(
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
 
     public VacationDto(Vacation vacation) {
-        this(vacation.getYear(), vacation.getCredit(), vacation.getDebit(), vacation.getEmployee().getId(),
+        this(vacation.getId(), vacation.getYear(), vacation.getCredit(), vacation.getDebit(), vacation.getEmployee().getId(),
                 vacation.isDeleted(), vacation.getCreatedAt(), vacation.getCreatedAt());
     }
 }
