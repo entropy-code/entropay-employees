@@ -28,6 +28,7 @@ public record AssignmentDto(UUID id,
                             @JsonFormat(pattern = "yyyy-MM-dd")
                             LocalDate endDate,
                             boolean deleted,
+                            boolean active,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime createdAt,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -42,6 +43,7 @@ public record AssignmentDto(UUID id,
                 assignment.getLabourHours(), assignment.getBillableRate(),
                 assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(),
+                assignment.isActive(),
                 assignment.getModifiedAt(), assignment.getCreatedAt()
         );
     }

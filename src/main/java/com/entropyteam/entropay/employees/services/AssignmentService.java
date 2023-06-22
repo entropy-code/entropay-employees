@@ -1,6 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
+
+import com.entropyteam.entropay.employees.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.auth.SecureObjectService;
@@ -8,16 +12,12 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
-import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Project;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.ProjectRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AssignmentService extends BaseService<Assignment, AssignmentDto, UUID> {
@@ -32,9 +32,9 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
-            RoleRepository roleRepository, SeniorityRepository seniorityRepository,
-            ProjectRepository projectRepository, SecureObjectService secureObjectService,
-            ReactAdminMapper reactAdminMapper) {
+                             RoleRepository roleRepository, SeniorityRepository seniorityRepository,
+                             ProjectRepository projectRepository, SecureObjectService secureObjectService,
+                             ReactAdminMapper reactAdminMapper) {
         super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
@@ -47,6 +47,24 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     @Override
     protected BaseRepository<Assignment, UUID> getRepository() {
         return assignmentRepository;
+    }
+
+    @Transactional
+    @Override
+    public AssignmentDto create(AssignmentDto assignmentDto){
+        Assignment entityToCreate = toEntity(assignmentDto);
+        Assignment savedEntity = getRepository().save(checkActiveAssignment(entityToCreate));
+        return toDTO(savedEntity);
+    }
+
+
+    @Override
+    @Transactional
+    public AssignmentDto update(UUID assignmentId,AssignmentDto assignmentDto){
+        Assignment entityToUpdate = toEntity(assignmentDto);
+        entityToUpdate.setId(assignmentId);
+        Assignment savedEntity = getRepository().save(checkActiveAssignment(entityToUpdate));
+        return toDTO(savedEntity);
     }
 
     @Override
@@ -71,4 +89,26 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
         return assignment;
     }
+    public Assignment checkActiveAssignment(Assignment assignmentToCheck) {
+        Optional<Assignment> activeAssignment = assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(assignmentToCheck.getEmployee().getId());
+        LocalDate currentDate = LocalDate.now();
+        LocalDate startDate = assignmentToCheck.getStartDate();
+        LocalDate endDate = assignmentToCheck.getEndDate();
+
+        if ((endDate == null || endDate.isAfter(currentDate)) && (startDate.isBefore(currentDate) || startDate.isEqual(currentDate))) {
+            assignmentToCheck.setActive(true);
+            activeAssignment.ifPresent(assignment -> {
+                assignment.setActive(false);
+                if (assignment.getEndDate() == null) {
+                    assignment.setEndDate(currentDate);
+                }
+                assignmentRepository.saveAndFlush(assignment);
+            });
+        } else {
+            assignmentToCheck.setActive(false);
+        }
+
+        return assignmentToCheck;
+    }
+
 }
