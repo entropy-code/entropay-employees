@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 
 @RestController
 @CrossOrigin
-@Secured({ROLE_MANAGER_HR})
+@Secured({ROLE_MANAGER_HR,ROLE_ADMIN,ROLE_DEVELOPMENT})
 @RequestMapping(value = "/vacations", produces = MediaType.APPLICATION_JSON_VALUE)
 public class VacationController extends BaseController<VacationDto, UUID> {
 

@@ -10,6 +10,7 @@ import java.util.UUID;
 public record VacationDto(  UUID id,
                             @NotNull
                             String year,
+                            @NotNull
                             Integer credit,
                             Integer debit,
                             @NotNull
