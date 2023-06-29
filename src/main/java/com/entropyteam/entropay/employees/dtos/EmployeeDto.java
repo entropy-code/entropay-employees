@@ -52,7 +52,8 @@ public record EmployeeDto(UUID id,
                           String role,
                           UUID lastAssignmentId,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                          @NotNull(message = "Active state is mandatory") boolean active) {
+                          @NotNull(message = "Active state is mandatory") 
+						  boolean active) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),

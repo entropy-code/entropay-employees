@@ -87,7 +87,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         employee.setTechnologies(technologies);
         employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
                 : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
-        employee.setActive(true);
         return employee;
     }
 

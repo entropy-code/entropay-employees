@@ -79,9 +79,6 @@ class ContractServiceTest {
     private ContractService contractService;
     private Contract existentContract;
     private Contract activeContract;
-    
-    @Autowired
-    private EmployeeService employeeService;
 
     @BeforeEach
     public void setUp() {
