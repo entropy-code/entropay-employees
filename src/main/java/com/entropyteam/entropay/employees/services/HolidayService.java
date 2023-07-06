@@ -11,8 +11,11 @@ import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
@@ -51,4 +54,16 @@ public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
         return List.of("date");
     }
 
+    public List<Map<String, Object>> getHolidayYears() {
+        List<Integer> years = holidayRepository.getHolidaysYears();
+
+        return years.stream()
+                .map(year -> {
+                    Map<String, Object> yearMap = new HashMap<>();
+                    yearMap.put("id", year);
+                    yearMap.put("year", year);
+                    return yearMap;
+                })
+                .collect(Collectors.toList());
+    }
 }
