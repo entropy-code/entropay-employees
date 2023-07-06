@@ -1,9 +1,9 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.LeaveType;
@@ -21,6 +22,7 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+import com.entropyteam.entropay.employees.repositories.projections.VacationBalanceByYear;
 
 
 @Service
@@ -46,19 +48,29 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     public PtoDto create(PtoDto ptoDto) {
         Pto entityToCreate = toEntity(ptoDto);
         entityToCreate.setStatus(Status.APPROVED); // For now all approved
-        if (StringUtils.equalsIgnoreCase(entityToCreate.getPtoType().getName(), "Vacation")) {
-            List<Vacation> availableVacations = new ArrayList<>(); // TODO read from db
-            availableVacations.sort(Comparator.comparing(Vacation::getYear));
-            Integer totalDays = ptoDto.days();
-            for (Vacation vacation : availableVacations) {
+        if (StringUtils.equalsIgnoreCase(entityToCreate.getLeaveType().getName(), "Vacation")) {
+            Integer totalDays = entityToCreate.getDays();
+            if (totalDays == 0) {
+                throw new InvalidRequestParametersException("Vacation days must be greater than 0");
+            }
+
+            List<VacationBalanceByYear> availableVacations = vacationRepository.getVacationByYear(ptoDto.employeeId());
+            if (CollectionUtils.isEmpty(availableVacations)
+                    || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
+                throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
+            }
+
+            availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
+            for (VacationBalanceByYear vacation : availableVacations) {
                 if (totalDays > 0) {
-                    Integer daysToUse = Math.min(totalDays, vacation.getCredit());
+                    Integer daysToUse = Math.min(totalDays, vacation.getBalance());
                     totalDays -= daysToUse;
                     Vacation vacationDebit = new Vacation(vacation.getYear(), daysToUse, entityToCreate.getEmployee());
                     vacationRepository.save(vacationDebit);
                 }
             }
         }
+
         Pto savedEntity = getRepository().save(entityToCreate);
         return toDTO(savedEntity);
     }
@@ -79,7 +91,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveType()).orElse(null);
         Pto pto = new Pto(dto);
         pto.setEmployee(employee);
-        pto.setPtoType(leaveType);
+        pto.setLeaveType(leaveType);
         return pto;
     }
 }

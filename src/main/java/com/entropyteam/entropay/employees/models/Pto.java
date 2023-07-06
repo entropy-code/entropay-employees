@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -15,10 +16,10 @@ import com.entropyteam.entropay.employees.dtos.PtoDto;
 @Entity
 @Table(name = "pto")
 public class Pto extends BaseEntity {
-    @Column
+    @Column(name = "from_date")
     private LocalDateTime from;
 
-    @Column
+    @Column(name = "to_date")
     private LocalDateTime to;
 
     @Enumerated(EnumType.STRING)
@@ -32,22 +33,32 @@ public class Pto extends BaseEntity {
     private Integer days;
 
     @Column
-    private Integer labour_hours;
+    private Integer labourHours;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pto_type")
-    private LeaveType ptoType;
+    @JoinColumn(name = "leave_type_id")
+    private LeaveType leaveType;
 
     public Pto(PtoDto dto) {
         this.from = dto.from();
         this.to = dto.to();
         this.details = dto.details();
-        this.days = dto.days();
-        this.labour_hours = dto.labour_hours();
+        setTimeAmount(dto);
+    }
+
+    private void setTimeAmount(PtoDto dto) {
+        this.days = 0;
+        this.labourHours = 0;
+        Long days = ChronoUnit.DAYS.between(dto.to(), dto.from());
+        if (days.compareTo(0L) > 0) {
+            this.days = days.intValue();
+        } else {
+            this.labourHours = dto.labourHours();
+        }
     }
 
     public Pto() {
@@ -93,12 +104,12 @@ public class Pto extends BaseEntity {
         this.days = days;
     }
 
-    public Integer getLabour_hours() {
-        return labour_hours;
+    public Integer getLabourHours() {
+        return labourHours;
     }
 
-    public void setLabour_hours(Integer labour_hours) {
-        this.labour_hours = labour_hours;
+    public void setLabourHours(Integer labour_hours) {
+        this.labourHours = labour_hours;
     }
 
     public Employee getEmployee() {
@@ -109,11 +120,11 @@ public class Pto extends BaseEntity {
         this.employee = employee;
     }
 
-    public LeaveType getPtoType() {
-        return ptoType;
+    public LeaveType getLeaveType() {
+        return leaveType;
     }
 
-    public void setPtoType(LeaveType ptoType) {
-        this.ptoType = ptoType;
+    public void setLeaveType(LeaveType ptoType) {
+        this.leaveType = ptoType;
     }
 }

@@ -21,25 +21,25 @@ public class RestExceptionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @ExceptionHandler(AuthException.class)
-    public ResponseEntity<Object> AuthExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<Object> authExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
 
     @ExceptionHandler(InvalidRequestParametersException.class)
-    public ResponseEntity<Object> InvalidRequestParametersExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<Object> invalidRequestParametersExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Object> ResourceNotFoundExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<Object> resourceNotFoundExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> MethodArgumentNotValidExceptionHandler(HttpServletRequest request, MethodArgumentNotValidException ex) {
+    public ResponseEntity<Object> methodArgumentNotValidExceptionHandler(HttpServletRequest request, MethodArgumentNotValidException ex) {
         Map<String, List<String>> body = new HashMap<>();
 
         List<String> errors = ex.getBindingResult()

@@ -20,7 +20,7 @@ public record PtoDto(UUID id,
                      @NotNull(message = "Leave type is mandatory")
                      UUID leaveType,
                      Integer days,
-                     Integer labour_hours,
+                     Integer labourHours,
                      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                      LocalDateTime createdAt,
                      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -28,7 +28,7 @@ public record PtoDto(UUID id,
 
     public PtoDto(Pto pto) {
         this(pto.getId(), pto.getFrom(), pto.getTo(), pto.getStatus().name(), pto.getDetails(),
-                pto.getEmployee().getId(), pto.getPtoType().getId(), pto.getDays(), pto.getLabour_hours(),
+                pto.getEmployee().getId(), pto.getLeaveType().getId(), pto.getDays(), pto.getLabourHours(),
                 pto.getCreatedAt(), pto.getModifiedAt());
     }
 }
