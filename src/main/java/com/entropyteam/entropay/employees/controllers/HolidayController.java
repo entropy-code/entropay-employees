@@ -4,7 +4,6 @@ import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.HolidayDto;
 import com.entropyteam.entropay.employees.services.HolidayService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -33,12 +32,9 @@ public class HolidayController extends BaseController<HolidayDto, UUID> {
         this.holidayService = holidayService;
     }
     @GetMapping("/years")
-    public ResponseEntity<List<Map<String, Object>>> getHolidayYears() {
-        List<Map<String, Object>> holidayYears = holidayService.getHolidayYears();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(holidayYears.size()));
-
-        return ResponseEntity.ok().headers(headers).body(holidayYears);
+    public ResponseEntity<List<Map<String, Integer>>> getHolidayYears() {
+        List<Map<String, Integer>> holidayYears = holidayService.getHolidayYears();
+        return ResponseEntity.ok().header(BaseController.X_TOTAL_COUNT, String.valueOf(holidayYears.size()))
+                .body(holidayYears);
     }
 }

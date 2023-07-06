@@ -54,12 +54,12 @@ public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
         return List.of("date");
     }
 
-    public List<Map<String, Object>> getHolidayYears() {
+    public List<Map<String, Integer>> getHolidayYears() {
         List<Integer> years = holidayRepository.getHolidaysYears();
 
         return years.stream()
                 .map(year -> {
-                    Map<String, Object> yearMap = new HashMap<>();
+                    Map<String, Integer> yearMap = new HashMap<>();
                     yearMap.put("id", year);
                     yearMap.put("year", year);
                     return yearMap;
