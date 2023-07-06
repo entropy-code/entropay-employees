@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+
 import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
@@ -38,23 +39,24 @@ public class Employee extends BaseEntity {
     private String healthInsurance;
     private String notes;
     private String labourEmail;
+    private boolean active;
 
-    @OneToMany(mappedBy="employee")
+    @OneToMany(mappedBy = "employee")
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "employee_role",
-            joinColumns = { @JoinColumn(name = "employee_id") },
-            inverseJoinColumns = { @JoinColumn(name = "role_id") }
+            joinColumns = {@JoinColumn(name = "employee_id")},
+            inverseJoinColumns = {@JoinColumn(name = "role_id")}
     )
     private Set<Role> roles;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "employee_technology",
-            joinColumns = { @JoinColumn(name = "employee_id") },
-            inverseJoinColumns = { @JoinColumn(name = "technology_id") }
+            joinColumns = {@JoinColumn(name = "employee_id")},
+            inverseJoinColumns = {@JoinColumn(name = "technology_id")}
     )
     private Set<Technology> technologies;
 
@@ -81,6 +83,7 @@ public class Employee extends BaseEntity {
         this.notes = entity.notes();
         this.healthInsurance = entity.healthInsurance();
         this.labourEmail = entity.labourEmail();
+        this.active = entity.active();
     }
 
     public String getFirstName() {
@@ -150,6 +153,7 @@ public class Employee extends BaseEntity {
     public String getCountry() {
         return country;
     }
+
     public void setCountry(String country) {
         this.country = country;
     }
@@ -157,6 +161,7 @@ public class Employee extends BaseEntity {
     public LocalDate getBirthDate() {
         return birthDate;
     }
+
     public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
@@ -257,4 +262,13 @@ public class Employee extends BaseEntity {
     public void setLabourEmail(String labourEmail) {
         this.labourEmail = labourEmail;
     }
+
+    public boolean isActive() {
+        return this.active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
 }
