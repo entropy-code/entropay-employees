@@ -8,6 +8,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
+import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +28,6 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
-import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
-import com.entropyteam.entropay.employees.repositories.ContractRepository;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
-import com.entropyteam.entropay.employees.repositories.RoleRepository;
-import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 
 
 @Service
@@ -39,6 +40,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final TechnologyRepository technologyRepository;
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
+    private final VacationRepository vacationRepository;
 
 
     @Autowired
@@ -46,7 +48,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             PaymentInformationRepository paymentInformationRepository,
             PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
             AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-            ReactAdminMapper reactAdminMapper) {
+            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -55,6 +57,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
+        this.vacationRepository = vacationRepository;
     }
 
     @Override
@@ -75,7 +78,12 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Contract> firstContract = contracts.stream().min(Comparator.comparing(Contract::getStartDate));
-        return new EmployeeDto(entity, paymentInformationList, lastAssignment.orElse(null), firstContract.orElse(null));
+        String availableDays = "0";
+        boolean employeeHasVacations = vacationRepository.existsVacationsByEmployee_IdAndDeletedIsFalse(entity.getId());
+        if(employeeHasVacations){
+            availableDays = Integer.toString(vacationRepository.getAvailableDays(entity.getId()));
+        }
+        return new EmployeeDto(entity, paymentInformationList, lastAssignment.orElse(null), firstContract.orElse(null), availableDays);
     }
 
     @Override
