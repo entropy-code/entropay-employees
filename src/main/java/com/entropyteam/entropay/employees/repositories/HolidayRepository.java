@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
 
-    @Query(value = "SELECT DISTINCT extract('Year' FROM date) AS year FROM holiday_calendar ORDER BY year ASC", nativeQuery = true)
+    @Query(value = "SELECT DISTINCT extract('Year' FROM date) AS year FROM holiday_calendar WHERE deleted=false ORDER BY year ASC", nativeQuery = true)
     List<Integer> getHolidaysYears();
 }
