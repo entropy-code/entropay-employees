@@ -8,9 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface VacationRepository extends BaseRepository<Vacation, UUID> {
 
-    @Query("SELECT CAST((SUM(v.credit) - COALESCE(SUM(v.debit), 0)) AS int) AS total_balance FROM Vacation v WHERE v.employee.id = :employeeId AND v.year <= CONCAT(YEAR(CURRENT_DATE), '') AND v.deleted = false GROUP BY v.employee.id")
-    int getAvailableDays(@Param("employeeId") UUID employeeId);
-
-    boolean existsVacationsByEmployee_IdAndDeletedIsFalse(UUID employeeId);
+    @Query("SELECT CAST((SUM(v.credit) - COALESCE(SUM(v.debit), 0)) AS int) AS total_balance FROM Vacation v WHERE v.employee.id = :employeeId AND v.deleted = false GROUP BY v.employee.id")
+    Integer getAvailableDays(@Param("employeeId") UUID employeeId);
 
 }
