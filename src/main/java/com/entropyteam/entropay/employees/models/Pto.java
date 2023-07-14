@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.employees.models;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDate;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -16,11 +15,11 @@ import com.entropyteam.entropay.employees.dtos.PtoDto;
 @Entity
 @Table(name = "pto")
 public class Pto extends BaseEntity {
-    @Column(name = "from_date")
-    private LocalDateTime from;
+    @Column
+    private LocalDate startDate;
 
-    @Column(name = "to_date")
-    private LocalDateTime to;
+    @Column
+    private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -44,40 +43,29 @@ public class Pto extends BaseEntity {
     private LeaveType leaveType;
 
     public Pto(PtoDto dto) {
-        this.from = dto.from();
-        this.to = dto.to();
+        this.startDate = dto.ptoStartDate();
+        this.endDate = dto.ptoEndDate();
         this.details = dto.details();
-        setTimeAmount(dto);
-    }
-
-    private void setTimeAmount(PtoDto dto) {
-        this.days = 0;
-        this.labourHours = 0;
-        Long days = ChronoUnit.DAYS.between(dto.to(), dto.from());
-        if (days.compareTo(0L) > 0) {
-            this.days = days.intValue();
-        } else {
-            this.labourHours = dto.labourHours();
-        }
+        this.labourHours = dto.labourHours();
     }
 
     public Pto() {
     }
 
-    public LocalDateTime getFrom() {
-        return from;
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
-    public void setFrom(LocalDateTime from) {
-        this.from = from;
+    public void setStartDate(LocalDate from) {
+        this.startDate = from;
     }
 
-    public LocalDateTime getTo() {
-        return to;
+    public LocalDate getEndDate() {
+        return endDate;
     }
 
-    public void setTo(LocalDateTime to) {
-        this.to = to;
+    public void setEndDate(LocalDate to) {
+        this.endDate = to;
     }
 
     public Status getStatus() {

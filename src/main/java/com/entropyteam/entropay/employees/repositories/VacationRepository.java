@@ -9,9 +9,12 @@ import com.entropyteam.entropay.employees.models.Vacation;
 import com.entropyteam.entropay.employees.repositories.projections.VacationBalanceByYear;
 
 public interface VacationRepository extends BaseRepository<Vacation, UUID> {
+
     @Query(value = "SELECT year, CAST((SUM(credit) - COALESCE(SUM(debit), 0)) AS int) AS balance "
             + "FROM Vacation WHERE employee_id = :employeeId AND deleted = false "
             + "GROUP BY year HAVING CAST((SUM(credit) - COALESCE(SUM(debit), 0)) AS int) > 0 ORDER BY year ASC",
             nativeQuery = true)
     List<VacationBalanceByYear> getVacationByYear(@Param("employeeId") UUID employeeId);
+
+    List<Vacation> getVacationByEmployeeIdAndDeletedIsFalseAndCreditOrderByYearDesc(@Param("employeeId") UUID employeeId, @Param("credit") Integer credit);
 }
