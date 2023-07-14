@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -53,10 +52,12 @@ public record EmployeeDto(UUID id,
                           String role,
                           UUID lastAssignmentId,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                          @NotNull(message = "Active state is mandatory") boolean active) {
+                          @NotNull(message = "Active state is mandatory")
+                          boolean active,
+                          Integer availableDays) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
-                       Contract firstContract) {
+            Contract firstContract, Integer availableDays) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
                 employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(),
@@ -70,8 +71,8 @@ public record EmployeeDto(UUID id,
                 lastAssignment != null ? lastAssignment.getProject().getName() : "-",
                 lastAssignment != null ? lastAssignment.getProject().getClient().getName() : "-",
                 lastAssignment != null ? lastAssignment.getRole().getName() : "-",
-                lastAssignment != null ? lastAssignment.getId() : null,
-                firstContract != null ? firstContract.getStartDate() : null,
-                employee.isActive());
+                lastAssignment != null? lastAssignment.getId() : null,
+                firstContract != null ? firstContract.getStartDate() : null, employee.isActive(),
+                availableDays != null ? availableDays : 0);
     }
 }
