@@ -17,7 +17,7 @@ public class TokenService {
         try {
             return MAPPER.readValue((String) tokenClaims.get(COGNITO_CLAIMS_ROLE_KEY), Map.class);
         } catch (JsonProcessingException e) {
-            throw new AuthException("Error reading roles startDate token");
+            throw new AuthException("Error reading roles from token");
         }
     }
 }
