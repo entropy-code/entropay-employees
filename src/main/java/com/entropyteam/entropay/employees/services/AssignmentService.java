@@ -1,6 +1,8 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -113,6 +115,11 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         }
 
         return assignmentToCheck;
+    }
+
+    @Override
+    public List<String> getColumnsForSearch() {
+        return Arrays.asList("firstName", "lastName", "currency");
     }
 
 }

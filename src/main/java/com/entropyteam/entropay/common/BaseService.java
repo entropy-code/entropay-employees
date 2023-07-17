@@ -2,25 +2,19 @@ package com.entropyteam.entropay.common;
 
 
 import java.time.LocalDate;
-import java.util.UUID;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Comparator;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.hibernate.validator.internal.util.Contracts;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +32,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     @PersistenceContext
     private EntityManager entityManager;
     private final Class<Entity> entityClass;
+    private final Class<Entity> relatedEntityClass;
     private final ReactAdminMapper mapper;
     public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
     public static final String DATE_FROM_TERM_KEY = ReactAdminMapper.DATE_FROM_TERM_KEY;
@@ -45,6 +40,13 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
+        this.mapper = mapper;
+        this.relatedEntityClass = clazz;
+    }
+
+    protected BaseService(Class<Entity> clazz, Class<Entity> relatedClazz, ReactAdminMapper mapper) {
+        this.entityClass = clazz;
+        this.relatedEntityClass = relatedClazz;
         this.mapper = mapper;
     }
 
@@ -145,8 +147,28 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             return CollectionUtils.emptyCollection();
         }
 
-        return filter.getGetByRelatedFieldsFilter().entrySet().stream()
+        List<Map<Class<Entity>, String>> fieldList = new ArrayList<>();
+        Map<Class<Entity>, String> tuple = new HashMap<>();
+        tuple.put(entityClass, "firstName");
+        tuple.put(entityClass, "lastName");
+        fieldList.add(tuple);
+
+
+
+        Collection<Predicate> searchPredicates = filter.getGetByRelatedFieldsFilter().entrySet().stream()
                 .map(f -> cb.equal(root.get(f.getKey()).get(ID), f.getValue())).collect(Collectors.toSet());
+        if (filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY) && !getRelatedColumnsForSearch().isEmpty()) {
+            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();
+            for(Map.Entry<Object, List<String>> relatedEntity : getRelatedColumnsForSearch().entrySet()){
+                relatedEntity.getKey().getClass();
+                Join<Employee, Contract> join = root.join(relatedEntity.getKey());
+                for(String column: relatedEntity.getValue()){
+                    Predicate searchContainsColumn = cb.like(cb.lower(join.get(column)), "%"+searchInput+"%");
+                    searchPredicates.add(searchContainsColumn);
+                }
+            }
+        }
+        return searchPredicates;
     }
 
     @Override
@@ -191,5 +213,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     public List<String> getColumnsForSearch() {
         return Collections.emptyList();
+    }
+
+    public Map<String, List<String>> getRelatedColumnsForSearch() {
+        return new HashMap<>();
     }
 }

@@ -1,11 +1,9 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.employees.models.Company;
@@ -152,6 +150,16 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
             contractToCheck.setActive(false);
         }
         return contractToCheck;
+    }
+
+    @Override
+    public List<String> getColumnsForSearch() {
+        return Arrays.asList("notes", "benefits", "firstName");
+    }
+
+    @Override
+    public Map<String, List<String>> getRelatedColumnsForSearch() {
+        return new HashMap<>();
     }
 
 }
