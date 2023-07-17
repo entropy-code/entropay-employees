@@ -71,17 +71,12 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Assignment> assignments =
                 assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        Optional<Assignment> lastAssignment = assignments.stream().filter(a -> a.getEndDate() == null).findFirst();
-
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Contract> firstContract = contracts.stream().min(Comparator.comparing(Contract::getStartDate));
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
         Optional<Contract> activeContract =
                 contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        Optional<Contract> lastContract =
-                activeContract.stream().min(Comparator.comparing(Contract::getEndDate));
-
-        return new EmployeeDto(entity, paymentInformationList, lastAssignment.orElse(null), firstContract.orElse(null), availableDays,lastContract.orElse(null));
+        return new EmployeeDto(entity, paymentInformationList, assignments.orElse(null), firstContract.orElse(null), availableDays,activeContract.orElse(null));
     }
 
     @Override

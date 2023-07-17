@@ -63,7 +63,7 @@ public record EmployeeDto(UUID id,
     }
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
-            Contract firstContract, Integer availableDays, Contract lastContract) {
+            Contract firstContract, Integer availableDays, Contract activeContract) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
                 employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(),
@@ -79,7 +79,7 @@ public record EmployeeDto(UUID id,
                 lastAssignment != null ? lastAssignment.getRole().getName() : "-",
                 lastAssignment != null ? lastAssignment.getId() : null,
                 firstContract != null ? firstContract.getStartDate() : null,
-                lastContract != null ? lastContract.getEndDate() : null,
+                activeContract != null ? activeContract.getEndDate() : null,
                 employee.isActive(),
                 availableDays != null ? availableDays : 0);
     }
