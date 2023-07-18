@@ -1,5 +1,5 @@
 package com.entropyteam.entropay.employees.models;
 
 public enum Status {
-    APPROVED, REQUESTED
+    APPROVED, DECLINED, REQUESTED
 }
