@@ -131,6 +131,8 @@ jobs:
       - name: Set next version
         id: set-next-version
         run: |
+          NEW_VERSION=${GITHUB_REF#refs/tags/}
+          mvn versions:set -DnewVersion=$NEW_VERSION
           mvn versions:set -DnextSnapshot
           export NEXT_VERSION=$(mvn help:evaluate -Dexpression=project.version -Dexpression=project.version -q -DforceStdout)
           echo "NEXT_VERSION=${NEXT_VERSION}" >> $GITHUB_OUTPUT
@@ -142,7 +144,7 @@ jobs:
           commit-message: Prepare next dev version
           committer: GitHub <noreply@github.com>
           branch: next-version-${{ steps.set-next-version.outputs.NEXT_VERSION }}
-          base: ${{ github.head_ref }}
+          base: develop
           delete-branch: true
           title: 'Prepare next dev version'
           body: |
