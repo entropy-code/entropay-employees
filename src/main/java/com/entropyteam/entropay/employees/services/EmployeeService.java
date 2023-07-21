@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -108,14 +109,65 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto update(UUID employeeId, EmployeeDto employeeDto) {
         Employee entityToUpdate = toEntity(employeeDto);
         entityToUpdate.setId(employeeId);
+
+
+        if (shouldDeactivateEmployee(employeeId, entityToUpdate)) {
+
+            List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
+            List<Assignment> employeeAssignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
+
+            employeeContracts.forEach(contract -> {
+                contract.setActive(false);
+                contract.setEndDate(LocalDate.now());
+            });
+            contractRepository.saveAll(employeeContracts);
+
+            employeeAssignments.forEach(assignment -> {
+                assignment.setActive(false);
+                assignment.setEndDate(LocalDate.now());
+            });
+            assignmentRepository.saveAll(employeeAssignments);
+        }
+
         Employee savedEntity = getRepository().save(entityToUpdate);
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
     }
 
     @Override
+    @Transactional
+    public EmployeeDto delete(UUID employeeId) {
+        Employee employee = getRepository().findById(employeeId).orElseThrow();
+        employee.setDeleted(true);
+        employee.setActive(false);
+        List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
+        List<Assignment> employeeAssignment = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
+
+        employeeContracts.forEach(contract -> {
+                    contract.setDeleted(true);
+                    contract.setActive(false);
+                    contract.setEndDate(LocalDate.now());
+                });
+        contractRepository.saveAll(employeeContracts);
+
+        employeeAssignment.forEach(assignment -> {
+                    assignment.setDeleted(true);
+                    assignment.setActive(false);
+                    assignment.setEndDate(LocalDate.now());
+                });
+        assignmentRepository.saveAll(employeeAssignment);
+
+        return toDTO(employee);
+    }
+
+    @Override
     public List<String> getColumnsForSearch() {
         return Arrays.asList("firstName", "lastName", "internalId");
+    }
+
+    private boolean shouldDeactivateEmployee(UUID employeeId, Employee entityToUpdate) {
+        Employee existingEmployee = getRepository().getById(employeeId);
+        return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
 
 }
