@@ -70,17 +70,14 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected EmployeeDto toDTO(Employee entity) {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
-        List<Assignment> assignments =
-                assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(entity.getId());
-        Optional<Assignment> lastAssignment = assignments.stream().filter(a -> a.getEndDate() == null).findFirst();
-        if (lastAssignment.isEmpty()) {
-            lastAssignment = assignments.stream().max(Comparator.comparing(Assignment::getEndDate));
-        }
-
+        Optional<Assignment> assignment =
+                assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Contract> firstContract = contracts.stream().min(Comparator.comparing(Contract::getStartDate));
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, lastAssignment.orElse(null), firstContract.orElse(null), availableDays);
+        Optional<Contract> activeContract =
+                contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
+        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays,activeContract.orElse(null));
     }
 
     @Override

@@ -36,6 +36,13 @@ public class Vacation extends BaseEntity {
         this.year = entity.year();
     }
 
+    public Vacation(String year, Integer debit, Employee employee){
+        this.credit = 0;
+        this.debit = debit;
+        this.year = year;
+        this.employee = employee;
+    }
+
     public String getYear() {
         return year;
     }
