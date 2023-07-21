@@ -47,10 +47,11 @@ public record EmployeeDto(UUID id,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                           @NotNull(message = "Active state is mandatory") boolean active,
-                          Integer availableDays) {
+                          Integer availableDays,
+                          @JsonFormat(pattern = "MM-dd-yyyy") LocalDate nearestPto) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
-            Contract firstContract, Integer availableDays, Contract activeContract) {
+            Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
                 employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(),
@@ -68,6 +69,7 @@ public record EmployeeDto(UUID id,
                 firstContract != null ? firstContract.getStartDate() : null,
                 activeContract != null ? activeContract.getEndDate() : null,
                 employee.isActive(),
-                availableDays != null ? availableDays : 0);
+                availableDays != null ? availableDays : 0,
+                nearestPto);
     }
 }
