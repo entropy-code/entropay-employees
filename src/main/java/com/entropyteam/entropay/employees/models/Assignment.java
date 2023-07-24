@@ -153,7 +153,9 @@ public class Assignment extends BaseEntity {
     public void setActive(boolean active) {
         this.active = active;
     }
+
     public String getEndReason() {return endReason;}
+
     public void setEndReason(String endReason) {
         this.endReason = endReason;
     }
