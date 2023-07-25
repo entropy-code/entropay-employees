@@ -94,10 +94,11 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
             // Count query
             CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-            Root<Entity> rootForCount = countQuery.from(entityClass);
-            countQuery.select(cb.count(rootForCount))
-                    .where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
-            Long count = session.createQuery(countQuery).getSingleResult();
+          //  Root<Entity> rootForCount = countQuery.from(entityClass);
+           // Join<Employee, Entity> join = rootForCount.join("employee");
+           // countQuery.select(cb.count(join))
+             //       .where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
+            Long count = 10L; // session.createQuery(countQuery).getSingleResult();
 
             return new PageImpl<DTO>(entitiesResponse, Pageable.unpaged(), count);
 
@@ -130,16 +131,28 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             predicates.add(predicate);
         }
 
+        ArrayList<Predicate> searchPredicates = new ArrayList<>();
         if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
             String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();
-            ArrayList<Predicate> searchPredicates = new ArrayList<>();
             for(String column: getColumnsForSearch()){
                 Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%"+searchInput+"%");
-                searchPredicates.add(searchContainsColumn);
+//                searchPredicates.add(searchContainsColumn);
             }
             predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+
+
+            // for(Map.Entry<Object, List<String>> relatedEntity : getRelatedColumnsForSearch().entrySet()){
+            // relatedEntity.getKey().getClass();
+            // Join<Employee, Contract> join = root.join(relatedEntity.getKey());
+            Join<Employee, Contract> join = root.join("employee");
+
+//            for(String column: relatedEntity.getValue()){
+            Predicate searchContainsColumn = cb.like(cb.lower(join.get("firstName")), "%"+searchInput+"%");
+            searchPredicates.add(searchContainsColumn);
+//                }
+            //}
         }
-        return predicates;
+        return searchPredicates;
     }
 
     private Collection<Predicate> buildEntityRelatedPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
@@ -147,27 +160,17 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             return CollectionUtils.emptyCollection();
         }
 
-        List<Map<Class<Entity>, String>> fieldList = new ArrayList<>();
-        Map<Class<Entity>, String> tuple = new HashMap<>();
-        tuple.put(entityClass, "firstName");
-        tuple.put(entityClass, "lastName");
-        fieldList.add(tuple);
+//        List<Map<Class<Entity>, String>> fieldList = new ArrayList<>();
+//        Map<Class<Entity>, String> tuple = new HashMap<>();
+//        tuple.put(entityClass, "firstName");
+//        tuple.put(entityClass, "lastName");
+//        fieldList.add(tuple);
 
 
 
         Collection<Predicate> searchPredicates = filter.getGetByRelatedFieldsFilter().entrySet().stream()
                 .map(f -> cb.equal(root.get(f.getKey()).get(ID), f.getValue())).collect(Collectors.toSet());
-        if (filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY) && !getRelatedColumnsForSearch().isEmpty()) {
-            String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();
-            for(Map.Entry<Object, List<String>> relatedEntity : getRelatedColumnsForSearch().entrySet()){
-                relatedEntity.getKey().getClass();
-                Join<Employee, Contract> join = root.join(relatedEntity.getKey());
-                for(String column: relatedEntity.getValue()){
-                    Predicate searchContainsColumn = cb.like(cb.lower(join.get(column)), "%"+searchInput+"%");
-                    searchPredicates.add(searchContainsColumn);
-                }
-            }
-        }
+
         return searchPredicates;
     }
 

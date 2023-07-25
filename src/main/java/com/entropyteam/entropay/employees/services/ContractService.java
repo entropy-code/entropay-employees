@@ -152,14 +152,9 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         return contractToCheck;
     }
 
-    @Override
-    public List<String> getColumnsForSearch() {
-        return Arrays.asList("notes", "benefits", "firstName");
-    }
-
-    @Override
-    public Map<String, List<String>> getRelatedColumnsForSearch() {
-        return new HashMap<>();
-    }
+//    @Override
+//    public List<String> getColumnsForSearch() {
+//        return Arrays.asList();
+//    }
 
 }
