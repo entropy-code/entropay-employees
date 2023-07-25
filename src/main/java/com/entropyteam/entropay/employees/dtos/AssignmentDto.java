@@ -32,7 +32,8 @@ public record AssignmentDto(UUID id,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime createdAt,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-                            LocalDateTime modifiedAt
+                            LocalDateTime modifiedAt,
+                            String endReason
 ) {
 
 
@@ -44,7 +45,8 @@ public record AssignmentDto(UUID id,
                 assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(),
                 assignment.isActive(),
-                assignment.getModifiedAt(), assignment.getCreatedAt()
+                assignment.getModifiedAt(), assignment.getCreatedAt(),
+                assignment.getEndReason()
         );
     }
 

@@ -51,6 +51,8 @@ public class Assignment extends BaseEntity {
     private Currency currency;
     @Column
     private boolean active;
+    @Column
+    private String endReason;
     public Assignment() {
     }
 
@@ -61,6 +63,7 @@ public class Assignment extends BaseEntity {
         this.billableRate = assignmentDto.billableRate();
         this.currency = Currency.findByName(assignmentDto.currency());
         this.labourHours = assignmentDto.labourHours();
+        this.endReason = assignmentDto.endReason();
     }
 
     public Project getProject() {
@@ -151,4 +154,9 @@ public class Assignment extends BaseEntity {
         this.active = active;
     }
 
+    public String getEndReason() {return endReason;}
+
+    public void setEndReason(String endReason) {
+        this.endReason = endReason;
+    }
 }
