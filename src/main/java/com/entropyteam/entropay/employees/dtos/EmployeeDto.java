@@ -48,7 +48,7 @@ public record EmployeeDto(UUID id,
                           @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                           @NotNull(message = "Active state is mandatory") boolean active,
                           Integer availableDays,
-                          @JsonFormat(pattern = "MM-dd-yyyy") LocalDate nearestPto) {
+                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate nearestPto) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
             Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto) {
