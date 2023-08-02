@@ -40,8 +40,6 @@ public class Contract extends BaseEntity {
     @Column
     private Integer hoursPerMonth;
     @Column
-    private Integer vacations;
-    @Column
     private String benefits;
     @Column
     private String notes;
