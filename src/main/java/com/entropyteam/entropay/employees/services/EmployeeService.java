@@ -55,7 +55,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationRepository paymentInformationRepository,
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository, HolidayRepository holidayRepository) {
+                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -125,8 +125,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     public Integer applyVacationRuleToEmployee(Employee employee, String vacationYearToAdd, List<Contract> employeeContracts, List<Holiday> holidaysInPeriod) {
-
-        //find variables to set vacations
         Optional<Contract> activeContract = employeeContracts.stream()
                 .filter(Contract::isActive)
                 .findFirst();
