@@ -14,7 +14,6 @@ public class TestUtils {
         contract.setSeniority(aSeniority());
         contract.setStartDate(LocalDate.of(2019, 5, 22));
         contract.setHoursPerMonth(48);
-        contract.setVacations(15);
         contract.setActive(true);
         contract.setContractType(ContractType.CONTRACTOR);
         return contract;
