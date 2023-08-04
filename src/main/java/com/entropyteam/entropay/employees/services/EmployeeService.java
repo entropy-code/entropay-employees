@@ -25,7 +25,6 @@ import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
-import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

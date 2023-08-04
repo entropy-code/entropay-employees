@@ -32,11 +32,11 @@ public class Seniority extends BaseEntity {
         this.name = name;
     }
 
-    public int getVacationDays() {
+    public Integer getVacationDays() {
         return vacationDays;
     }
 
-    public void setVacationDays(int vacationDays) {
+    public void setVacationDays(Integer vacationDays) {
         this.vacationDays = vacationDays;
     }
 }
