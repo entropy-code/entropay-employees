@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,7 +36,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Vacations to apply to a old trainee/junior/ssr lv2 employee")
     @Test
-    @Transactional
     void vacationToApplyToAOldTrJrSsrEmployee() {
         //given
         Employee oldEmployee = TestUtils.anEmployee();
@@ -70,7 +68,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Vacations to apply to a old senior employee")
     @Test
-    @Transactional
     void vacationToApplyToAOldSrEmployee() {
         //given
         Employee oldEmployee = TestUtils.anEmployee();
@@ -103,7 +100,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Vacations to apply to a new senior employee")
     @Test
-    @Transactional
     void vacationToApplyToANewSrEmployee() {
         //given
         Employee oldEmployee = TestUtils.anEmployee();
@@ -136,7 +132,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Vacations to apply to a new Tr Jr Ssr employee")
     @Test
-    @Transactional
     void vacationToApplyToANewTrJrSsrEmployee() {
         //given
         Employee oldEmployee = TestUtils.anEmployee();
@@ -169,7 +164,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Default vacation days to employees with 2 years")
     @Test
-    @Transactional
     void applyDefaultVacationDays() {
         Employee oldEmployee = TestUtils.anEmployee();
         oldEmployee.setId(UUID.randomUUID());
@@ -202,7 +196,6 @@ public class EmployeeServiceTest {
 
     @DisplayName("Apply to employee with vacations")
     @Test
-    @Transactional
     void applyToEmployeeWithVacations() {
         Employee employee = TestUtils.anEmployee();
         employee.setId(UUID.randomUUID());

@@ -128,11 +128,11 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                 .filter(Contract::isActive)
                 .findFirst();
         Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
-        boolean hasVacationsLoad = vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd);
+        boolean hasVacationsLoaded = vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd);
 
-        if (activeContract.isPresent() && firstContract.isPresent() && !hasVacationsLoad) {
+        if (activeContract.isPresent() && firstContract.isPresent() && !hasVacationsLoaded) {
             int vacationDays = activeContract.get().getSeniority().getVacationDays();
-            LocalDate startDate = firstContract.orElse(null).getStartDate();
+            LocalDate startDate = firstContract.get().getStartDate();
             int yearDiff = startDate.until(LocalDate.now()).getYears();
             if (startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), 7, 1))) {
                 return yearDiff >= 2 ? 15 : vacationDays;
@@ -157,7 +157,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             }
             startDate = startDate.plusDays(1);
         }
-        if (StringUtils.equalsIgnoreCase(seniorityName, "Senior 1") || StringUtils.equalsIgnoreCase(seniorityName, "Senior 2") || StringUtils.equalsIgnoreCase(seniorityName, "Architect")) {
+        if (StringUtils.equalsIgnoreCase(seniorityName, "Senior 1") || StringUtils.equalsIgnoreCase(seniorityName, "Senior 2")
+                || StringUtils.equalsIgnoreCase(seniorityName, "Architect")) {
             return (int) Math.round((labourDays * 1.5) / 20);
         } else {
             return (int) Math.round((labourDays * 1) / 20);

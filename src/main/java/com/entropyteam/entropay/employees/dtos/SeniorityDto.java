@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 public record SeniorityDto(UUID id,
                            @NotNull(message = "Name is mandatory")
                            String name,
+                           @NotNull(message = "Vacation days is mandatory")
                            Integer vacationDays) {
 
     public SeniorityDto(Seniority seniority) {
