@@ -1,21 +1,31 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Set;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.PaymentInformation;
+import com.entropyteam.entropay.employees.models.Role;
+import com.entropyteam.entropay.employees.models.Technology;
+import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +33,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
-import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.PaymentInformation;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Technology;
 
 
 @Service
@@ -42,14 +46,15 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
+    private final PtoRepository ptoRepository;
 
 
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
-            PaymentInformationRepository paymentInformationRepository,
-            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
-            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository) {
+                           PaymentInformationRepository paymentInformationRepository,
+                           PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
+                           AssignmentRepository assignmentRepository, ContractRepository contractRepository,
+                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -59,6 +64,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
+        this.ptoRepository = ptoRepository;
     }
 
     @Override
@@ -77,7 +83,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
         Optional<Contract> activeContract =
                 contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays,activeContract.orElse(null));
+        LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
+        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, activeContract.orElse(null), nearestPto);
     }
 
     @Override
@@ -107,25 +114,20 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToUpdate = toEntity(employeeDto);
         entityToUpdate.setId(employeeId);
 
-
         if (shouldDeactivateEmployee(employeeId, entityToUpdate)) {
-
             List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
             List<Assignment> employeeAssignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
-
             employeeContracts.forEach(contract -> {
                 contract.setActive(false);
                 contract.setEndDate(LocalDate.now());
             });
             contractRepository.saveAll(employeeContracts);
-
             employeeAssignments.forEach(assignment -> {
                 assignment.setActive(false);
                 assignment.setEndDate(LocalDate.now());
             });
             assignmentRepository.saveAll(employeeAssignments);
         }
-
         Employee savedEntity = getRepository().save(entityToUpdate);
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
@@ -139,21 +141,18 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         employee.setActive(false);
         List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
         List<Assignment> employeeAssignment = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
-
         employeeContracts.forEach(contract -> {
-                    contract.setDeleted(true);
-                    contract.setActive(false);
-                    contract.setEndDate(LocalDate.now());
-                });
+            contract.setDeleted(true);
+            contract.setActive(false);
+            contract.setEndDate(LocalDate.now());
+        });
         contractRepository.saveAll(employeeContracts);
-
         employeeAssignment.forEach(assignment -> {
-                    assignment.setDeleted(true);
-                    assignment.setActive(false);
-                    assignment.setEndDate(LocalDate.now());
-                });
+            assignment.setDeleted(true);
+            assignment.setActive(false);
+            assignment.setEndDate(LocalDate.now());
+        });
         assignmentRepository.saveAll(employeeAssignment);
-
         return toDTO(employee);
     }
 
@@ -162,9 +161,50 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return Arrays.asList("firstName", "lastName", "internalId");
     }
 
+    public Integer applyVacationRuleToEmployee(Employee employee, String vacationYearToAdd, List<Contract> employeeContracts, List<Holiday> holidaysInPeriod) {
+        Optional<Contract> activeContract = employeeContracts.stream()
+                .filter(Contract::isActive)
+                .findFirst();
+        Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
+        boolean hasVacationsLoaded = vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd);
+
+        if (activeContract.isPresent() && firstContract.isPresent() && !hasVacationsLoaded) {
+            int vacationDays = activeContract.get().getSeniority().getVacationDays();
+            LocalDate startDate = firstContract.get().getStartDate();
+            int yearDiff = startDate.until(LocalDate.now()).getYears();
+            if (startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), 7, 1))) {
+                return yearDiff >= 2 ? 15 : vacationDays;
+            } else {
+                String seniorityName = activeContract.get().getSeniority().getName();
+                return vacationDaysPerWorkDay(holidaysInPeriod, startDate, seniorityName);
+            }
+
+        } else {
+            return 0;
+        }
+    }
+
+    private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate startDate, String seniorityName) {
+        double labourDays = 0;
+        while (!startDate.isAfter(LocalDate.now())) {
+            LocalDate finalStartDate = startDate;
+            if (startDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
+                    startDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
+                    holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalStartDate))) {
+                labourDays++;
+            }
+            startDate = startDate.plusDays(1);
+        }
+        if (StringUtils.equalsIgnoreCase(seniorityName, "Senior 1") || StringUtils.equalsIgnoreCase(seniorityName, "Senior 2")
+                || StringUtils.equalsIgnoreCase(seniorityName, "Architect")) {
+            return (int) Math.round((labourDays * 1.5) / 20);
+        } else {
+            return (int) Math.round((labourDays * 1) / 20);
+        }
+    }
+
     private boolean shouldDeactivateEmployee(UUID employeeId, Employee entityToUpdate) {
         Employee existingEmployee = getRepository().getById(employeeId);
         return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
-
 }
