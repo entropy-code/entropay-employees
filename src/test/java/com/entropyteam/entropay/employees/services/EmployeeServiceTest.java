@@ -134,8 +134,8 @@ public class EmployeeServiceTest {
     @Test
     void vacationToApplyToANewTrJrSsrEmployee() {
         //given
-        Employee oldEmployee = TestUtils.anEmployee();
-        oldEmployee.setId(UUID.randomUUID());
+        Employee newEmployee = TestUtils.anEmployee();
+        newEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
         activeContract.setActive(true);
@@ -147,16 +147,16 @@ public class EmployeeServiceTest {
 
         activeContract.setSeniority(seniority);
         activeContract.setStartDate(LocalDate.of(2023, 7, 20));
-        activeContract.setEmployee(oldEmployee);
+        activeContract.setEmployee(newEmployee);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
         //when
-        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
+        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(newEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(newEmployee, "2024", employeeContractList, holidaysList);
 
         //verify
         assertEquals(response, 1);

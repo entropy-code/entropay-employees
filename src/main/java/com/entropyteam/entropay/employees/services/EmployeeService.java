@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Set;
+
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -124,26 +125,28 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     public Integer applyVacationRuleToEmployee(Employee employee, String vacationYearToAdd, List<Contract> employeeContracts, List<Holiday> holidaysInPeriod) {
+        //early return if employee already has vacations for considered year
+        if (vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd)) {
+            return 0;
+        }
         Optional<Contract> activeContract = employeeContracts.stream()
                 .filter(Contract::isActive)
                 .findFirst();
         Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
-        boolean hasVacationsLoaded = vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd);
 
-        if (activeContract.isPresent() && firstContract.isPresent() && !hasVacationsLoaded) {
-            int vacationDays = activeContract.get().getSeniority().getVacationDays();
+        //calculate vacations if employee has contract to get seniority
+        if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
-            int yearDiff = startDate.until(LocalDate.now()).getYears();
-            if (startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), 7, 1))) {
+            if (LocalDate.now().getMonth().getValue() == 10 && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), 7, 1))) {
+                int yearDiff = startDate.until(LocalDate.now()).getYears();
+                int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;
             } else {
                 String seniorityName = activeContract.get().getSeniority().getName();
                 return vacationDaysPerWorkDay(holidaysInPeriod, startDate, seniorityName);
             }
-
-        } else {
-            return 0;
         }
+        return 0;
     }
 
     private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate startDate, String seniorityName) {
