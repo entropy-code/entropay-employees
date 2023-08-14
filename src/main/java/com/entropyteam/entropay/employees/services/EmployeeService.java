@@ -2,6 +2,7 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -175,7 +176,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         //calculate vacations if employee has contract to get seniority
         if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
-            if (LocalDate.now().getMonth().getValue() == 10 && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), 7, 1))) {
+            if (LocalDate.now().getMonth().getValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), Month.JULY, 1))) {
                 int yearDiff = startDate.until(LocalDate.now()).getYears();
                 int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;

@@ -38,9 +38,9 @@ public class VacationJob {
     }
 
     //Job to execute in October and January
-    @Scheduled(cron = "0 0 8 1 1,8 ?")
+    @Scheduled(cron = "0 0 8 1 1,10 ?")
     @Transactional
-    public void addVacationForEmployees() {
+    public void setEmployeeVacations() {
         List<String> summary = findEmployeeVacations();
         summary.forEach(System.out::println);
     }
@@ -52,17 +52,17 @@ public class VacationJob {
         String vacationYearToAdd = (currentDate.getMonthValue() == Month.JANUARY.getValue()) ? String.valueOf(currentYear) : String.valueOf(currentYear + 1);
 
         //find employees according to the month of accreditation
-        List<Employee> employees = LocalDate.now().getMonth().getValue() == 10 ?
+        List<Employee> employees = LocalDate.now().getMonth().getValue() == Month.OCTOBER.getValue() ?
                 employeeRepository.findEmployeeWhereStartDateBeforeJuly() : employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
         List<String> summary = new ArrayList<>();
         if (employees.isEmpty()) {
             summary.add("No employees found to add vacations");
             return summary;
         }
-
+        List<Holiday> holidaysInPeriod = holidayRepository.findAllByDeletedIsFalse();
+        List<Contract> employeesList = contractRepository.findAllByDeletedIsFalse();
         for (Employee employee : employees) {
-            List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employee.getId());
-            List<Holiday> holidaysInPeriod = holidayRepository.findAllByDeletedIsFalse();
+            List<Contract> employeeContracts = employeesList.stream().filter( c -> c.getEmployee().getId() == employee.getId()).toList();
             int vacationsCreditToAdd = employeeService.applyVacationRuleToEmployee(employee, vacationYearToAdd, employeeContracts, holidaysInPeriod);
             if (vacationsCreditToAdd > 0) {
                 summary.add(vacationsCreditToAdd + " days will be add to employee " + employee.getFirstName() + " " + employee.getLastName() + " for year " + vacationYearToAdd);
