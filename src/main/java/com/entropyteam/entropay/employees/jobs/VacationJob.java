@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,11 +48,15 @@ public class VacationJob {
 
         LocalDate currentDate = LocalDate.now();
         int currentYear = currentDate.getYear();
-        String vacationYearToAdd = (currentDate.getMonthValue() == Month.JANUARY.getValue()) ? String.valueOf(currentYear) : String.valueOf(currentYear + 1);
-
-        //find employees according to the month of accreditation
-        List<Employee> employees = LocalDate.now().getMonth().getValue() == Month.OCTOBER.getValue() ?
-                employeeRepository.findEmployeeWhereStartDateBeforeJuly() : employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        String vacationYearToAdd;
+        List<Employee> employees;
+        if (currentDate.getMonthValue() == 8){
+            vacationYearToAdd = String.valueOf(currentYear);
+            employees = employeeRepository.findEmployeeWhereStartDateAfterJuly();
+        } else {
+            vacationYearToAdd = String.valueOf(currentYear + 1);
+            employees = employeeRepository.findEmployeeWhereStartDateBeforeJuly();
+        }
         List<String> summary = new ArrayList<>();
         if (employees.isEmpty()) {
             summary.add("No employees found to add vacations");
@@ -63,7 +66,7 @@ public class VacationJob {
         List<Contract> employeesList = contractRepository.findAllByDeletedIsFalse();
         for (Employee employee : employees) {
             List<Contract> employeeContracts = employeesList.stream().filter( c -> c.getEmployee().getId() == employee.getId()).toList();
-            int vacationsCreditToAdd = employeeService.applyVacationRuleToEmployee(employee, vacationYearToAdd, employeeContracts, holidaysInPeriod);
+            int vacationsCreditToAdd = employeeService.applyVacationRuleToEmployee(employee, vacationYearToAdd, employeeContracts, currentDate, holidaysInPeriod);
             if (vacationsCreditToAdd > 0) {
                 summary.add(vacationsCreditToAdd + " days will be add to employee " + employee.getFirstName() + " " + employee.getLastName() + " for year " + vacationYearToAdd);
                 Vacation vacationToAdd = new Vacation();

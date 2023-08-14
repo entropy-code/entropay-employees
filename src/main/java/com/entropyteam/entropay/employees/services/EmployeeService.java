@@ -163,7 +163,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return Arrays.asList("firstName", "lastName", "internalId");
     }
 
-    public Integer applyVacationRuleToEmployee(Employee employee, String vacationYearToAdd, List<Contract> employeeContracts, List<Holiday> holidaysInPeriod) {
+    public Integer applyVacationRuleToEmployee(Employee employee, String vacationYearToAdd, List<Contract> employeeContracts, LocalDate currentDate, List<Holiday> holidaysInPeriod) {
         //early return if employee already has vacations for considered year
         if (vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), vacationYearToAdd)) {
             return 0;
@@ -176,21 +176,21 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         //calculate vacations if employee has contract to get seniority
         if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
-            if (LocalDate.now().getMonth().getValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), Month.JULY, 1))) {
+            if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), Month.JULY, 1))) {
                 int yearDiff = startDate.until(LocalDate.now()).getYears();
                 int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;
             } else {
                 String seniorityName = activeContract.get().getSeniority().getName();
-                return vacationDaysPerWorkDay(holidaysInPeriod, startDate, seniorityName);
+                return vacationDaysPerWorkDay(holidaysInPeriod, currentDate, startDate, seniorityName);
             }
         }
         return 0;
     }
 
-    private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate startDate, String seniorityName) {
+    private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate currentDate, LocalDate startDate, String seniorityName) {
         double labourDays = 0;
-        while (!startDate.isAfter(LocalDate.now())) {
+        while (!startDate.isAfter(currentDate)) {
             LocalDate finalStartDate = startDate;
             if (startDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
                     startDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
