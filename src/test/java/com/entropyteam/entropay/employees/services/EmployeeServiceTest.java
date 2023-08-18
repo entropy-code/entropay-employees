@@ -238,4 +238,28 @@ public class EmployeeServiceTest {
 
     }
 
+    @DisplayName("Vacations to apply to a employee without contract")
+    @Test
+    void vacationToApplyToAEmployeeWithoutContract() {
+        Employee employee = TestUtils.anEmployee();
+        employee.setId(UUID.randomUUID());
+
+        Seniority seniority = new Seniority();
+        seniority.setId(UUID.randomUUID());
+        seniority.setName("junior");
+        seniority.setVacationDays(10);
+
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+        List<Contract> employeeContractList = new ArrayList<>();
+
+        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);
+
+        //then
+        int response = employeeService.applyVacationRuleToEmployee(employee, "2024", employeeContractList, currentDate, holidaysList);
+
+        //verify
+        assertEquals(response, 0);
+
+    }
+
 }

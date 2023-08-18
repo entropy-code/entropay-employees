@@ -15,7 +15,7 @@
 	<packaging>jar</packaging>
 
 	<name>entropay-employees</name>
-	<description>Entropay Employees API</description>
+	<description>Entrogay Employees API</description>
 
 	<properties>
 		<apache-commons.version>3.0</apache-commons.version>
@@ -30,6 +30,7 @@
 		<mapstruct-processor.version>1.4.2.Final</mapstruct-processor.version>
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<postgresql.version>42.3.5</postgresql.version>
+		<software-amazon-sdk.version>2.20.52</software-amazon-sdk.version>
 	</properties>
 
 	<dependencies>
@@ -100,6 +101,11 @@
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
 			<version>${hibernate-validator.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>${software-amazon-sdk.version}</version>
 		</dependency>
 	</dependencies>
 	<build>

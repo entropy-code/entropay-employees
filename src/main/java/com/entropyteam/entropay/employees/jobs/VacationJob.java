@@ -1,81 +1,86 @@
 package com.entropyteam.entropay.employees.jobs;
 
+import com.entropyteam.entropay.common.Builder;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.Vacation;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.HolidayRepository;
+import com.entropyteam.entropay.employees.repositories.VacationRepository;
+import com.entropyteam.entropay.employees.services.AmazonService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class VacationJob {
 
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
-    private final VacationRepository vacationRepository;
     private final HolidayRepository holidayRepository;
     private final EmployeeService employeeService;
+    private final VacationRepository vacationRepository;
+    private final AmazonService amazonService;
 
     @Autowired
-    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, VacationRepository vacationRepository, HolidayRepository holidayRepository, EmployeeService employeeService) {
+    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, HolidayRepository holidayRepository, EmployeeService employeeService, VacationRepository vacationRepository, AmazonService amazonService) {
         this.employeeRepository = employeeRepository;
         this.contractRepository = contractRepository;
-        this.vacationRepository = vacationRepository;
         this.holidayRepository = holidayRepository;
         this.employeeService = employeeService;
+        this.vacationRepository = vacationRepository;
+        this.amazonService = amazonService;
     }
 
     //Job to execute in October and January
     @Scheduled(cron = "0 0 8 1 1,10 ?")
     @Transactional
-    public void setEmployeeVacations() {
-        List<String> summary = findEmployeeVacations();
-        summary.forEach(System.out::println);
+    public void setEmployeeVacations() throws IOException {
+        Map<String, Integer> summary = findEmployeeVacations();
+        String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
+        InputStream is = Builder.convertMapToCSVInputStream(summary);
+        amazonService.uploadFile("entroteam-dev-files",fileName,is);
+
     }
 
-    private List<String> findEmployeeVacations() {
+    private Map<String, Integer> findEmployeeVacations() {
+        List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        Map<String, Integer> summary = new HashMap<>();
+        if (employees.isEmpty()) {
+            return summary;
+        }
 
         LocalDate currentDate = LocalDate.now();
         int currentYear = currentDate.getYear();
-        String vacationYearToAdd;
-        List<Employee> employees;
-        if (currentDate.getMonthValue() == 8){
-            vacationYearToAdd = String.valueOf(currentYear);
-            employees = employeeRepository.findEmployeeWhereStartDateAfterJuly();
-        } else {
-            vacationYearToAdd = String.valueOf(currentYear + 1);
-            employees = employeeRepository.findEmployeeWhereStartDateBeforeJuly();
-        }
-        List<String> summary = new ArrayList<>();
-        if (employees.isEmpty()) {
-            summary.add("No employees found to add vacations");
-            return summary;
-        }
+        String vacationYearToAdd = currentDate.getMonthValue() == 10 ? String.valueOf(currentYear + 1) : String.valueOf(currentYear);
+
         List<Holiday> holidaysInPeriod = holidayRepository.findAllByDeletedIsFalse();
-        List<Contract> employeesList = contractRepository.findAllByDeletedIsFalse();
+        List<Contract> contractsList = contractRepository.findAllByDeletedIsFalse();
+
         for (Employee employee : employees) {
-            List<Contract> employeeContracts = employeesList.stream().filter( c -> c.getEmployee().getId() == employee.getId()).toList();
+            List<Contract> employeeContracts = contractsList.stream().filter( c -> c.getEmployee().getId() == employee.getId()).toList();
             int vacationsCreditToAdd = employeeService.applyVacationRuleToEmployee(employee, vacationYearToAdd, employeeContracts, currentDate, holidaysInPeriod);
+
             if (vacationsCreditToAdd > 0) {
-                summary.add(vacationsCreditToAdd + " days will be add to employee " + employee.getFirstName() + " " + employee.getLastName() + " for year " + vacationYearToAdd);
                 Vacation vacationToAdd = new Vacation();
                 vacationToAdd.setYear(vacationYearToAdd);
                 vacationToAdd.setCredit(vacationsCreditToAdd);
                 vacationToAdd.setEmployee(employee);
                 vacationRepository.save(vacationToAdd);
+                summary.put(employee.getFirstName() + " " + employee.getLastName(),vacationsCreditToAdd);
             } else {
-                summary.add("Can't add vacations to employee " + employee.getFirstName() + " " + employee.getLastName() + " for year " + vacationYearToAdd);
+                summary.put(employee.getFirstName() + " " + employee.getLastName(),0);
             }
         }
         return summary;

@@ -180,7 +180,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                 int yearDiff = startDate.until(LocalDate.now()).getYears();
                 int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;
-            } else {
+            } else if (currentDate.getMonthValue() == Month.JANUARY.getValue()) {
                 String seniorityName = activeContract.get().getSeniority().getName();
                 return vacationDaysPerWorkDay(holidaysInPeriod, currentDate, startDate, seniorityName);
             }
