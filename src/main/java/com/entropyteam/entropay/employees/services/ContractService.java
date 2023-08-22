@@ -2,12 +2,10 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -35,6 +33,7 @@ import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
+    public static final String CONTRACT_ROLE_HHRR = "hhrr";
     private final ContractRepository contractRepository;
     private final CompanyRepository companyRepository;
     private final EmployeeRepository employeeRepository;
@@ -152,6 +151,18 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
             contractToCheck.setActive(false);
         }
         return contractToCheck;
+    }
+    @Override
+    public Map<String, Object> getRestrictedFields(AppRole userRole){
+        Map<String,Object> restrictedFields = new HashMap<>();
+                if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
+                    
+                    Optional<Role> role = roleRepository.findByDeletedIsFalseAndName(CONTRACT_ROLE_HHRR);
+                    if(role.isPresent()){
+                        restrictedFields.put("role", role.get());
+                    }
+                }
+                return  restrictedFields;
     }
 
 }
