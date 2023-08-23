@@ -54,7 +54,6 @@ public class VacationJob {
         String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
         InputStream is = BuilderUtils.convertMapToCSVInputStream(summary);
         awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName,is);
-
     }
 
     private Map<String, Integer> findEmployeeVacations() {

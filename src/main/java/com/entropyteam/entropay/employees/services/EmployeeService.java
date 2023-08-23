@@ -177,7 +177,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
             if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), Month.JULY, 1))) {
-                int yearDiff = startDate.until(LocalDate.now()).getYears();
+                int yearDiff = startDate.until(currentDate).getYears();
                 int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;
             } else if (currentDate.getMonthValue() == Month.JANUARY.getValue()) {
