@@ -16,7 +16,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 
-import static com.entropyteam.entropay.auth.AuthConstants.*;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DIRECTOR_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
