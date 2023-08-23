@@ -8,4 +8,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class AwsCredentialsProperties {
     private String accessKeyId;
     private String secretAccessKey;
+    private String bucketName;
 }

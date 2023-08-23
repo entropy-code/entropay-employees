@@ -7,11 +7,9 @@ import java.io.ByteArrayInputStream;
 import java.time.LocalDate;
 import java.util.Map;
 
-public class Builder {
+public class BuilderUtils {
 
     public static InputStream convertMapToCSVInputStream(Map<String, Integer> summary) throws IOException {
-
-
         StringWriter writer = new StringWriter();
         writer.write(" Vacation summary of " + LocalDate.now() + "\n");
         writer.write("\n");

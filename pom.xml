@@ -15,7 +15,7 @@
 	<packaging>jar</packaging>
 
 	<name>entropay-employees</name>
-	<description>Entrogay Employees API</description>
+	<description>Entropay Employees API</description>
 
 	<properties>
 		<apache-commons.version>3.0</apache-commons.version>

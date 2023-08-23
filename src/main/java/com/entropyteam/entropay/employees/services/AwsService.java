@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 
 @EnableConfigurationProperties(AwsCredentialsProperties.class)
 @Service
-public class AmazonService {
+public class AwsService {
     private final AwsCredentialsProperties awsCredentialsProperties;
     private S3Client s3client;
 
     @Autowired
-    public AmazonService(AwsCredentialsProperties awsCredentialsProperties) {
+    public AwsService(AwsCredentialsProperties awsCredentialsProperties) {
         this.awsCredentialsProperties = awsCredentialsProperties;
         initAws();
     }

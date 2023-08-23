@@ -1,6 +1,6 @@
 package com.entropyteam.entropay.employees.jobs;
 
-import com.entropyteam.entropay.common.Builder;
+import com.entropyteam.entropay.common.BuilderUtils;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
@@ -9,7 +9,8 @@ import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
-import com.entropyteam.entropay.employees.services.AmazonService;
+import com.entropyteam.entropay.employees.services.AwsCredentialsProperties;
+import com.entropyteam.entropay.employees.services.AwsService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -31,16 +32,18 @@ public class VacationJob {
     private final HolidayRepository holidayRepository;
     private final EmployeeService employeeService;
     private final VacationRepository vacationRepository;
-    private final AmazonService amazonService;
+    private final AwsService awsService;
+    private final AwsCredentialsProperties awsCredentialsProperties;
 
     @Autowired
-    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, HolidayRepository holidayRepository, EmployeeService employeeService, VacationRepository vacationRepository, AmazonService amazonService) {
+    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, HolidayRepository holidayRepository, EmployeeService employeeService, VacationRepository vacationRepository, AwsService awsService, AwsCredentialsProperties awsCredentialsProperties) {
         this.employeeRepository = employeeRepository;
         this.contractRepository = contractRepository;
         this.holidayRepository = holidayRepository;
         this.employeeService = employeeService;
         this.vacationRepository = vacationRepository;
-        this.amazonService = amazonService;
+        this.awsService = awsService;
+        this.awsCredentialsProperties = awsCredentialsProperties;
     }
 
     //Job to execute in October and January
@@ -49,8 +52,8 @@ public class VacationJob {
     public void setEmployeeVacations() throws IOException {
         Map<String, Integer> summary = findEmployeeVacations();
         String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
-        InputStream is = Builder.convertMapToCSVInputStream(summary);
-        amazonService.uploadFile("entroteam-dev-files",fileName,is);
+        InputStream is = BuilderUtils.convertMapToCSVInputStream(summary);
+        awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName,is);
 
     }
 
