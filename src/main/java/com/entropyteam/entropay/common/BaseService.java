@@ -147,8 +147,13 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     }
 
     private Collection<Predicate> buildEntityRestrictedFields(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
-        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
-                .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+        Collection<Predicate> predicates = new ArrayList<>();
+        predicates.addAll(
+                filter.getGetByFieldsFilter().entrySet().stream()
+                        .filter(f -> f.getKey() != SEARCH_TERM_KEY)
+                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue()))
+                        .collect(Collectors.toSet())
+        );
         Map<String, Object> restrictedFields = getRestrictedFields(getUserRole());
         for (Map.Entry<String, Object> entry : restrictedFields.entrySet()) {
             predicates.add(cb.notEqual(root.get(entry.getKey()), entry.getValue()));
@@ -200,6 +205,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return Collections.emptyList();
     }
 
-    public Map<String, Object> getRestrictedFields(AppRole userRole){return Collections.emptyMap();};
+    public Map<String,Object> getRestrictedFields(AppRole userRole) { return Collections.emptyMap(); };
 
 }

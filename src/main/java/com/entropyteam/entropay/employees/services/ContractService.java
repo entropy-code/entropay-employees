@@ -156,8 +156,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public Map<String, Object> getRestrictedFields(AppRole userRole){
         Map<String,Object> restrictedFields = new HashMap<>();
                 if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
-                    
-                    Optional<Role> role = roleRepository.findByDeletedIsFalseAndName(CONTRACT_ROLE_HHRR);
+                    Optional<Role> role = roleRepository.findHrRoles();
                     if(role.isPresent()){
                         restrictedFields.put("role", role.get());
                     }
