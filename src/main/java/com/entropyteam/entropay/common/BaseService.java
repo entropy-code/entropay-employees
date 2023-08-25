@@ -2,8 +2,15 @@ package com.entropyteam.entropay.common;
 
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -11,8 +18,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.hibernate.Session;
@@ -205,6 +210,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return Collections.emptyList();
     }
 
-    public Map<String,Object> getRestrictedFields(AppRole userRole) { return Collections.emptyMap(); };
+    public Map<String,Object> getRestrictedFields(AppRole userRole) {
+        return Collections.emptyMap();
+    };
 
 }

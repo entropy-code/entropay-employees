@@ -2,7 +2,12 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.auth.AppRole;
@@ -33,7 +38,6 @@ import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
-    public static final String CONTRACT_ROLE_HHRR = "hhrr";
     private final ContractRepository contractRepository;
     private final CompanyRepository companyRepository;
     private final EmployeeRepository employeeRepository;

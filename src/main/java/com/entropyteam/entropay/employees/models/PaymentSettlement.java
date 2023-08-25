@@ -15,14 +15,16 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import java.math.BigDecimal;
 
-import static com.entropyteam.entropay.auth.AuthConstants.*;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 
 @Entity(name = "PaymentSettlement")
 @Table(name = "payment_settlement")
 public class PaymentSettlement extends BaseEntity {
 
     @Column
-    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DIRECTOR_HR})
+    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     private BigDecimal salary;
     @Enumerated(EnumType.STRING)
     @Column(name = "currency")
