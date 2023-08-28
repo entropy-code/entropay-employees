@@ -1,10 +1,5 @@
 package com.entropyteam.entropay.common;
 
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
-
 import java.util.List;
 import java.util.Objects;
 import org.springframework.data.domain.Page;
@@ -21,6 +16,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
     public static final String X_TOTAL_COUNT = "X-Total-Count";
@@ -32,7 +33,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<List<T>> getList(ReactAdminParams params) {
         Page<T> response = crudService.findAllActive(params);
         return ResponseEntity.ok()
@@ -42,7 +43,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @GetMapping("/{id}")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> getOne(@PathVariable(value = "id") K id) {
         return crudService.findOne(id)
                 .map(ResponseEntity::ok)
@@ -51,21 +52,21 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
 
     @Override
     @PostMapping
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> create(@Valid @RequestBody T entity) {
         return ResponseEntity.ok(crudService.create(entity));
     }
 
     @Override
     @DeleteMapping("/{id}")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> delete(@PathVariable(value = "id") K id) {
         return ResponseEntity.ok(crudService.delete(id));
     }
 
     @Override
     @PutMapping("/{id}")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> update(@PathVariable(value = "id") K id, @Valid @RequestBody T entity) {
         return crudService.findOne(id)
                 .map(e -> {

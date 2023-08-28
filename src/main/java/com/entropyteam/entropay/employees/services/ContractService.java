@@ -2,12 +2,15 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
+import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -152,6 +155,17 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
             contractToCheck.setActive(false);
         }
         return contractToCheck;
+    }
+    @Override
+    public Map<String, Object> getRestrictedFields(AppRole userRole){
+        Map<String,Object> restrictedFields = new HashMap<>();
+                if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
+                    Optional<Role> role = roleRepository.findHrRoles();
+                    if(role.isPresent()){
+                        restrictedFields.put("role", role.get());
+                    }
+                }
+                return  restrictedFields;
     }
 
 }

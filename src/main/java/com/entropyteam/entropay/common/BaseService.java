@@ -2,14 +2,15 @@ package com.entropyteam.entropay.common;
 
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.Comparator;
+import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -69,6 +70,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("deleted"), false));
+            predicates.addAll(buildEntityRestrictedFields(root, filter,cb));
             predicates.addAll(buildIdPredicates(root, filter));
             predicates.addAll(buildEntityPredicates(root, filter, cb));
             predicates.addAll(buildEntityRelatedPredicates(root, filter, cb));
@@ -149,6 +151,21 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 .map(f -> cb.equal(root.get(f.getKey()).get(ID), f.getValue())).collect(Collectors.toSet());
     }
 
+    private Collection<Predicate> buildEntityRestrictedFields(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
+        Collection<Predicate> predicates = new ArrayList<>();
+        predicates.addAll(
+                filter.getGetByFieldsFilter().entrySet().stream()
+                        .filter(f -> f.getKey() != SEARCH_TERM_KEY)
+                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue()))
+                        .collect(Collectors.toSet())
+        );
+        Map<String, Object> restrictedFields = getRestrictedFields(getUserRole());
+        for (Map.Entry<String, Object> entry : restrictedFields.entrySet()) {
+            predicates.add(cb.notEqual(root.get(entry.getKey()), entry.getValue()));
+        }
+        return predicates;
+    }
+
     @Override
     @Transactional
     public DTO delete(Key id) {
@@ -192,4 +209,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     public List<String> getColumnsForSearch() {
         return Collections.emptyList();
     }
+
+    public Map<String,Object> getRestrictedFields(AppRole userRole) {
+        return Collections.emptyMap();
+    };
+
 }
