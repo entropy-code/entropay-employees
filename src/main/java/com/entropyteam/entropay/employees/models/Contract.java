@@ -40,8 +40,6 @@ public class Contract extends BaseEntity {
     @Column
     private Integer hoursPerMonth;
     @Column
-    private Integer vacations;
-    @Column
     private String benefits;
     @Column
     private String notes;
@@ -60,7 +58,6 @@ public class Contract extends BaseEntity {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
         this.hoursPerMonth = entity.hoursPerMonth();
-        this.vacations = entity.vacations();
         this.benefits = entity.benefits();
         this.notes = entity.notes();
         this.contractType = ContractType.valueOf(entity.contractType());
@@ -122,14 +119,6 @@ public class Contract extends BaseEntity {
 
     public void setHoursPerMonth(Integer hoursPerMonth) {
         this.hoursPerMonth = hoursPerMonth;
-    }
-
-    public Integer getVacations() {
-        return vacations;
-    }
-
-    public void setVacations(Integer vacations) {
-        this.vacations = vacations;
     }
 
     public String getBenefits() {

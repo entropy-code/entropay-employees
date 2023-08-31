@@ -21,7 +21,6 @@ public record ContractDto(UUID id,
                           @NotNull(message = "Seniority is mandatory")
                           UUID seniorityId,
                           Integer hoursPerMonth,
-                          Integer vacations,
                           @NotNull(message = "Start date is mandatory")
                           @JsonFormat(pattern = "yyyy-MM-dd")
                           LocalDate startDate,
@@ -42,8 +41,7 @@ public record ContractDto(UUID id,
 
     public ContractDto(Contract contract) {
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
-                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
-                contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
+                contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 contract.getPaymentsSettlement().stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
                 contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());
@@ -57,7 +55,6 @@ public record ContractDto(UUID id,
                 this.roleId,
                 this.seniorityId,
                 this.hoursPerMonth,
-                this.vacations,
                 this.startDate,
                 this.endDate,
                 this.benefits,
@@ -74,7 +71,7 @@ public record ContractDto(UUID id,
     public ContractDto(Contract contract, List<PaymentSettlement> paymentSettlementList ) {
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
-                contract.getVacations(), contract.getStartDate(), contract.getEndDate(),
+                contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 paymentSettlementList.stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
                 contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());

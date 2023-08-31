@@ -26,7 +26,7 @@ public class ReactAdminMapperTest {
     @Test
     public void TestMapperGetList() {
         ReactAdminParams params = new ReactAdminParams();
-        params.setFilter("{\"vacations\":\"10\"}");
+        params.setFilter("{\"hoursPerMonth\":\"10\"}");
         params.setRange("[5,9]");
         params.setSort("[\"startDate\",\"ASC\"]");
         Class<Contract> entityClass = Contract.class;
@@ -37,7 +37,7 @@ public class ReactAdminMapperTest {
         Assertions.assertEquals(0, filter.getGetByIdsFilter().size());
         Assertions.assertEquals(1, filter.getGetByFieldsFilter().size());
         Assertions.assertEquals(0, filter.getGetByRelatedFieldsFilter().size());
-        Assertions.assertEquals("10", filter.getGetByFieldsFilter().get("vacations"));
+        Assertions.assertEquals("10", filter.getGetByFieldsFilter().get("hoursPerMonth"));
 
         Assertions.assertEquals(5, pageable.getOffset());
         Assertions.assertEquals(5, pageable.getPageSize());
