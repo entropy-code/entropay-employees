@@ -2,19 +2,28 @@ package com.entropyteam.entropay.common;
 
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.criteria.*;
-
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-import org.hibernate.validator.internal.util.Contracts;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +33,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
@@ -94,10 +105,10 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
             // Count query
             CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-          //  Root<Entity> rootForCount = countQuery.from(entityClass);
-           // Join<Employee, Entity> join = rootForCount.join("employee");
-           // countQuery.select(cb.count(join))
-             //       .where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
+            //  Root<Entity> rootForCount = countQuery.from(entityClass);
+            // Join<Employee, Entity> join = rootForCount.join("employee");
+            // countQuery.select(cb.count(join))
+            //       .where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
             Long count = 10L; // session.createQuery(countQuery).getSingleResult();
 
             return new PageImpl<DTO>(entitiesResponse, Pageable.unpaged(), count);
@@ -124,7 +135,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
         if( filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter().containsKey(DATE_FROM_TERM_KEY) ){
-            String column = getColumnsForSearch().get(0);
+            String column = getColumnsForSearch().get(0); // TODO fix
             LocalDate dateFrom = filter.getGetByDateFieldsFilter().get(DATE_FROM_TERM_KEY);
             LocalDate dateTo = filter.getGetByDateFieldsFilter().get(DATE_TO_TERM_KEY);
             Predicate predicate = cb.between(root.get(column), dateFrom,dateTo);
@@ -134,25 +145,22 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         ArrayList<Predicate> searchPredicates = new ArrayList<>();
         if(filter.getGetByFieldsFilter().containsKey(SEARCH_TERM_KEY)){
             String searchInput = filter.getGetByFieldsFilter().get(SEARCH_TERM_KEY).toString().toLowerCase();
-            for(String column: getColumnsForSearch()){
-                Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%"+searchInput+"%");
-//                searchPredicates.add(searchContainsColumn);
+            for (String column : getColumnsForSearch()) {
+                Predicate searchContainsColumn = cb.like(cb.lower(root.get(column)), "%" + searchInput + "%");
+                searchPredicates.add(searchContainsColumn);
+            }
+            //predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
+
+            for (Map.Entry<String, List<String>> relatedEntity : getRelatedColumnsForSearch().entrySet()) {
+                Join<?, Contract> join = root.join(relatedEntity.getKey());
+                for (String column : relatedEntity.getValue()) {
+                    Predicate searchContainsColumn = cb.like(cb.lower(join.get(column)), "%" + searchInput + "%");
+                    searchPredicates.add(searchContainsColumn);
+                }
             }
             predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));
-
-
-            // for(Map.Entry<Object, List<String>> relatedEntity : getRelatedColumnsForSearch().entrySet()){
-            // relatedEntity.getKey().getClass();
-            // Join<Employee, Contract> join = root.join(relatedEntity.getKey());
-            Join<Employee, Contract> join = root.join("employee");
-
-//            for(String column: relatedEntity.getValue()){
-            Predicate searchContainsColumn = cb.like(cb.lower(join.get("firstName")), "%"+searchInput+"%");
-            searchPredicates.add(searchContainsColumn);
-//                }
-            //}
         }
-        return searchPredicates;
+        return predicates;
     }
 
     private Collection<Predicate> buildEntityRelatedPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
@@ -219,6 +227,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     }
 
     public Map<String, List<String>> getRelatedColumnsForSearch() {
-        return new HashMap<>();
+        Map<String, List<String>> relatedColumns = new HashMap<>();
+        relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
+        return relatedColumns;
     }
 }
