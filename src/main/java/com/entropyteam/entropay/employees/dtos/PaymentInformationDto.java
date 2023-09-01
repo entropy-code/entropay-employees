@@ -8,11 +8,13 @@ public record PaymentInformationDto(UUID id,
                                     String platform,
                                     String country,
                                     String cbu,
+                                    String routingNumber,
                                     boolean deleted
 ) {
 
     public PaymentInformationDto(PaymentInformation paymentInformation) {
-        this(paymentInformation.getId(), paymentInformation.getPlatform(),paymentInformation.getCountry(), paymentInformation.getCbu(), paymentInformation.isDeleted());
+        this(paymentInformation.getId(), paymentInformation.getPlatform(),paymentInformation.getCountry(),
+                paymentInformation.getCbu(), paymentInformation.getRoutingNumber(), paymentInformation.isDeleted());
     }
 
 }
