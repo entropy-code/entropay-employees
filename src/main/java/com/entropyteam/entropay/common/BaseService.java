@@ -20,6 +20,8 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.springframework.data.domain.Page;
@@ -35,12 +37,12 @@ import com.entropyteam.entropay.employees.models.Contract;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
+    private static final Logger LOGGER = LogManager.getLogger();
     public static final String ID = "id";
 
     @PersistenceContext
     private EntityManager entityManager;
     private final Class<Entity> entityClass;
-    private final Class<Entity> relatedEntityClass;
     private final ReactAdminMapper mapper;
     public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
     public static final String DATE_FROM_TERM_KEY = ReactAdminMapper.DATE_FROM_TERM_KEY;
@@ -49,15 +51,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
         this.mapper = mapper;
-        this.relatedEntityClass = clazz;
     }
-
-    protected BaseService(Class<Entity> clazz, Class<Entity> relatedClazz, ReactAdminMapper mapper) {
-        this.entityClass = clazz;
-        this.relatedEntityClass = relatedClazz;
-        this.mapper = mapper;
-    }
-
 
     @Override
     @Transactional
@@ -112,8 +106,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             return new PageImpl<DTO>(entitiesResponse, Pageable.unpaged(), count);
 
         } catch (Exception e) {
-            throw new InvalidRequestParametersException("Bad params error: invalid params. Error: " + e.getMessage(),
-                    e);
+            LOGGER.error(e.getMessage(), e);
+            throw new InvalidRequestParametersException("Bad params error", e);
         }
     }
 
