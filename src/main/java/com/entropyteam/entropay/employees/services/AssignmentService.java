@@ -1,6 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -115,4 +119,10 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         return assignmentToCheck;
     }
 
+    @Override
+    public Map<String, List<String>> getRelatedColumnsForSearch() {
+        Map<String, List<String>> relatedColumns = new HashMap<>();
+        relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
+        return relatedColumns;
+    }
 }
