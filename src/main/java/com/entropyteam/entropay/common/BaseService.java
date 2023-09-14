@@ -135,7 +135,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 LocalDate dateFrom = filter.getGetByDateFieldsFilter().get(DATE_FROM_TERM_KEY);
                 LocalDate dateTo = filter.getGetByDateFieldsFilter().get(DATE_TO_TERM_KEY);
                 Predicate predicate = cb.between(root.get(column), dateFrom, dateTo);
-                predicates.add(predicate);
+                searchPredicates.add(predicate);
             }
             if (CollectionUtils.isNotEmpty(searchPredicates)) {
                 predicates.add(cb.or(searchPredicates.toArray(new Predicate[0])));

@@ -50,7 +50,7 @@ public class HolidayService extends BaseService<Holiday, HolidayDto,UUID> {
     }
 
     @Override
-    public List<String> getColumnsForSearch() {
+    public List<String> getDateColumnsForSearch() {
         return List.of("date");
     }
 
