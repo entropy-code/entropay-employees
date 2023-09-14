@@ -53,6 +53,8 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2023, 5, 5));
         activeContract.setEmployee(oldEmployee);
 
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
@@ -60,7 +62,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 10);
@@ -88,11 +90,13 @@ public class EmployeeServiceTest {
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+
         //when
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 15);
@@ -117,6 +121,8 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2023, 7, 20));
         activeContract.setEmployee(oldEmployee);
 
+        LocalDate currentDate = LocalDate.of(2024,1,1);
+
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
@@ -124,19 +130,18 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
-        //Fixed in EN-107
-        //assertEquals(response, 1);
+        assertEquals(response, 9);
     }
 
     @DisplayName("Vacations to apply to a new Tr Jr Ssr employee")
     @Test
     void vacationToApplyToANewTrJrSsrEmployee() {
         //given
-        Employee oldEmployee = TestUtils.anEmployee();
-        oldEmployee.setId(UUID.randomUUID());
+        Employee newEmployee = TestUtils.anEmployee();
+        newEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
         activeContract.setActive(true);
@@ -148,19 +153,21 @@ public class EmployeeServiceTest {
 
         activeContract.setSeniority(seniority);
         activeContract.setStartDate(LocalDate.of(2023, 7, 20));
-        activeContract.setEmployee(oldEmployee);
+        activeContract.setEmployee(newEmployee);
+
+        LocalDate currentDate = LocalDate.of(2024,1,1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
         //when
-        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
+        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(newEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(newEmployee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
-        assertEquals(response, 1);
+        assertEquals(response, 6);
     }
 
     @DisplayName("Default vacation days to employees with 2 years")
@@ -181,6 +188,8 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2021, 7, 1));
         activeContract.setEmployee(oldEmployee);
 
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
@@ -188,7 +197,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 15);
@@ -213,6 +222,8 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2021, 7, 1));
         activeContract.setEmployee(employee);
 
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
@@ -220,7 +231,31 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(employee, "2024", employeeContractList, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(employee, "2024", employeeContractList, currentDate, holidaysList);
+
+        //verify
+        assertEquals(response, 0);
+
+    }
+
+    @DisplayName("Vacations to apply to a employee without contract")
+    @Test
+    void vacationToApplyToAEmployeeWithoutContract() {
+        Employee employee = TestUtils.anEmployee();
+        employee.setId(UUID.randomUUID());
+
+        Seniority seniority = new Seniority();
+        seniority.setId(UUID.randomUUID());
+        seniority.setName("junior");
+        seniority.setVacationDays(10);
+
+        LocalDate currentDate = LocalDate.of(2023,10,1);
+        List<Contract> employeeContractList = new ArrayList<>();
+
+        when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);
+
+        //then
+        int response = employeeService.applyVacationRuleToEmployee(employee, "2024", employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 0);

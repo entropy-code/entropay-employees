@@ -2,29 +2,31 @@ package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import com.entropyteam.entropay.auth.AppRole;
+import com.entropyteam.entropay.auth.SecureObjectService;
+import com.entropyteam.entropay.common.BaseRepository;
+import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Seniority;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import com.entropyteam.entropay.auth.SecureObjectService;
-import com.entropyteam.entropay.common.BaseRepository;
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -153,5 +155,22 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         }
         return contractToCheck;
     }
+    @Override
+    public Map<String, Object> getRestrictedFields(AppRole userRole){
+        Map<String,Object> restrictedFields = new HashMap<>();
+                if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
+                    Optional<Role> role = roleRepository.findHrRoles();
+                    if(role.isPresent()){
+                        restrictedFields.put("role", role.get());
+                    }
+                }
+                return  restrictedFields;
+    }
 
+    @Override
+    public Map<String, List<String>> getRelatedColumnsForSearch() {
+        Map<String, List<String>> relatedColumns = new HashMap<>();
+        relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
+        return relatedColumns;
+    }
 }
