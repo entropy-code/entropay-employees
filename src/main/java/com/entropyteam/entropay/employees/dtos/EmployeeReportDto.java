@@ -5,8 +5,10 @@ import com.entropyteam.entropay.employees.models.Employee;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
-public record EmployeeReportDto(String internalId,
+public record EmployeeReportDto(UUID id,
+                                String internalId,
                                 String firstName,
                                 String lastName,
                                 String city,
@@ -22,12 +24,12 @@ public record EmployeeReportDto(String internalId,
                                 Integer usdPayment,
                                 Integer arsPayment) {
 
-    public   EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract activeContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment) {
-        this(employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
+    public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract activeContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment) {
+        this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getCity() != null ? employee.getCity() : "",
-                activeContract != null? activeContract.getRole().getName() : null,
-                profile, activeContract != null? activeContract.getSeniority().getName() : null,
-                firstContract != null? firstContract.getStartDate() : null,
+                activeContract != null ? activeContract.getRole().getName() : null,
+                profile, activeContract != null ? activeContract.getSeniority().getName() : null,
+                firstContract != null ? firstContract.getStartDate() : null,
                 activeContract != null ? activeContract.getEndDate() : null,
                 employee.isActive(), client, project, technologiesName, usdPayment, arsPayment);
     }
