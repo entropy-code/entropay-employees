@@ -13,15 +13,19 @@ public class PaymentInformation extends BaseEntity {
     private String platform;
     private String country;
     private String cbu;
+    private String routingNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
+
+
     public PaymentInformation(PaymentInformationDto paymentInformationDto) {
         this.platform = paymentInformationDto.platform();
         this.country = paymentInformationDto.country();
         this.cbu = paymentInformationDto.cbu();
+        this.routingNumber = paymentInformationDto.routingNumber();
         this.setId(paymentInformationDto.id());
     }
 
@@ -58,5 +62,13 @@ public class PaymentInformation extends BaseEntity {
 
     public void setEmployee(Employee employee) {
         this.employee = employee;
+    }
+
+    public String getRoutingNumber() {
+        return routingNumber;
+    }
+
+    public void setRoutingNumber(String routingNumber) {
+        this.routingNumber = routingNumber;
     }
 }
