@@ -22,7 +22,6 @@ import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
-import com.entropyteam.entropay.employees.repositories.ReportRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -32,10 +31,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageImpl;
 
 
+
 @Service
 public class ReportService {
 
-    private final ReportRepository reportRepository;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
     private final AssignmentRepository assignmentRepository;
@@ -44,21 +43,14 @@ public class ReportService {
 
 
     @Autowired
-    public ReportService(ReportRepository reportRepository, RoleRepository roleRepository, TechnologyRepository technologyRepository,
+    public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
                          AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository) {
-        this.reportRepository = reportRepository;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
         this.employeeRepository = employeeRepository;
     }
-
-
-    /*
-    Internal ID, Name, last name, city, role, profile, seniority, start date, end date, Status (active/inactive),
-    Client, Project, technology, last contact start date, last assignment start date, payment settlement (una columna USD, una columna ARS)
-     */
     public Page<EmployeeReportDto> getEmployeesReport() {
         List<Employee> employeesList = employeeRepository.findAllByDeletedIsFalse();
         Map<UUID, List<Contract>> employeeContractsMap = contractRepository.findAllByDeletedIsFalse()
@@ -74,14 +66,16 @@ public class ReportService {
         for (Employee employee : employeesList) {
             List<Contract> employeeContracts = employeeContractsMap.getOrDefault(employee.getId(), Collections.emptyList());
             List<Role> employeeRoles = employeeRolesList.stream().filter(t -> t.getEmployees().contains(employee)).toList();
-            List<Technology> employeeTechnologies = employeeTechnologiesList.stream().filter(t -> t.getEmployees().contains(employee)).toList();
+            List<String> technologiesName = employeeTechnologiesList.stream()
+                    .filter(t -> t.getEmployees().contains(employee))
+                    .map(Technology::getName)
+                    .toList();
             List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
             List<String> profile = employeeRoles.stream().map(Role::getName).toList();
 
             Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
             Optional<Contract> activeContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
-            List<String> technologiesName = employeeTechnologies.stream().filter(t -> t.getEmployees().contains(employee)).map(Technology::getName).toList();
 
             String client = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
             String projectName = lastAssignment.flatMap(assignment -> Optional.ofNullable(assignment.getProject()))

@@ -17,12 +17,10 @@ import com.entropyteam.entropay.employees.services.EmployeeService;
 @RequestMapping(value = "/employees", produces = MediaType.APPLICATION_JSON_VALUE)
 public class EmployeeController extends BaseController<EmployeeDto, UUID> {
 
-    private EmployeeService employeeService;
 
     @Autowired
     public EmployeeController(EmployeeService employeeService) {
         super(employeeService);
-        this.employeeService = employeeService;
     }
 
 }
