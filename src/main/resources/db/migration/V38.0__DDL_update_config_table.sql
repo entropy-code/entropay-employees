@@ -32,8 +32,8 @@ SET menu='[
     "key": 5
   },
   {
-    "name": "Reporting",
-    "icon": "reporting",
+    "name": "Reports",
+    "icon": "reports",
     "key": 7,
     "submenu": [
       {
@@ -128,8 +128,8 @@ SET menu='[
     ]
   },
   {
-    "name": "Reporting",
-    "icon": "reporting",
+    "name": "Reports",
+    "icon": "reports",
     "key": 7,
     "submenu": [
       {
@@ -189,8 +189,8 @@ SET menu='[
     "key": 5
   },
   {
-    "name": "Reporting",
-    "icon": "reporting",
+    "name": "Reports",
+    "icon": "reports",
     "key": 7,
     "submenu": [
       {
@@ -300,8 +300,8 @@ SET menu='[
     ]
   },
   {
-    "name": "Reporting",
-    "icon": "reporting",
+    "name": "Reports",
+    "icon": "reports",
     "key": 7,
     "submenu": [
       {
