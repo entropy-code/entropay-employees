@@ -1,5 +1,7 @@
 package com.entropyteam.entropay.employees.services;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Service;
 @EnableConfigurationProperties(AwsCredentialsProperties.class)
 @Service
 public class AwsService {
+
+    private static final Logger LOGGER = LogManager.getLogger();
     private final AwsCredentialsProperties awsCredentialsProperties;
     private S3Client s3client;
 
@@ -41,16 +45,19 @@ public class AwsService {
     }
 
     public void uploadFile(String bucketName, String keyName, InputStream inputStream) throws IOException {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            IOUtils.copyLarge(inputStream, baos);
+            byte[] contentBytes = baos.toByteArray();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        IOUtils.copyLarge(inputStream, baos);
-        byte[] contentBytes = baos.toByteArray();
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(keyName)
+                    .build();
 
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(keyName)
-                .build();
-
-        s3client.putObject(request, RequestBody.fromBytes(contentBytes));
+            s3client.putObject(request, RequestBody.fromBytes(contentBytes));
+        } catch (Exception e) {
+            LOGGER.error("Error uploading file to AWS S3", e);
+        }
     }
 }
