@@ -19,7 +19,6 @@ import java.util.List;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 
@@ -35,9 +34,8 @@ public class ReportController {
     private ReportService reportService;
 
 
-    //TODO ask hr
     @GetMapping("/employees")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
     public ResponseEntity<List<EmployeeReportDto>> getEmployeesReport() {
         Page<EmployeeReportDto> response = reportService.getEmployeesReport();

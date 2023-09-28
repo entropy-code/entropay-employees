@@ -65,13 +65,15 @@ public class ReportService {
 
         for (Employee employee : employeesList) {
             List<Contract> employeeContracts = employeeContractsMap.getOrDefault(employee.getId(), Collections.emptyList());
-            List<Role> employeeRoles = employeeRolesList.stream().filter(t -> t.getEmployees().contains(employee)).toList();
+            List<String> profile = employeeRolesList.stream()
+                    .filter(t -> t.getEmployees().contains(employee))
+                    .map(Role::getName)
+                    .toList();
             List<String> technologiesName = employeeTechnologiesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Technology::getName)
                     .toList();
             List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
-            List<String> profile = employeeRoles.stream().map(Role::getName).toList();
 
             Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
             Optional<Contract> activeContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
