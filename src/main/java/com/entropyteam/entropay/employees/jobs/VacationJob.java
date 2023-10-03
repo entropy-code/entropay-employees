@@ -47,7 +47,7 @@ public class VacationJob {
     }
 
     //Job to execute in October and January
-    @Scheduled(cron = "0 0 8 1 1,10 ?")
+    @Scheduled(cron = "0 0 8 ? 1,10 MON#1")
     @Transactional
     public void setEmployeeVacations() throws IOException {
         Map<String, Integer> summary = findEmployeeVacations();
