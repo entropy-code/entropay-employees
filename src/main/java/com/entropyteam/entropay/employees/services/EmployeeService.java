@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Set;
-
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
