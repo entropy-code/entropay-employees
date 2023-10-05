@@ -13,6 +13,6 @@ public interface RoleRepository extends BaseRepository<Role, UUID> {
     List<Role> findAllByDeletedIsFalse();
 
     Set<Role> findAllByDeletedIsFalseAndIdIn(List<UUID> roleIds);
-    @Query(value= "select * from role where deleted = false and name like '%HR%'", nativeQuery = true)
-    Optional<Role> findHrRoles();
+
+    List<Role> findAllByDeletedIsFalseAndNameLikeIgnoreCase(String roleName);
 }

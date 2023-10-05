@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.auth.SecureObjectService;
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -37,6 +39,7 @@ import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
+    public static final String HR_SEARCH_TERM = "%HR%";
     private final ContractRepository contractRepository;
     private final CompanyRepository companyRepository;
     private final EmployeeRepository employeeRepository;
@@ -157,14 +160,15 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     }
     @Override
     public Map<String, Object> getRestrictedFields(AppRole userRole){
-        Map<String,Object> restrictedFields = new HashMap<>();
-                if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
-                    Optional<Role> role = roleRepository.findHrRoles();
-                    if(role.isPresent()){
-                        restrictedFields.put("role", role.get());
-                    }
-                }
-                return  restrictedFields;
+        Map<String, Object> restrictedFields = new HashMap<>();
+        if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
+            List<Role> roles = roleRepository.findAllByDeletedIsFalseAndNameLikeIgnoreCase(HR_SEARCH_TERM);
+            if(CollectionUtils.isNotEmpty(roles)){
+                restrictedFields.put("role", roles);
+            }
+        }
+
+        return  restrictedFields;
     }
 
     @Override
