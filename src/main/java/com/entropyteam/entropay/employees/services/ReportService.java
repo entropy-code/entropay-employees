@@ -1,14 +1,18 @@
 package com.entropyteam.entropay.employees.services;
 
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+import java.util.stream.Collectors;
+
+import com.entropyteam.entropay.auth.AppRole;
+
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -30,10 +34,11 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.PageImpl;
 
+import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
 
 
 @Service
-public class ReportService {
+public class ReportService  {
 
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -51,8 +56,19 @@ public class ReportService {
         this.contractRepository = contractRepository;
         this.employeeRepository = employeeRepository;
     }
+
+
+
     public Page<EmployeeReportDto> getEmployeesReport() {
-        List<Employee> employeesList = employeeRepository.findAllByDeletedIsFalse();
+        AppRole userRole = getUserRole();
+        List<Employee> employeesList;
+
+        if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
+            employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrueAndRolesNameNotLikeIgnoreCase();
+        } else {
+            employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        }
+
         Map<UUID, List<Contract>> employeeContractsMap = contractRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getEmployee().getId()));
@@ -63,12 +79,15 @@ public class ReportService {
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
         List<EmployeeReportDto> employeesReportDtoList = new ArrayList<>();
 
+
         for (Employee employee : employeesList) {
             List<Contract> employeeContracts = employeeContractsMap.getOrDefault(employee.getId(), Collections.emptyList());
+
             List<String> profile = employeeRolesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Role::getName)
                     .toList();
+
             List<String> technologiesName = employeeTechnologiesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Technology::getName)
