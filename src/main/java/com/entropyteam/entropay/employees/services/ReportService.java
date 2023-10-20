@@ -27,6 +27,7 @@ import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,7 +39,7 @@ import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
 
 
 @Service
-public class ReportService  {
+public class ReportService {
 
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -58,17 +59,9 @@ public class ReportService  {
     }
 
 
-
     public Page<EmployeeReportDto> getEmployeesReport() {
         AppRole userRole = getUserRole();
-        List<Employee> employeesList;
-
-        if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
-            employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrueAndRolesNameNotLikeIgnoreCase();
-        } else {
-            employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
-        }
-
+        List<Employee> employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
         Map<UUID, List<Contract>> employeeContractsMap = contractRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getEmployee().getId()));
@@ -79,15 +72,20 @@ public class ReportService  {
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
         List<EmployeeReportDto> employeesReportDtoList = new ArrayList<>();
 
-
         for (Employee employee : employeesList) {
             List<Contract> employeeContracts = employeeContractsMap.getOrDefault(employee.getId(), Collections.emptyList());
+            if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
+                Optional<Contract> hrContract = employeeContracts.stream()
+                        .filter(c -> StringUtils.contains(c.getRole().getName(), "HR")).findFirst();
+                if (hrContract.isPresent()) {
+                    continue;
+                }
+            }
 
             List<String> profile = employeeRolesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Role::getName)
                     .toList();
-
             List<String> technologiesName = employeeTechnologiesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Technology::getName)
@@ -98,6 +96,8 @@ public class ReportService  {
             Optional<Contract> activeContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
 
+            String country = employee.getCountry();
+            String labourEmail = employee.getLabourEmail();
             String client = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
             String projectName = lastAssignment.flatMap(assignment -> Optional.ofNullable(assignment.getProject()))
                     .map(Project::getName)
@@ -119,7 +119,7 @@ public class ReportService  {
                             .orElse(0)
             ).orElse(0);
 
-            EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), activeContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment);
+            EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), activeContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
             employeesReportDtoList.add(employeeReportDto);
         }
         return new PageImpl<>(employeesReportDtoList, Pageable.unpaged(), employeesReportDtoList.size());
