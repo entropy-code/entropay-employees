@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public class EmployeeReportDto extends ReportDto{
+public class EmployeeReportDto extends ReportDto {
     private UUID id;
     private String internalId;
     private String firstName;
@@ -24,6 +24,8 @@ public class EmployeeReportDto extends ReportDto{
     private List<String> technologiesNames;
     private Integer usdPayment;
     private Integer arsPayment;
+    private String country;
+    private String labourEmail;
 
     public EmployeeReportDto(UUID id,
                              String internalId,
@@ -40,7 +42,9 @@ public class EmployeeReportDto extends ReportDto{
                              String projectName,
                              List<String> technologiesNames,
                              Integer usdPayment,
-                             Integer arsPayment) {
+                             Integer arsPayment,
+                             String country,
+                             String labourEmail) {
         this.id = id;
         this.internalId = internalId;
         this.firstName = firstName;
@@ -57,16 +61,18 @@ public class EmployeeReportDto extends ReportDto{
         this.technologiesNames = technologiesNames;
         this.usdPayment = usdPayment;
         this.arsPayment = arsPayment;
+        this.country = country;
+        this.labourEmail = labourEmail;
     }
 
-    public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract activeContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment) {
+    public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract activeContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment, String country, String labourEmail) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getCity() != null ? employee.getCity() : "",
                 activeContract != null ? activeContract.getRole().getName() : null,
                 profile, activeContract != null ? activeContract.getSeniority().getName() : null,
                 firstContract != null ? firstContract.getStartDate() : null,
                 activeContract != null ? activeContract.getEndDate() : null,
-                employee.isActive(), client, project, technologiesName, usdPayment, arsPayment);
+                employee.isActive(), client, project, technologiesName, usdPayment, arsPayment, employee.getCountry() != null ? employee.getCountry() : "", employee.getLabourEmail() != null ? employee.getLabourEmail() : "");
     }
 
     public String getInternalId() {
@@ -195,5 +201,21 @@ public class EmployeeReportDto extends ReportDto{
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getLabourEmail() {
+        return labourEmail;
+    }
+
+    public void setLabourEmail() {
+        this.labourEmail = labourEmail;
     }
 }
