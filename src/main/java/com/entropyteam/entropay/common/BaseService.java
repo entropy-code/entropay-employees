@@ -32,7 +32,7 @@ import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
 
-import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 

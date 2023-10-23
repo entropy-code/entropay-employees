@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.PageImpl;
 
-import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 
 @Service

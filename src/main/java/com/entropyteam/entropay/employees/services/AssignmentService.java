@@ -27,7 +27,7 @@ import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 @Service
 public class AssignmentService extends BaseService<Assignment, AssignmentDto, UUID> {

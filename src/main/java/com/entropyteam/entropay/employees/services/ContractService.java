@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.auth.SecureObjectService;
-import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -36,7 +35,7 @@ import com.entropyteam.entropay.employees.repositories.PaymentSettlementReposito
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
-import static com.entropyteam.entropay.auth.AuthUtil.getUserRole;
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {

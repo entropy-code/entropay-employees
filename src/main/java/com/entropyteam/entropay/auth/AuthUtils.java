@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 
-public class AuthUtil {
+public class AuthUtils {
     public static AppRole getUserRole() {
         Collection<SimpleGrantedAuthority> authorities =
                 (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication()
