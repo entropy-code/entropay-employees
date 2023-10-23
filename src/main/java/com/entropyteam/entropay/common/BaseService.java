@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,12 +27,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
+
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
@@ -221,15 +220,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     protected abstract DTO toDTO(Entity entity);
 
     protected abstract Entity toEntity(DTO entity);
-
-    protected AppRole getUserRole() {
-        Collection<SimpleGrantedAuthority> authorities =
-                (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication()
-                        .getAuthorities();
-        Optional<AppRole> appRole = authorities.stream().map(a -> AppRole.getByValue(a.getAuthority()))
-                .min(Comparator.comparing(r -> r.score));
-        return appRole.orElseThrow();
-    }
 
     protected List<String> getColumnsForSearch() {
         return Collections.emptyList();

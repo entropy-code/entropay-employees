@@ -36,6 +36,8 @@ import com.entropyteam.entropay.employees.repositories.PaymentSettlementReposito
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
