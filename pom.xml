@@ -31,6 +31,7 @@
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<postgresql.version>42.3.5</postgresql.version>
 		<software-amazon-sdk.version>2.20.52</software-amazon-sdk.version>
+		<google.version>1.32.1</google.version>
 	</properties>
 
 	<dependencies>
@@ -106,6 +107,11 @@
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>s3</artifactId>
 			<version>${software-amazon-sdk.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>${google.version}</version>
 		</dependency>
 	</dependencies>
 	<build>
