@@ -2,10 +2,12 @@ package com.entropyteam.entropay.employees.dtos;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.apache.commons.lang3.ObjectUtils;
 
 public record PtoDto(UUID id,
                      @NotNull(message = "Start date is mandatory")
@@ -20,16 +22,22 @@ public record PtoDto(UUID id,
                      UUID employeeId,
                      @NotNull(message = "Leave type is mandatory")
                      UUID leaveTypeId,
-                     Integer days,
+                     Double days,
                      Integer labourHours,
                      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                      LocalDateTime createdAt,
                      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-                     LocalDateTime modifiedAt) {
+                     LocalDateTime modifiedAt,
+                     boolean isHalfDay) {
 
     public PtoDto(Pto pto) {
         this(pto.getId(), pto.getStartDate(), pto.getEndDate(), pto.getStatus().name(), pto.getDetails(),
                 pto.getEmployee().getId(), pto.getLeaveType().getId(), pto.getDays(), pto.getLabourHours(),
-                pto.getCreatedAt(), pto.getModifiedAt());
+                pto.getCreatedAt(), pto.getModifiedAt(), checkHalfDay(pto));
+    }
+
+    private static boolean checkHalfDay(Pto pto){
+        Long days = ChronoUnit.DAYS.between(pto.getStartDate(), pto.getEndDate());
+        return ObjectUtils.notEqual(pto.getDays(), null) && days.compareTo(0L) == 0 && pto.getDays().equals(0.5);
     }
 }

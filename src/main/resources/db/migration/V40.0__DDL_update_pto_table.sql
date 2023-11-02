@@ -1,0 +1,1 @@
+ALTER TABLE pto ALTER COLUMN days TYPE decimal(2,1) USING days::decimal;

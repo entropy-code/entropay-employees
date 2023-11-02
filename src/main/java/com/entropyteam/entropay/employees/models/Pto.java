@@ -11,6 +11,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
+import org.apache.commons.lang3.ObjectUtils;
 
 @Entity
 @Table(name = "pto")
@@ -29,7 +30,7 @@ public class Pto extends BaseEntity {
     private String details;
 
     @Column
-    private Integer days;
+    private Double days;
 
     @Column
     private Integer labourHours;
@@ -84,11 +85,11 @@ public class Pto extends BaseEntity {
         this.details = details;
     }
 
-    public Integer getDays() {
+    public Double getDays() {
         return days;
     }
 
-    public void setDays(Integer days) {
+    public void setDays(Double days) {
         this.days = days;
     }
 
@@ -114,5 +115,9 @@ public class Pto extends BaseEntity {
 
     public void setLeaveType(LeaveType ptoType) {
         this.leaveType = ptoType;
+    }
+
+    public Integer getDaysAsInteger(){
+        return days.intValue();
     }
 }
