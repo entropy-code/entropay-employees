@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,7 @@ import com.entropyteam.entropay.employees.repositories.VacationRepository;
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     public static final String VACATION_TYPE = "vacation";
+    public static final Double HALF_DAY_OFF = 0.5;
 
     private PtoRepository ptoRepository;
     private EmployeeRepository employeeRepository;
@@ -93,8 +95,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         entityToCreate.setStatus(Status.APPROVED); // For now all approved
         if (isVacationType(entityToCreate)) {
             Double totalDaysAsDouble = entityToCreate.getDays();
-            if (totalDaysAsDouble == 0.5) {
-                throw new InvalidRequestParametersException("Vacations can´t be half day");
+            if (Objects.equals(totalDaysAsDouble, HALF_DAY_OFF)) {
+                throw new InvalidRequestParametersException("Can't take half a day off on vacations");
             }
 
             Integer totalDays = entityToCreate.getDaysAsInteger();
@@ -133,7 +135,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Long days = ChronoUnit.DAYS.between(entity.getStartDate(), entity.getEndDate());
         if (days.compareTo(0L) == 0) {
             if (isHalfDay) {
-                entity.setDays(0.5);
+                entity.setDays(HALF_DAY_OFF);
                 entity.setLabourHours(0);
             } else {
                 entity.setLabourHours(0);
