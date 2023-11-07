@@ -84,8 +84,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
         Optional<Contract> activeContract =
                 contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
+        Optional<Contract> latestContract =
+                contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, activeContract.orElse(null), nearestPto);
+        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, activeContract.orElse(latestContract.orElse(null)), nearestPto);
     }
 
     @Override
