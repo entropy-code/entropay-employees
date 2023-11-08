@@ -78,6 +78,7 @@ public class VacationJob {
                 Vacation vacationToAdd = new Vacation();
                 vacationToAdd.setYear(vacationYearToAdd);
                 vacationToAdd.setCredit(vacationsCreditToAdd);
+                vacationToAdd.setDebit(0);
                 vacationToAdd.setEmployee(employee);
                 vacationRepository.save(vacationToAdd);
                 summary.put(employee.getFirstName() + " " + employee.getLastName(),vacationsCreditToAdd);

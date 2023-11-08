@@ -28,19 +28,11 @@ public class Vacation extends BaseEntity {
     private Employee employee;
 
     public Vacation(){
-
     }
     public Vacation(VacationDto entity){
         this.credit = entity.credit();
-        this.debit = entity.debit();
+        this.debit = entity.debit() != null ? entity.debit() : 0;
         this.year = entity.year();
-    }
-
-    public Vacation(String year, Integer debit, Employee employee){
-        this.credit = 0;
-        this.debit = debit;
-        this.year = year;
-        this.employee = employee;
     }
 
     public String getYear() {
@@ -60,7 +52,7 @@ public class Vacation extends BaseEntity {
     }
 
     public Integer getDebit() {
-        return debit;
+        return debit != null ? debit : 0;
     }
 
     public void setDebit(Integer debit) {
