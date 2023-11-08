@@ -25,4 +25,9 @@ public class GoogleServiceTest {
 
         googleService.createGoogleCalendarEvent("Event Test", tomorrow);
     }
+
+    @Test
+    public void testGoogleServiceWithServiceAccount() {
+        googleService.initGoogleForServiceAccount();
+    }
 }
