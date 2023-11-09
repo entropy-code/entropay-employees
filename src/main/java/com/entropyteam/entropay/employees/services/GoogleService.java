@@ -5,6 +5,7 @@ import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInsta
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -25,6 +26,10 @@ import org.springframework.stereotype.Service;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -77,24 +82,39 @@ public class GoogleService {
         }
     }
 
-    public void createGoogleCalendarEvent(String eventName, Date eventDate) {
+    public void createGoogleCalendarEvent(String eventName, LocalDate startDate, LocalDate endDate) {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials()).setApplicationName("GoogleCalendar").build();
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials())
+                    .setApplicationName("GoogleCalendar").build();
 
             Event event = new Event().setSummary(eventName);
 
-            DateTime startDateTime = new DateTime(eventDate, TimeZone.getTimeZone("UTC"));
-            EventDateTime start = new EventDateTime().setDateTime(startDateTime);
-            DateTime endDateTime = new DateTime(eventDate, TimeZone.getTimeZone("UTC"));
-            EventDateTime end = new EventDateTime().setDateTime(endDateTime);
+            Date startDateUtil = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date endDateUtil = Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
 
-            event.setStart(start);
-            event.setEnd(end);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            String startDateStr = dateFormat.format(startDateUtil);
+            String endDateStr = dateFormat.format(endDateUtil);
+
+            DateTime startDateTime = new DateTime(startDateStr);
+            DateTime endDateTime = new DateTime(endDateStr);
+
+            EventDateTime startEventDateTime = new EventDateTime().setDate(startDateTime);
+            EventDateTime endEventDateTime = new EventDateTime().setDate(endDateTime);
+
+            event.setStart(startEventDateTime);
+            event.setEnd(endEventDateTime);
 
             Event createdEvent = service.events().insert("primary", event).execute();
 
-            System.out.println("Event create: " + createdEvent.getHtmlLink());
+            System.out.println("Event created: " + createdEvent.getHtmlLink());
+
+        } catch (GoogleJsonResponseException e) {
+            System.err.println("Google Calendar API error:");
+            System.err.println("HTTP code: " + e.getStatusCode());
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
         } catch (IOException | GeneralSecurityException e) {
             e.printStackTrace();
         }
@@ -102,9 +122,8 @@ public class GoogleService {
 
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<Credentials files from google>.json"))
+        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/optical-weft-403114-bb52e7bc537e.json"))
                 .createScoped(SCOPES);
-
     }
 
     public void initGoogleForServiceAccount() {
@@ -147,7 +166,7 @@ public class GoogleService {
 
     /**
      * Invoke to accept shared calendars one time
-     * */
+     */
     public void insertCalendar() throws GeneralSecurityException, IOException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Calendar service =

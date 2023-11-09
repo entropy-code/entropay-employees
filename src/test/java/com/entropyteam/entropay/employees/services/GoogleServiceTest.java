@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -19,11 +20,11 @@ public class GoogleServiceTest {
 
     @Test
     public void testCreateGoogleCalendarEvent() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        Date tomorrow = calendar.getTime();
+        LocalDate today = LocalDate.now();
 
-        googleService.createGoogleCalendarEvent("Event Test", tomorrow);
+        LocalDate tomorrow = today.plusDays(5);
+
+        googleService.createGoogleCalendarEvent("Event Test", today, tomorrow);
     }
 
     @Test
