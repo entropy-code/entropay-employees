@@ -53,7 +53,11 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
             if (totalDays > 0) {
                 Integer daysToUse = Math.min(totalDays, vacation.getBalance());
                 totalDays -= daysToUse;
-                Vacation vacationDebit = new Vacation(vacation.getYear(), daysToUse, employee);
+                Vacation vacationDebit = new Vacation();
+                vacationDebit.setYear(vacation.getYear());
+                vacationDebit.setCredit(0);
+                vacationDebit.setDebit(daysToUse);
+                vacationDebit.setEmployee(employee);
                 vacationRepository.save(vacationDebit);
             }
         }

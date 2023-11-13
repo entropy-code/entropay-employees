@@ -2,6 +2,7 @@ package com.entropyteam.entropay.employees.dtos;
 
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,7 +17,9 @@ public class EmployeeReportDto extends ReportDto {
     private String role;
     private List<String> profile;
     private String seniority;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
     private Boolean status;
     private String clientName;
