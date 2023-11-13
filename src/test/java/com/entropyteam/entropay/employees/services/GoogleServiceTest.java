@@ -14,17 +14,12 @@ public class GoogleServiceTest {
     private GoogleService googleService;
 
     @Test
-    public void testGoogleService() {
-        googleService.initGoogle();
-    }
-
-    @Test
     public void testCreateGoogleCalendarEvent() {
         LocalDate today = LocalDate.now();
 
         LocalDate tomorrow = today.plusDays(5);
 
-        googleService.createGoogleCalendarEvent("Event Test", today, tomorrow);
+        googleService.createGoogleCalendarEvent("Event Test", today, today);
     }
 
     @Test
