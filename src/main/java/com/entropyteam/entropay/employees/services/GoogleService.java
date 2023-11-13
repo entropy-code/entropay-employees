@@ -45,7 +45,7 @@ public class GoogleService {
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/optical-weft-403114-4eb710812ca4.json"))
+        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<json file name>.json"))
                 .createScoped(SCOPES);
     }
 
@@ -62,7 +62,7 @@ public class GoogleService {
             List<CalendarListEntry> calendarList = service.calendarList().list().execute().getItems();
             calendarList.forEach(c -> LOGGER.info("Calendar Id: {} Summary: {}", c.getId(), c.getSummary()));
             List<Event> items = service.events()
-                    .list("cc5e7bcafc5aa1fdafd6642928e3ef4230c97e7c0ae174f374c3e5fe38701681@group.calendar.google.com")
+                    .list("<calender Id")
                     .setMaxResults(10)
                     .setTimeMin(now)
                     .setOrderBy("startTime")
@@ -111,7 +111,7 @@ public class GoogleService {
             event.setStart(startEventDateTime);
             event.setEnd(endEventDateTime);
 
-            String calendarId = "cc5e7bcafc5aa1fdafd6642928e3ef4230c97e7c0ae174f374c3e5fe38701681@group.calendar.google.com";
+            String calendarId = "<Calender Id>";
             event = service.events().insert(calendarId, event).execute();
 
             System.out.println("Event created: " + event.getHtmlLink());
@@ -131,7 +131,7 @@ public class GoogleService {
                         .setApplicationName("GoogleCalender")
                         .build();
         CalendarListEntry calendarListEntry = new CalendarListEntry();
-        calendarListEntry.setId("cc5e7bcafc5aa1fdafd6642928e3ef4230c97e7c0ae174f374c3e5fe38701681@group.calendar.google.com");
+        calendarListEntry.setId("<Calender Id>");
         CalendarListEntry updatedCalendarList = service.calendarList().insert(calendarListEntry).execute();
         LOGGER.info("Calendar Summary: {}", updatedCalendarList.getSummary());
     }
