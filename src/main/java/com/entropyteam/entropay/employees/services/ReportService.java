@@ -37,7 +37,6 @@ import org.springframework.data.domain.PageImpl;
 
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
-
 @Service
 public class ReportService {
 
@@ -93,7 +92,10 @@ public class ReportService {
             List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
 
             Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
-            Optional<Contract> activeContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
+            Optional<Contract> latestContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
+            if(latestContract.isEmpty()) {
+                latestContract = employeeContracts.stream().max(Comparator.comparing((Contract::getStartDate)));
+            }
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
 
             String country = employee.getCountry();
@@ -103,23 +105,10 @@ public class ReportService {
                     .map(Project::getName)
                     .orElse("No project");
 
-            Integer usdPayment = activeContract.map(contract ->
-                    contract.getPaymentsSettlement().stream()
-                            .filter(p -> p.getCurrency() == Currency.USD)
-                            .findFirst()
-                            .map(payment -> payment.getSalary().intValue())
-                            .orElse(0)
-            ).orElse(0);
+            Integer usdPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.USD): 0;
+            Integer arsPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.ARS): 0;
 
-            Integer arsPayment = activeContract.map(contract ->
-                    contract.getPaymentsSettlement().stream()
-                            .filter(p -> p.getCurrency() == Currency.ARS)
-                            .findFirst()
-                            .map(payment -> payment.getSalary().intValue())
-                            .orElse(0)
-            ).orElse(0);
-
-            EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), activeContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
+            EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), latestContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
             employeesReportDtoList.add(employeeReportDto);
         }
         return new PageImpl<>(employeesReportDtoList, Pageable.unpaged(), employeesReportDtoList.size());

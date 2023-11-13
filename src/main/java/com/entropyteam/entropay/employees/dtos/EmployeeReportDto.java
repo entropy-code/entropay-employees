@@ -68,8 +68,8 @@ public class EmployeeReportDto extends ReportDto {
     public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract activeContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment, String country, String labourEmail) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getCity() != null ? employee.getCity() : "",
-                activeContract != null ? activeContract.getRole().getName() : null,
-                profile, activeContract != null ? activeContract.getSeniority().getName() : null,
+                activeContract != null && activeContract.isActive() ? activeContract.getRole().getName() : null,
+                profile, activeContract != null && activeContract.isActive() ? activeContract.getSeniority().getName() : null,
                 firstContract != null ? firstContract.getStartDate() : null,
                 activeContract != null ? activeContract.getEndDate() : null,
                 employee.isActive(), client, project, technologiesName, usdPayment, arsPayment, employee.getCountry() != null ? employee.getCountry() : "", employee.getLabourEmail() != null ? employee.getLabourEmail() : "");
