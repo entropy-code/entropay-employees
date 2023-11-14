@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,12 +27,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
+
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
@@ -184,15 +183,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     private Collection<Predicate> buildEntityRestrictedFields(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
         Collection<Predicate> predicates = new ArrayList<>();
-        predicates.addAll(
-                filter.getGetByFieldsFilter().entrySet().stream()
-                        .filter(f -> f.getKey() != SEARCH_TERM_KEY)
-                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue()))
-                        .collect(Collectors.toSet())
-        );
         Map<String, Object> restrictedFields = getRestrictedFields(getUserRole());
         for (Map.Entry<String, Object> entry : restrictedFields.entrySet()) {
-            predicates.add(cb.notEqual(root.get(entry.getKey()), entry.getValue()));
+            predicates.add(cb.not(root.get(entry.getKey()).in(entry.getValue())));
         }
         return predicates;
     }
@@ -227,15 +220,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
     protected abstract DTO toDTO(Entity entity);
 
     protected abstract Entity toEntity(DTO entity);
-
-    protected AppRole getUserRole() {
-        Collection<SimpleGrantedAuthority> authorities =
-                (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication()
-                        .getAuthorities();
-        Optional<AppRole> appRole = authorities.stream().map(a -> AppRole.getByValue(a.getAuthority()))
-                .min(Comparator.comparing(r -> r.score));
-        return appRole.orElseThrow();
-    }
 
     protected List<String> getColumnsForSearch() {
         return Collections.emptyList();

@@ -4,6 +4,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,7 @@ import com.entropyteam.entropay.employees.repositories.VacationRepository;
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     public static final String VACATION_TYPE = "vacation";
+    public static final Double HALF_DAY_OFF = 0.5;
 
     private PtoRepository ptoRepository;
     private EmployeeRepository employeeRepository;
@@ -59,7 +61,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto pto = getRepository().findById(id).orElseThrow();
         pto.setDeleted(true);
         if (isVacationType(pto)) {
-            vacationService.discountVacationDebit(pto.getEmployee(), pto.getDays());
+            vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
         }
 
         return toDTO(pto);
@@ -71,12 +73,12 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto oldEntity = ptoRepository.findById(id).orElseThrow();
         Pto entityToUpdate = toEntity(ptoDto);
         if (isVacationType(oldEntity) && isVacationType(entityToUpdate) && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
-            vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDays());
-            vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDays());
+            vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
+            vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         } else if (isVacationType(oldEntity) && !isVacationType(entityToUpdate)) {
-            vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDays());
+            vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
         } else if (!isVacationType(oldEntity) && isVacationType(entityToUpdate)) {
-            vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDays());
+            vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         }
 
         entityToUpdate.setId(id);
@@ -92,11 +94,15 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto entityToCreate = toEntity(ptoDto);
         entityToCreate.setStatus(Status.APPROVED); // For now all approved
         if (isVacationType(entityToCreate)) {
-            Integer totalDays = entityToCreate.getDays();
+            Double totalDaysAsDouble = entityToCreate.getDays();
+            if (Objects.equals(totalDaysAsDouble, HALF_DAY_OFF)) {
+                throw new InvalidRequestParametersException("Can't take half a day off on vacations");
+            }
+
+            Integer totalDays = entityToCreate.getDaysAsInteger();
             if (totalDays == 0) {
                 throw new InvalidRequestParametersException("Vacation days must be greater than 0");
             }
-
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
 
@@ -119,23 +125,24 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Employee employee = employeeRepository.findById(dto.employeeId()).orElse(null);
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveTypeId()).orElse(null);
         Pto pto = new Pto(dto);
-        setTimeAmount(pto);
+        setTimeAmount(pto, dto.isHalfDay());
         pto.setEmployee(employee);
         pto.setLeaveType(leaveType);
         return pto;
     }
 
-    public void setTimeAmount(Pto entity) {
+    public void setTimeAmount(Pto entity, boolean isHalfDay) {
         Long days = ChronoUnit.DAYS.between(entity.getStartDate(), entity.getEndDate());
         if (days.compareTo(0L) == 0) {
-            if (ObjectUtils.notEqual(entity.getLabourHours(), null)) {
-                entity.setDays(0);
+            if (isHalfDay) {
+                entity.setDays(HALF_DAY_OFF);
+                entity.setLabourHours(0);
             } else {
                 entity.setLabourHours(0);
-                entity.setDays(1);
+                entity.setDays(1.0);
             }
         } else {
-            Integer labourDays = 0;
+            Double labourDays = 0.0;
             LocalDate currentDate = entity.getStartDate();
             LocalDate endDate = entity.getEndDate();
             List<Holiday> holidaysInPeriod = holidayRepository.

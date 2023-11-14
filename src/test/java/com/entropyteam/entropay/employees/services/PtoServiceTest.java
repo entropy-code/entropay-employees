@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.LocalDate;
 import java.util.Collections;
+
+import com.entropyteam.entropay.employees.models.LeaveType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,21 +24,39 @@ public class PtoServiceTest {
     @InjectMocks
     private PtoService ptoService;
 
-
     @Test
-    void setTimeAmountTestWithHoursPto() {
+    void setTimeAmountTestIsAHalfDayPto() {
         // Config
         Pto ptoEntity = new Pto();
-        ptoEntity.setStartDate(LocalDate.now());
-        ptoEntity.setEndDate(LocalDate.now());
-        ptoEntity.setLabourHours(4);
+        ptoEntity.setStartDate(LocalDate.of(2023, 7,10));
+        ptoEntity.setEndDate(LocalDate.of(2023, 7,10));
+        ptoEntity.setLabourHours(0);
 
         // Run
-        ptoService.setTimeAmount(ptoEntity);
+        ptoService.setTimeAmount(ptoEntity, true);
 
         // Assert
-        assertEquals(4, ptoEntity.getLabourHours());
-        assertEquals(0, ptoEntity.getDays());
+        assertEquals(0, ptoEntity.getLabourHours());
+        assertEquals(0.5, ptoEntity.getDays());
+    }
+
+    @Test
+    void setTimeAmountTestIsAOneDayVacation() {
+        // Config
+        Pto ptoEntity = new Pto();
+        ptoEntity.setStartDate(LocalDate.of(2023, 7,10));
+        ptoEntity.setEndDate(LocalDate.of(2023, 7,10));
+        ptoEntity.setLabourHours(0);
+        LeaveType leaveTypeEntity = new LeaveType();
+        leaveTypeEntity.setName("vacation");
+        ptoEntity.setLeaveType(leaveTypeEntity);
+
+        // Run
+        ptoService.setTimeAmount(ptoEntity, false);
+
+        // Assert
+        assertEquals(0, ptoEntity.getLabourHours());
+        assertEquals(1, ptoEntity.getDays());
     }
 
     @Test
@@ -51,7 +71,7 @@ public class PtoServiceTest {
                 .thenReturn(Collections.emptyList());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity);
+        ptoService.setTimeAmount(ptoEntity, false);
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -70,7 +90,7 @@ public class PtoServiceTest {
                 .thenReturn(Collections.emptyList());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity);
+        ptoService.setTimeAmount(ptoEntity, false);
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -92,7 +112,7 @@ public class PtoServiceTest {
                 .thenReturn(Collections.singletonList(holiday));
 
         // Run
-        ptoService.setTimeAmount(ptoEntity);
+        ptoService.setTimeAmount(ptoEntity, false);
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());

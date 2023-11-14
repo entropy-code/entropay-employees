@@ -1,6 +1,8 @@
 package com.entropyteam.entropay.common.exceptions;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.entropyteam.entropay.common.exceptions.dtos.ErrorResponseDto;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -21,48 +23,50 @@ public class RestExceptionHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @ExceptionHandler(AuthException.class)
-    public ResponseEntity<Object> authExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<ErrorResponseDto> authExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(InvalidRequestParametersException.class)
-    public ResponseEntity<Object> invalidRequestParametersExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<ErrorResponseDto> invalidRequestParametersExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
-        return ResponseEntity.badRequest().body(e.getMessage());
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Object> resourceNotFoundExceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<ErrorResponseDto> resourceNotFoundExceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error(e.getMessage());
-        return ResponseEntity.badRequest().body(e.getMessage());
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> methodArgumentNotValidExceptionHandler(HttpServletRequest request, MethodArgumentNotValidException ex) {
-        Map<String, List<String>> body = new HashMap<>();
-
+    public ResponseEntity<ErrorResponseDto> methodArgumentNotValidExceptionHandler(HttpServletRequest request, MethodArgumentNotValidException ex) {
+        LOGGER.error(ex.getMessage());
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(e -> e.getDefaultMessage())
-                .collect(Collectors.toList());
-
-        body.put("errors", errors);
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+                .toList();
+        ErrorResponseDto response = new ErrorResponseDto(String.join(", ", errors));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Object> noSuchElementExceptionHandler(HttpServletRequest request,  NoSuchElementException e) {
+    public ResponseEntity<ErrorResponseDto> noSuchElementExceptionHandler(HttpServletRequest request,  NoSuchElementException e) {
         LOGGER.error(e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> exceptionHandler(HttpServletRequest request, Exception e) {
+    public ResponseEntity<ErrorResponseDto> exceptionHandler(HttpServletRequest request, Exception e) {
         LOGGER.error("Error occurred processing request", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        ErrorResponseDto response = new ErrorResponseDto(e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
 }
