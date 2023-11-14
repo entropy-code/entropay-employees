@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Set;
+
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -48,6 +50,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
+    private final GoogleService googleService;
 
 
     @Autowired
@@ -55,7 +58,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationRepository paymentInformationRepository,
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository) {
+                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository, GoogleService googleService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -66,6 +69,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
+        this.googleService = googleService;
     }
 
     @Override
@@ -106,6 +110,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
+        LocalDate birthDate = employeeDto.birthDate();
+        LocalDate modifiedBirthDate = birthDate.withYear(LocalDate.now().getYear());
+        googleService.createGoogleCalendarEvent("BirthDay " + employeeDto.firstName() + " " + employeeDto.lastName(), modifiedBirthDate, modifiedBirthDate);
         return toDTO(savedEntity);
     }
 
@@ -209,5 +216,16 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private boolean shouldDeactivateEmployee(UUID employeeId, Employee entityToUpdate) {
         Employee existingEmployee = getRepository().getById(employeeId);
         return existingEmployee.isActive() && !entityToUpdate.isActive();
+    }
+
+    public void createGoogleCalendarEventsForBirthdays() throws IOException {
+        int currentYear = LocalDate.now().getYear();
+
+        employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue()
+                .forEach(employee -> {
+                    String eventName = "BirthDay " + employee.getFirstName() + " " + employee.getLastName();
+                    LocalDate birthDateWithCurrentYear = employee.getBirthDate().withYear(currentYear);
+                    googleService.createGoogleCalendarEvent(eventName, birthDateWithCurrentYear, birthDateWithCurrentYear);
+                });
     }
 }
