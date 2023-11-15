@@ -1,12 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -20,7 +14,6 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
@@ -34,7 +27,6 @@ import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
 @Service
@@ -52,12 +44,11 @@ public class GoogleService {
     public void initGoogleForServiceAccount() {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            Calendar service =
-                    new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpCredentialsAdapter(getCredentialsServiceAccount()))
-                            .setApplicationName("GoogleCalendar")
-                            .build();
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+                    new HttpCredentialsAdapter(getCredentialsServiceAccount()))
+                    .setApplicationName("GoogleCalendar")
+                    .build();
             DateTime now = new DateTime(System.currentTimeMillis());
-
 
             List<CalendarListEntry> calendarList = service.calendarList().list().execute().getItems();
             calendarList.forEach(c -> LOGGER.info("Calendar Id: {} Summary: {}", c.getId(), c.getSummary()));
@@ -89,7 +80,8 @@ public class GoogleService {
     public void createGoogleCalendarEvent(String eventName, LocalDate startDate, LocalDate endDate) {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpCredentialsAdapter(getCredentialsServiceAccount()))
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+                    new HttpCredentialsAdapter(getCredentialsServiceAccount()))
                     .setApplicationName("GoogleCalendar")
                     .build();
 
@@ -120,16 +112,15 @@ public class GoogleService {
         }
     }
 
-
     /**
      * Invoke to accept shared calendars one time
      */
     public void insertCalendar() throws GeneralSecurityException, IOException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Calendar service =
-                new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, new HttpCredentialsAdapter(getCredentialsServiceAccount()))
-                        .setApplicationName("GoogleCalender")
-                        .build();
+        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+                new HttpCredentialsAdapter(getCredentialsServiceAccount()))
+                .setApplicationName("GoogleCalender")
+                .build();
         CalendarListEntry calendarListEntry = new CalendarListEntry();
         calendarListEntry.setId("<Calender Id>");
         CalendarListEntry updatedCalendarList = service.calendarList().insert(calendarListEntry).execute();
