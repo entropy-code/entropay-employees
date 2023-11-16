@@ -8,5 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class GoogleCredentialsProperties {
     private String idClient;
     private String secretClient;
+    private String idCalender;
 }
 

@@ -88,7 +88,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
         Optional<Contract> latestContract =
                 contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        if(latestContract.isEmpty()) {
+        if (latestContract.isEmpty()) {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
@@ -113,9 +113,14 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
-        LocalDate birthDate = employeeDto.birthDate();
-        LocalDate modifiedBirthDate = birthDate.withYear(LocalDate.now().getYear());
-        googleService.createGoogleCalendarEvent("BirthDay " + employeeDto.firstName() + " " + employeeDto.lastName(), modifiedBirthDate, modifiedBirthDate);
+
+        Object[] eventData = formatEventData(employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+
+        String eventName = (String) eventData[0];
+        LocalDate eventStartDate = (LocalDate) eventData[1];
+
+        googleService.createGoogleCalendarEvent(eventName, eventStartDate, eventStartDate);
+
         return toDTO(savedEntity);
     }
 
@@ -221,14 +226,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
 
-    public void createGoogleCalendarEventsForBirthdays() throws IOException {
-        int currentYear = LocalDate.now().getYear();
-
-        employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue()
-                .forEach(employee -> {
-                    String eventName = "BirthDay " + employee.getFirstName() + " " + employee.getLastName();
-                    LocalDate birthDateWithCurrentYear = employee.getBirthDate().withYear(currentYear);
-                    googleService.createGoogleCalendarEvent(eventName, birthDateWithCurrentYear, birthDateWithCurrentYear);
-                });
+    public Object[] formatEventData(LocalDate birthDate, String firstName, String lastName) {
+        LocalDate modifiedBirthDate = birthDate.withYear(LocalDate.now().getYear());
+        String eventName = "BirthDay " + firstName + " " + lastName;
+        return new Object[]{eventName, modifiedBirthDate};
     }
+
 }

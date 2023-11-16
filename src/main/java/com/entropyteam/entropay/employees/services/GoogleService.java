@@ -7,13 +7,13 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
-import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +23,7 @@ import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Date;
@@ -32,49 +33,19 @@ import java.util.List;
 @Service
 public class GoogleService {
 
+    private final GoogleCredentialsProperties googleCredentialsProperties;
     private static final Logger LOGGER = LogManager.getLogger();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
 
-    public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<json file name>.json"))
-                .createScoped(SCOPES);
+    @Autowired
+    public GoogleService(GoogleCredentialsProperties googleCredentialsProperties) {
+        this.googleCredentialsProperties = googleCredentialsProperties;
     }
 
-    public void initGoogleForServiceAccount() {
-        try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-                    new HttpCredentialsAdapter(getCredentialsServiceAccount()))
-                    .setApplicationName("GoogleCalendar")
-                    .build();
-            DateTime now = new DateTime(System.currentTimeMillis());
-
-            List<CalendarListEntry> calendarList = service.calendarList().list().execute().getItems();
-            calendarList.forEach(c -> LOGGER.info("Calendar Id: {} Summary: {}", c.getId(), c.getSummary()));
-            List<Event> items = service.events()
-                    .list("<calender Id")
-                    .setMaxResults(10)
-                    .setTimeMin(now)
-                    .setOrderBy("startTime")
-                    .setSingleEvents(true)
-                    .execute().getItems();
-
-            if (items.isEmpty()) {
-                System.out.println("No upcoming events found.");
-            } else {
-                System.out.println("Upcoming events:");
-                for (Event event : items) {
-                    DateTime start = event.getStart().getDateTime();
-                    if (start == null) {
-                        start = event.getStart().getDate();
-                    }
-                    System.out.printf("%s (%s)\n", event.getSummary(), start);
-                }
-            }
-        } catch (IOException | GeneralSecurityException e) {
-            e.printStackTrace();
-        }
+    public GoogleCredentials getCredentialsServiceAccount() throws IOException {
+        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<jsonfilename>.json"))
+                .createScoped(SCOPES);
     }
 
     public void createGoogleCalendarEvent(String eventName, LocalDate startDate, LocalDate endDate) {
@@ -87,43 +58,23 @@ public class GoogleService {
 
             Event event = new Event().setSummary(eventName);
 
-            Date startDateUtil = Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-            Date endDateUtil = Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+            DateTime startDateTime = new DateTime(
+                    startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            EventDateTime startEventDateTime = new EventDateTime().setDateTime(startDateTime).setTimeZone("UTC");
 
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            String startDateStr = dateFormat.format(startDateUtil);
-            String endDateStr = dateFormat.format(endDateUtil);
-
-            DateTime startDateTime = new DateTime(startDateStr);
-            DateTime endDateTime = new DateTime(endDateStr);
-
-            EventDateTime startEventDateTime = new EventDateTime().setDate(startDateTime);
-            EventDateTime endEventDateTime = new EventDateTime().setDate(endDateTime);
+            DateTime endDateTime = new DateTime(
+                    endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant().toEpochMilli());
+            EventDateTime endEventDateTime = new EventDateTime().setDateTime(endDateTime).setTimeZone("UTC");
 
             event.setStart(startEventDateTime);
             event.setEnd(endEventDateTime);
 
-            String calendarId = "<Calender Id>";
-            event = service.events().insert(calendarId, event).execute();
+            String idCalendar = googleCredentialsProperties.getIdCalender();
+            event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
 
-            System.out.println("Event created: " + event.getHtmlLink());
+            LOGGER.info("Event created: " + event.getHtmlLink());
         } catch (IOException | GeneralSecurityException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
-    }
-
-    /**
-     * Invoke to accept shared calendars one time
-     */
-    public void insertCalendar() throws GeneralSecurityException, IOException {
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-                new HttpCredentialsAdapter(getCredentialsServiceAccount()))
-                .setApplicationName("GoogleCalender")
-                .build();
-        CalendarListEntry calendarListEntry = new CalendarListEntry();
-        calendarListEntry.setId("<Calender Id>");
-        CalendarListEntry updatedCalendarList = service.calendarList().insert(calendarListEntry).execute();
-        LOGGER.info("Calendar Summary: {}", updatedCalendarList.getSummary());
     }
 }

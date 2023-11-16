@@ -32,17 +32,4 @@ public class EmployeeController extends BaseController<EmployeeDto, UUID> {
         super(employeeService);
         this.employeeService = employeeService;
     }
-
-    @GetMapping("/birthday")
-    @Secured({ ROLE_ADMIN, ROLE_DEVELOPMENT })
-    @Transactional
-    public ResponseEntity<String> birthdayEmployee() {
-        try {
-            employeeService.createGoogleCalendarEventsForBirthdays();
-            return ResponseEntity.ok("Successful job execute");
-        } catch (IOException exception) {
-            String errorMessage = "An error occurred: " + exception.getMessage();
-            return ResponseEntity.badRequest().body(errorMessage);
-        }
-    }
 }

@@ -17,13 +17,8 @@ public class GoogleServiceTest {
     public void testCreateGoogleCalendarEvent() {
         LocalDate today = LocalDate.now();
 
-        LocalDate tomorrow = today.plusDays(5);
+        LocalDate tomorrow = today.plusDays(2);
 
-        googleService.createGoogleCalendarEvent("Event Test", today, today);
-    }
-
-    @Test
-    public void testGoogleServiceWithServiceAccount() {
-        googleService.initGoogleForServiceAccount();
+        googleService.createGoogleCalendarEvent("Event Test", today, tomorrow);
     }
 }
