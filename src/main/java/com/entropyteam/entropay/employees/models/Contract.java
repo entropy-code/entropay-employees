@@ -161,4 +161,11 @@ public class Contract extends BaseEntity {
         this.paymentsSettlement = paymentsSettlement;
     }
 
+    public Integer getLatestPayment(Currency currency) {
+        return getPaymentsSettlement().stream()
+                .filter(p -> p.getCurrency() == currency)
+                .findFirst()
+                .map(payment -> payment.getSalary().intValue())
+                .orElse(0);
+    }
 }
