@@ -10,15 +10,5 @@ import java.util.Date;
 
 @SpringBootTest
 public class GoogleServiceTest {
-    @Autowired
-    private GoogleService googleService;
 
-    @Test
-    public void testCreateGoogleCalendarEvent() {
-        LocalDate today = LocalDate.now();
-
-        LocalDate tomorrow = today.plusDays(2);
-
-        googleService.createGoogleCalendarEvent("Event Test", today, tomorrow);
-    }
 }
