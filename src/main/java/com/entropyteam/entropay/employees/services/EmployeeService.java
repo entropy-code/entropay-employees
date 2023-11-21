@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.Period;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,8 +92,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         if (latestContract.isEmpty()) {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
+        String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto);
+        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
     }
 
     @Override
@@ -232,4 +234,23 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return new Object[]{eventName, modifiedBirthDate};
     }
 
+    public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract){
+        LocalDate startDate = firstContract != null ? firstContract.getStartDate() : LocalDate.now();
+        LocalDate endDate = latestContract != null ? latestContract.isActive() ? LocalDate.now() : latestContract.getEndDate() : LocalDate.now();
+        Period difference = Period.between(startDate, endDate);
+        StringBuilder timeSinceStart = new StringBuilder();
+        if (difference.getYears() > 0) {
+            timeSinceStart.append(difference.getYears()).append(" year").append(difference.getYears() > 1 ? "s" : "");
+            if (difference.getMonths() > 0) {
+                timeSinceStart.append(", ");
+            }
+        }
+        if (difference.getMonths() > 0) {
+            timeSinceStart.append(difference.getMonths()).append(" month").append(difference.getMonths() > 1 ? "s" : "");
+        }
+        if (timeSinceStart.isEmpty()) {
+            timeSinceStart.append("0 months");
+        }
+        return timeSinceStart.toString();
+    }
 }
