@@ -41,7 +41,7 @@ public class GoogleService {
     }
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<jsonfilename>.json"))
+        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/optical-weft-403114-84eebea181fd.json"))
                 .createScoped(SCOPES);
     }
 
