@@ -45,17 +45,12 @@ public class GoogleService {
                 .createScoped(SCOPES);
     }
 
-    private EventDateTime[] convertToLocalTimeZones(LocalDate startDate, LocalDate endDate) {
-        long startMillis = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        long endMillis = endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant().toEpochMilli();
-
-        EventDateTime startEventDateTime = new EventDateTime().setDateTime(new DateTime(startMillis)).setTimeZone("UTC");
-        EventDateTime endEventDateTime = new EventDateTime().setDateTime(new DateTime(endMillis)).setTimeZone("UTC");
-
-        return new EventDateTime[]{startEventDateTime, endEventDateTime};
+    private EventDateTime convertToLocalTimeZones(LocalDate date) {
+        long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
     }
 
-    public void createGoogleCalendarEvent(String eventName, LocalDate startDate, LocalDate endDate) {
+    public void createGoogleCalendarEvent(String id, String eventName, LocalDate startDate, LocalDate endDate) {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
             Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
@@ -65,10 +60,12 @@ public class GoogleService {
 
             Event event = new Event().setSummary(eventName);
 
-            EventDateTime[] eventDateTimes = convertToLocalTimeZones(startDate, endDate);
+            EventDateTime eventDateStartTime = convertToLocalTimeZones(startDate);
+            EventDateTime eventDateEndTimes = convertToLocalTimeZones(endDate);
 
-            event.setStart(eventDateTimes[0]);
-            event.setEnd(eventDateTimes[1]);
+            event.setId(id);
+            event.setStart(eventDateStartTime);
+            event.setEnd(eventDateEndTimes);
 
             String idCalendar = googleCredentialsProperties.getIdCalender();
             event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();

@@ -37,6 +37,7 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
 
 
 @Service
@@ -116,12 +117,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
 
-        Object[] eventData = formatEventData(employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+        CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
 
-        String eventName = (String) eventData[0];
-        LocalDate eventStartDate = (LocalDate) eventData[1];
-
-        googleService.createGoogleCalendarEvent(eventName, eventStartDate, eventStartDate);
+        googleService.createGoogleCalendarEvent(eventData.id(), eventData.description(), eventData.startDate(), eventData.endDate());
 
         return toDTO(savedEntity);
     }
@@ -228,13 +226,18 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
 
-    public Object[] formatEventData(LocalDate birthDate, String firstName, String lastName) {
-        LocalDate modifiedBirthDate = birthDate.withYear(LocalDate.now().getYear());
+    public CalendarEventDto formatEventData(UUID employeeId, LocalDate birthDate, String firstName, String lastName) {
+        int currentYear = LocalDate.now().getYear();
+        LocalDate startDate = birthDate.withYear(currentYear);
+        LocalDate endDate = startDate.plusDays(1);
+        String eventId = currentYear + "-" + employeeId.toString();
         String eventName = "BirthDay " + firstName + " " + lastName;
-        return new Object[]{eventName, modifiedBirthDate};
+
+        return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 
-    public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract){
+
+    public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract) {
         LocalDate startDate = firstContract != null ? firstContract.getStartDate() : LocalDate.now();
         LocalDate endDate = latestContract != null ? latestContract.isActive() ? LocalDate.now() : latestContract.getEndDate() : LocalDate.now();
         Period difference = Period.between(startDate, endDate);
