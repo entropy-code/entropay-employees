@@ -20,13 +20,10 @@ import org.springframework.stereotype.Service;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
@@ -44,8 +41,18 @@ public class GoogleService {
     }
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/<jsonfilename>.json"))
+        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/optical-weft-403114-84eebea181fd.json"))
                 .createScoped(SCOPES);
+    }
+
+    private EventDateTime[] convertToLocalTimeZones(LocalDate startDate, LocalDate endDate) {
+        long startMillis = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endMillis = endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant().toEpochMilli();
+
+        EventDateTime startEventDateTime = new EventDateTime().setDateTime(new DateTime(startMillis)).setTimeZone("UTC");
+        EventDateTime endEventDateTime = new EventDateTime().setDateTime(new DateTime(endMillis)).setTimeZone("UTC");
+
+        return new EventDateTime[]{startEventDateTime, endEventDateTime};
     }
 
     public void createGoogleCalendarEvent(String eventName, LocalDate startDate, LocalDate endDate) {
@@ -58,21 +65,15 @@ public class GoogleService {
 
             Event event = new Event().setSummary(eventName);
 
-            DateTime startDateTime = new DateTime(
-                    startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-            EventDateTime startEventDateTime = new EventDateTime().setDateTime(startDateTime).setTimeZone("UTC");
+            EventDateTime[] eventDateTimes = convertToLocalTimeZones(startDate, endDate);
 
-            DateTime endDateTime = new DateTime(
-                    endDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant().toEpochMilli());
-            EventDateTime endEventDateTime = new EventDateTime().setDateTime(endDateTime).setTimeZone("UTC");
-
-            event.setStart(startEventDateTime);
-            event.setEnd(endEventDateTime);
+            event.setStart(eventDateTimes[0]);
+            event.setEnd(eventDateTimes[1]);
 
             String idCalendar = googleCredentialsProperties.getIdCalender();
             event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
 
-            LOGGER.info("Event created: " + event.getHtmlLink());
+            LOGGER.info("Event created " + event.getHtmlLink());
         } catch (IOException | GeneralSecurityException e) {
             LOGGER.error(e.getMessage());
         }
