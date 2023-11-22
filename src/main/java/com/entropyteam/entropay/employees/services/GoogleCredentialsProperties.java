@@ -9,5 +9,6 @@ public class GoogleCredentialsProperties {
     private String idClient;
     private String secretClient;
     private String idCalender;
+    private String credential;
 }
 

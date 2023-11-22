@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -17,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -29,7 +30,6 @@ import java.util.List;
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
 @Service
 public class GoogleService {
-
     private final GoogleCredentialsProperties googleCredentialsProperties;
     private static final Logger LOGGER = LogManager.getLogger();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
@@ -41,7 +41,7 @@ public class GoogleService {
     }
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new FileInputStream("src/main/resources/optical-weft-403114-84eebea181fd.json"))
+        return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentialsProperties.getCredential().getBytes()))
                 .createScoped(SCOPES);
     }
 
@@ -50,26 +50,25 @@ public class GoogleService {
         return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
     }
 
-    public void createGoogleCalendarEvent(String id, String eventName, LocalDate startDate, LocalDate endDate) {
+    public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
             Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
                     new HttpCredentialsAdapter(getCredentialsServiceAccount()))
                     .setApplicationName("GoogleCalendar")
                     .build();
+            Event event = new Event().setSummary(calendarEventDto.description());
+            String formattedId = calendarEventDto.id().replace("-", "");
+            EventDateTime eventDateStartTime = convertToLocalTimeZones(calendarEventDto.startDate());
+            EventDateTime eventDateEndTimes = convertToLocalTimeZones(calendarEventDto.endDate());
 
-            Event event = new Event().setSummary(eventName);
-
-            EventDateTime eventDateStartTime = convertToLocalTimeZones(startDate);
-            EventDateTime eventDateEndTimes = convertToLocalTimeZones(endDate);
-
-            event.setId(id);
+            event.setId(formattedId);
             event.setStart(eventDateStartTime);
             event.setEnd(eventDateEndTimes);
 
             String idCalendar = googleCredentialsProperties.getIdCalender();
-            event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
 
+            event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
         } catch (IOException | GeneralSecurityException e) {
             LOGGER.error(e.getMessage());
