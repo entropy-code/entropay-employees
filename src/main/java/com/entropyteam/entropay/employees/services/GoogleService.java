@@ -19,7 +19,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
@@ -41,7 +40,7 @@ public class GoogleService {
     }
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentialsProperties.getCredential().getBytes()))
+        return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentialsProperties.getCredentials()))
                 .createScoped(SCOPES);
     }
 
@@ -66,7 +65,7 @@ public class GoogleService {
             event.setStart(eventDateStartTime);
             event.setEnd(eventDateEndTimes);
 
-            String idCalendar = googleCredentialsProperties.getIdCalender();
+            String idCalendar = googleCredentialsProperties.getCalenderId();
 
             event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
