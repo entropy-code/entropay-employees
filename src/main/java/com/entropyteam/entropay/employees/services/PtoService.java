@@ -3,9 +3,9 @@ package com.entropyteam.entropay.employees.services;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+
+import com.entropyteam.entropay.employees.dtos.*;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
-import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.LeaveType;
@@ -40,6 +39,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     private VacationRepository vacationRepository;
     private HolidayRepository holidayRepository;
     private VacationService vacationService;
+    private GoogleService googleService;
 
 
     @Autowired
@@ -53,6 +53,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.holidayRepository = holidayRepository;
         this.vacationService = vacationService;
+        this.googleService = googleService;
     }
 
     @Transactional
@@ -103,11 +104,16 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             if (totalDays == 0) {
                 throw new InvalidRequestParametersException("Vacation days must be greater than 0");
             }
+
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
 
+
         Pto savedEntity = getRepository().save(entityToCreate);
-        return toDTO(savedEntity);
+        ptoDto = toDTO(savedEntity);
+        CalendarEventDto calendarEventDto = CreateCalendarEventDto(ptoDto);
+        googleService.createGoogleCalendarEvent(calendarEventDto);
+        return ptoDto;
     }
 
     @Override
@@ -164,5 +170,15 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     private static boolean isVacationType(Pto oldEntity) {
         return StringUtils.equalsIgnoreCase(oldEntity.getLeaveType().getName(), VACATION_TYPE);
+    }
+
+    private CalendarEventDto CreateCalendarEventDto(PtoDto ptoDto){
+        String eventId = ptoDto.id().toString();
+        LocalDate startDate = ptoDto.ptoStartDate();
+        LocalDate endDate = ptoDto.ptoEndDate();
+        Optional<Employee> employee = employeeRepository.findById(ptoDto.employeeId());
+        String eventName = employee.get().getFirstName() + " " + employee.get().getLastName() + " " + ptoDto.details();
+
+        return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 }

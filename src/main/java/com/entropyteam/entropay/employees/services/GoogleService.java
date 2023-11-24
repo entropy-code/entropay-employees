@@ -41,7 +41,7 @@ public class GoogleService {
     }
 
     public GoogleCredentials getCredentialsServiceAccount() throws IOException {
-        return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentialsProperties.getCredential().getBytes()))
+        return GoogleCredentials.fromStream(new ByteArrayInputStream(googleCredentialsProperties.getCredentials().getBytes()))
                 .createScoped(SCOPES);
     }
 
@@ -66,7 +66,7 @@ public class GoogleService {
             event.setStart(eventDateStartTime);
             event.setEnd(eventDateEndTimes);
 
-            String idCalendar = googleCredentialsProperties.getIdCalender();
+            String idCalendar = googleCredentialsProperties.getIdCalendar();
 
             event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
