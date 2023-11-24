@@ -65,7 +65,7 @@ public class GoogleService {
             event.setStart(eventDateStartTime);
             event.setEnd(eventDateEndTimes);
 
-            String idCalendar = googleCredentialsProperties.getCalenderId();
+            String idCalendar = googleCredentialsProperties.getCalendarId();
 
             event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());

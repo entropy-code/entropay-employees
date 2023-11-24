@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties("google-credentials")
 @Data
 public class GoogleCredentialsProperties {
-    private String calenderId;
+    private String calendarId;
     private String type;
     private String projectId;
     private String privateKeyId;
@@ -34,8 +34,6 @@ public class GoogleCredentialsProperties {
                 "\"universe_domain\": \"" + universeDomain + "\"}";
         return propertiesString.getBytes();
     }
-
-
 }
 
 
