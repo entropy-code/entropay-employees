@@ -45,7 +45,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     @Autowired
     public PtoService(ReactAdminMapper mapper, PtoRepository ptoRepository, EmployeeRepository employeeRepository,
             LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
-            HolidayRepository holidayRepository, VacationService vacationService) {
+            HolidayRepository holidayRepository, VacationService vacationService, GoogleService googleService) {
         super(Pto.class, mapper);
         this.ptoRepository = ptoRepository;
         this.employeeRepository = employeeRepository;
