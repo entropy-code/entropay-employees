@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class GoogleService {
     }
 
     private EventDateTime convertToLocalTimeZones(LocalDate date) {
-        long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long dateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
         return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
     }
 
