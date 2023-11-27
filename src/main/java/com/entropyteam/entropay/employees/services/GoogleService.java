@@ -22,19 +22,20 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
 @Service
 public class GoogleService {
-    private final GoogleCredentialsProperties googleCredentialsProperties;
     private static final Logger LOGGER = LogManager.getLogger();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
 
     @Autowired
+    private final GoogleCredentialsProperties googleCredentialsProperties;
+
     public GoogleService(GoogleCredentialsProperties googleCredentialsProperties) {
         this.googleCredentialsProperties = googleCredentialsProperties;
     }
@@ -45,7 +46,7 @@ public class GoogleService {
     }
 
     private EventDateTime convertToLocalTimeZones(LocalDate date) {
-        long dateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long dateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
         return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
     }
 
