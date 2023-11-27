@@ -229,7 +229,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         int currentYear = LocalDate.now().getYear();
         LocalDate startDate = birthDate.withYear(currentYear);
         LocalDate endDate = startDate.plusDays(1);
-        String eventId = currentYear + "-" + employeeId.toString();
+        String eventId = currentYear + employeeId.toString();
         String eventName = "BirthDay " + firstName + " " + lastName;
 
         return new CalendarEventDto(eventId, eventName, startDate, endDate);

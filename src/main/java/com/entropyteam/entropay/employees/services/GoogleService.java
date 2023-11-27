@@ -29,12 +29,13 @@ import java.util.List;
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
 @Service
 public class GoogleService {
-    private final GoogleCredentialsProperties googleCredentialsProperties;
     private static final Logger LOGGER = LogManager.getLogger();
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
 
     @Autowired
+    private final GoogleCredentialsProperties googleCredentialsProperties;
+
     public GoogleService(GoogleCredentialsProperties googleCredentialsProperties) {
         this.googleCredentialsProperties = googleCredentialsProperties;
     }
