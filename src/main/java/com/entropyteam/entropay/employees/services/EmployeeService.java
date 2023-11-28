@@ -29,7 +29,10 @@ import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import net.bytebuddy.asm.Advice;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.hibernate.bytecode.internal.bytebuddy.BytecodeProviderImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -238,7 +241,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract) {
         LocalDate startDate = firstContract != null ? firstContract.getStartDate() : LocalDate.now();
-        LocalDate endDate = latestContract != null ? latestContract.isActive() ? LocalDate.now() : latestContract.getEndDate() : LocalDate.now();
+        LocalDate endDate = LocalDate.now();
+        if(latestContract != null && latestContract.getEndDate() != null){
+            endDate = Collections.min(Arrays.asList(latestContract.getEndDate(), endDate));
+        }
         Period difference = Period.between(startDate, endDate);
         StringBuilder timeSinceStart = new StringBuilder();
         if (difference.getYears() > 0) {
