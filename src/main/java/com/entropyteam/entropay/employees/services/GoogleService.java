@@ -57,6 +57,7 @@ public class GoogleService {
         return new EventDateTime().setDate(dateTime);
     }
 
+
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
             final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
