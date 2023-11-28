@@ -22,7 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,9 +47,12 @@ public class GoogleService {
     }
 
     private EventDateTime convertToLocalTimeZones(LocalDate date) {
-        long dateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
+        ZoneId localZone = ZoneId.systemDefault();
+        ZonedDateTime zonedDateTime = date.atStartOfDay(localZone);
+        long dateMillis = zonedDateTime.toInstant().toEpochMilli();
+        return new EventDateTime().setDateTime(new DateTime(dateMillis));
     }
+
 
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
@@ -60,7 +64,9 @@ public class GoogleService {
             Event event = new Event().setSummary(calendarEventDto.description());
             String formattedId = calendarEventDto.id().replace("-", "");
             EventDateTime eventDateStartTime = convertToLocalTimeZones(calendarEventDto.startDate());
+            LOGGER.info("startDate" + eventDateStartTime);
             EventDateTime eventDateEndTimes = convertToLocalTimeZones(calendarEventDto.endDate());
+            LOGGER.info("startEnd" + eventDateEndTimes);
 
             event.setId(formattedId);
             event.setStart(eventDateStartTime);
