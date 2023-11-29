@@ -1,9 +1,12 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -19,6 +22,8 @@ import com.entropyteam.entropay.employees.repositories.projections.VacationBalan
 
 @Service
 public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private final VacationRepository vacationRepository;
     private final EmployeeRepository employeeRepository;
@@ -58,7 +63,9 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 vacationDebit.setCredit(0);
                 vacationDebit.setDebit(daysToUse);
                 vacationDebit.setEmployee(employee);
-                vacationRepository.save(vacationDebit);
+                Vacation savedEntity = vacationRepository.save(vacationDebit);
+                LOGGER.info("Vacation debit created, employeeId: {}, year: {}, available vacation days before debit: {}, available vacation days after debit: {}",
+                        savedEntity.getEmployee().getId(), savedEntity.getYear(), vacation.getBalance(), vacationRepository.getAvailableDays(employee.getId()));
             }
         }
     }
@@ -72,6 +79,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
         vacationDebits.sort(Comparator.comparing(Vacation::getYear).reversed());
         for (Vacation vacation : vacationDebits) {
+            Integer availableDays = vacationRepository.getAvailableDays(employee.getId());
             if (totalDays > 0) {
                 Integer debit = vacation.getDebit();
                 if (debit > totalDays) {
@@ -81,7 +89,9 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                     vacation.setDeleted(true);
                     totalDays -= debit;
                 }
-                vacationRepository.save(vacation);
+                Vacation savedEntity = vacationRepository.save(vacation);
+                LOGGER.info("Vacation debit discounted, employeeId: {}, year: {}, : available days before discount: {}, available days after discount: {}",
+                        savedEntity.getEmployee().getId(), savedEntity.getYear(), availableDays, vacationRepository.getAvailableDays(employee.getId()));
             }
         }
     }
