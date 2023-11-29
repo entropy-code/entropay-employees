@@ -21,9 +21,11 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
@@ -46,8 +48,11 @@ public class GoogleService {
     }
 
     private EventDateTime convertToLocalTimeZones(LocalDate date) {
-        long dateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        return new EventDateTime().setDateTime(new DateTime(dateMillis)).setTimeZone("UTC");
+        Date utilDate = java.sql.Date.valueOf(date);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = dateFormat.format(utilDate);
+        DateTime dateTime = new DateTime(formattedDate);
+        return new EventDateTime().setDate(dateTime);
     }
 
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
@@ -60,7 +65,9 @@ public class GoogleService {
             Event event = new Event().setSummary(calendarEventDto.description());
             String formattedId = calendarEventDto.id().replace("-", "");
             EventDateTime eventDateStartTime = convertToLocalTimeZones(calendarEventDto.startDate());
+            LOGGER.info("startDate" + eventDateStartTime);
             EventDateTime eventDateEndTimes = convertToLocalTimeZones(calendarEventDto.endDate());
+            LOGGER.info("startEnd" + eventDateEndTimes);
 
             event.setId(formattedId);
             event.setStart(eventDateStartTime);
