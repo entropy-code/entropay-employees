@@ -21,10 +21,11 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
@@ -47,10 +48,11 @@ public class GoogleService {
     }
 
     private EventDateTime convertToLocalTimeZones(LocalDate date) {
-        ZoneId localZone = ZoneId.systemDefault();
-        ZonedDateTime zonedDateTime = date.atStartOfDay(localZone);
-        long dateMillis = zonedDateTime.toInstant().toEpochMilli();
-        return new EventDateTime().setDateTime(new DateTime(dateMillis));
+        Date utilDate = java.sql.Date.valueOf(date);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = dateFormat.format(utilDate);
+        DateTime dateTime = new DateTime(formattedDate);
+        return new EventDateTime().setDate(dateTime);
     }
 
 
