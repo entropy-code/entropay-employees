@@ -64,13 +64,10 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto pto = getRepository().findById(id).orElseThrow();
         pto.setDeleted(true);
         if (isVacationType(pto)) {
-            LOGGER.info("Pto of type vacation deletion started, employeeId: {}, quantity of days: {}",
-                    pto.getEmployee().getId(), pto.getDays());
             vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
-            LOGGER.info("Pto of type vacation deleted, employeeId: {}, quantity of days: {}",
+            LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}",
                     pto.getEmployee().getId(), pto.getDays());
         }
-
         return toDTO(pto);
     }
 
@@ -79,10 +76,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     public PtoDto update(UUID id, PtoDto ptoDto) {
         Pto oldEntity = ptoRepository.findById(id).orElseThrow();
         Pto entityToUpdate = toEntity(ptoDto);
-        if (isVacationType(oldEntity) || isVacationType(entityToUpdate)){
-            LOGGER.info("Started update of pto of type: {}, update to type: {}, duration of new pto: {} ",
-                    oldEntity.getLeaveType().getName(), entityToUpdate.getLeaveType().getName(), entityToUpdate.getDays());
-        }
+        LOGGER.info("Started update of pto of type: {}, update to type: {}, amount of days: {} ",
+                oldEntity.getLeaveType().getName(), entityToUpdate.getLeaveType().getName(), entityToUpdate.getDays());
         if (isVacationType(oldEntity) && isVacationType(entityToUpdate) && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
             vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
@@ -91,7 +86,6 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         } else if (!isVacationType(oldEntity) && isVacationType(entityToUpdate)) {
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         }
-
         entityToUpdate.setId(id);
         entityToUpdate.setStatus(Status.APPROVED); // For now all approved
         Pto savedEntity = getRepository().save(entityToUpdate);
@@ -105,9 +99,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto entityToCreate = toEntity(ptoDto);
         entityToCreate.setStatus(Status.APPROVED); // For now all approved
         if (isVacationType(entityToCreate)) {
-            LOGGER.info("PTO of type vacation started creation employeeId: {}, duration of pto: {}",
-                    "EmployeeId: " + entityToCreate.getEmployee().getId(),
-                    "Days: " + entityToCreate.getDays());
+            LOGGER.info("PTO of type vacation started creation employeeId: {}, amount of days: {}",
+                    entityToCreate.getEmployee().getId(), entityToCreate.getDays());
             Double totalDaysAsDouble = entityToCreate.getDays();
             if (Objects.equals(totalDaysAsDouble, HALF_DAY_OFF)) {
                 throw new InvalidRequestParametersException("Can't take half a day off on vacations");
@@ -119,11 +112,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             }
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
-
         Pto savedEntity = getRepository().save(entityToCreate);
-        if(isVacationType(savedEntity)){
-            LOGGER.info("PTO of type vacation created employeeId: {}, duration of pto: {}", savedEntity.getEmployee().getId(), savedEntity.getDays());
-        }
+        LOGGER.info("PTO of type vacation created employeeId: {}, amount of days: {}", savedEntity.getEmployee().getId(), savedEntity.getDays());
         return toDTO(savedEntity);
     }
 

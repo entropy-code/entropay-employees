@@ -52,8 +52,9 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
             throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
         }
-
         availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
+        LOGGER.info("Adding vacation debit, employeeId: {}, credit before adding new vacation: {}",
+                employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
         for (VacationBalanceByYear vacation : availableVacations) {
             if (totalDays > 0) {
                 Integer daysToUse = Math.min(totalDays, vacation.getBalance());
@@ -63,11 +64,12 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 vacationDebit.setCredit(0);
                 vacationDebit.setDebit(daysToUse);
                 vacationDebit.setEmployee(employee);
-                Vacation savedEntity = vacationRepository.save(vacationDebit);
-                LOGGER.info("Vacation debit created, employeeId: {}, year: {}, available vacation days before debit: {}, available vacation days after debit: {}",
-                        savedEntity.getEmployee().getId(), savedEntity.getYear(), vacation.getBalance(), vacationRepository.getAvailableDays(employee.getId()));
+                vacationRepository.save(vacationDebit);
             }
         }
+        LOGGER.info("Vacation debits added, employeeId: {}, credit after adding new vacation: {}",
+                employee.getId(),
+                vacationRepository.getVacationByYear(employee.getId()).stream().mapToInt(VacationBalanceByYear::getBalance).sum());
     }
 
     public void discountVacationDebit(Employee employee, Integer totalDays) {
@@ -76,10 +78,10 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
         if (CollectionUtils.isEmpty(vacationDebits) || vacationDebits.stream().mapToInt(Vacation::getDebit).sum() < totalDays) {
             throw new InvalidRequestParametersException("No vacations found to discount for the employee");
         }
-
+        LOGGER.info("Discounting vacation debit, employeeId: {}, debit before discount: {}",
+                employee.getId(), vacationDebits.stream().mapToInt(Vacation::getDebit).sum());
         vacationDebits.sort(Comparator.comparing(Vacation::getYear).reversed());
         for (Vacation vacation : vacationDebits) {
-            Integer availableDays = vacationRepository.getAvailableDays(employee.getId());
             if (totalDays > 0) {
                 Integer debit = vacation.getDebit();
                 if (debit > totalDays) {
@@ -89,13 +91,13 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                     vacation.setDeleted(true);
                     totalDays -= debit;
                 }
-                Vacation savedEntity = vacationRepository.save(vacation);
-                LOGGER.info("Vacation debit discounted, employeeId: {}, year: {}, : available days before discount: {}, available days after discount: {}",
-                        savedEntity.getEmployee().getId(), savedEntity.getYear(), availableDays, vacationRepository.getAvailableDays(employee.getId()));
+                vacationRepository.save(vacation);
             }
         }
+        LOGGER.info("Vacation debits discounted, employeeId: {}, debit after discount: {}",
+                employee.getId(), vacationRepository.getVacationByEmployeeIdAndDeletedIsFalseAndCreditOrderByYearDesc(
+                        employee.getId(), 0).stream().mapToInt(Vacation::getDebit).sum());
     }
-
 
     @Override
     protected Vacation toEntity(VacationDto entity) {

@@ -28,8 +28,8 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
     public static final String X_TOTAL_COUNT = "X-Total-Count";
-    private final CrudService<T, K> crudService;
     private static final Logger LOGGER = LogManager.getLogger();
+    private final CrudService<T, K> crudService;
 
     public BaseController(CrudService<T, K> crudService) {
         this.crudService = Objects.requireNonNull(crudService);
