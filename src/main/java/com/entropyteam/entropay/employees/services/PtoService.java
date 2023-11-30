@@ -3,14 +3,17 @@ package com.entropyteam.entropay.employees.services;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.List;
+import java.util.Optional;
 
-import com.entropyteam.entropay.employees.dtos.*;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
+import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -44,8 +47,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     @Autowired
     public PtoService(ReactAdminMapper mapper, PtoRepository ptoRepository, EmployeeRepository employeeRepository,
-            LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
-            HolidayRepository holidayRepository, VacationService vacationService, GoogleService googleService) {
+                      LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
+                      HolidayRepository holidayRepository, VacationService vacationService, GoogleService googleService) {
         super(Pto.class, mapper);
         this.ptoRepository = ptoRepository;
         this.employeeRepository = employeeRepository;
