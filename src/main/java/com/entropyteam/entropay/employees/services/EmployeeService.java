@@ -144,6 +144,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignmentRepository.saveAll(employeeAssignments);
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
+
+        CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+        googleService.updateGoogleCalendarEvent(eventData);
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
     }
@@ -168,6 +171,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignment.setEndDate(LocalDate.now());
         });
         assignmentRepository.saveAll(employeeAssignment);
+        googleService.deleteGoogleCalendarEvent(employeeId.toString());
         return toDTO(employee);
     }
 
@@ -235,11 +239,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 
-
     public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract) {
         LocalDate startDate = firstContract != null ? firstContract.getStartDate() : LocalDate.now();
         LocalDate endDate = LocalDate.now();
-        if(latestContract != null && latestContract.getEndDate() != null){
+        if (latestContract != null && latestContract.getEndDate() != null) {
             endDate = Collections.min(Arrays.asList(latestContract.getEndDate(), endDate));
         }
         Period difference = Period.between(startDate, endDate);

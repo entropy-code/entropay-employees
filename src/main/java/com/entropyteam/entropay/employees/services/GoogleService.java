@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -55,31 +54,61 @@ public class GoogleService {
         return new EventDateTime().setDate(dateTime);
     }
 
-
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
-            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-                    new HttpCredentialsAdapter(getCredentialsServiceAccount()))
-                    .setApplicationName("GoogleCalendar")
-                    .build();
-            Event event = new Event().setSummary(calendarEventDto.description());
-            String formattedId = calendarEventDto.id().replace("-", "");
-            EventDateTime eventDateStartTime = convertToLocalTimeZones(calendarEventDto.startDate());
-            LOGGER.info("startDate" + eventDateStartTime);
-            EventDateTime eventDateEndTimes = convertToLocalTimeZones(calendarEventDto.endDate());
-            LOGGER.info("startEnd" + eventDateEndTimes);
+            Calendar service = getCalendarService();
 
-            event.setId(formattedId);
-            event.setStart(eventDateStartTime);
-            event.setEnd(eventDateEndTimes);
+            Event event = createEvent(calendarEventDto);
 
-            String idCalendar = googleCredentialsProperties.getCalendarId();
+            String calendarId = googleCredentialsProperties.getCalendarId();
 
-            event = service.events().insert(idCalendar, event).setSendNotifications(true).execute();
+            event = service.events().insert(calendarId, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
-        } catch (IOException | GeneralSecurityException e) {
+        } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
+    }
+
+    public void deleteGoogleCalendarEvent(String calendarEventId) {
+        try {
+            Calendar service = getCalendarService();
+            String formattedId = calendarEventId.replace("-", "");
+            String calendarId = googleCredentialsProperties.getCalendarId();
+
+            service.events().delete(calendarId, formattedId).execute();
+            LOGGER.info("Event deleted successfully");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    public void updateGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
+        try {
+            Calendar service = getCalendarService();
+            Event event = createEvent(calendarEventDto);
+            String calendarId = googleCredentialsProperties.getCalendarId();
+
+            event = service.events().update(calendarId, event.getId(), event).execute();
+            LOGGER.info("Event updated " + event.getHtmlLink());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    private Calendar getCalendarService() throws Exception {
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        return new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
+                new HttpCredentialsAdapter(getCredentialsServiceAccount()))
+                .setApplicationName("GoogleCalendar")
+                .build();
+    }
+
+    private Event createEvent(CalendarEventDto calendarEventDto) {
+        EventDateTime eventDateStartTime = convertToLocalTimeZones(calendarEventDto.startDate());
+        EventDateTime eventDateEndTimes = convertToLocalTimeZones(calendarEventDto.endDate());
+        String formattedId = calendarEventDto.id().replace("-", "");
+
+        return new Event().setSummary(calendarEventDto.description()).
+                setId(formattedId).setStart(eventDateStartTime).setEnd(eventDateEndTimes);
     }
 }
