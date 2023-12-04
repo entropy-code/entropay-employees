@@ -3,21 +3,23 @@ package com.entropyteam.entropay.employees.services;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import org.apache.commons.lang3.ObjectUtils;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
+import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
-import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.LeaveType;
@@ -43,12 +45,13 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     private VacationRepository vacationRepository;
     private HolidayRepository holidayRepository;
     private VacationService vacationService;
+    private GoogleService googleService;
 
 
     @Autowired
     public PtoService(ReactAdminMapper mapper, PtoRepository ptoRepository, EmployeeRepository employeeRepository,
-            LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
-            HolidayRepository holidayRepository, VacationService vacationService) {
+                      LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
+                      HolidayRepository holidayRepository, VacationService vacationService, GoogleService googleService) {
         super(Pto.class, mapper);
         this.ptoRepository = ptoRepository;
         this.employeeRepository = employeeRepository;
@@ -56,6 +59,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.holidayRepository = holidayRepository;
         this.vacationService = vacationService;
+        this.googleService = googleService;
     }
 
     @Transactional
@@ -110,11 +114,16 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             if (totalDays == 0) {
                 throw new InvalidRequestParametersException("Vacation days must be greater than 0");
             }
+
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
+        
         Pto savedEntity = getRepository().save(entityToCreate);
         LOGGER.info("PTO of type vacation created employeeId: {}, amount of days: {}", savedEntity.getEmployee().getId(), savedEntity.getDays());
-        return toDTO(savedEntity);
+        ptoDto = toDTO(savedEntity);
+        CalendarEventDto calendarEventDto = CreateCalendarEventDto(ptoDto);
+        googleService.createGoogleCalendarEvent(calendarEventDto);
+        return ptoDto;
     }
 
     @Override
@@ -171,5 +180,15 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     private static boolean isVacationType(Pto oldEntity) {
         return StringUtils.equalsIgnoreCase(oldEntity.getLeaveType().getName(), VACATION_TYPE);
+    }
+
+    private CalendarEventDto CreateCalendarEventDto(PtoDto ptoDto){
+        String eventId = ptoDto.id().toString();
+        LocalDate startDate = ptoDto.ptoStartDate();
+        LocalDate endDate = ptoDto.ptoEndDate();
+        Optional<Employee> employee = employeeRepository.findById(ptoDto.employeeId());
+        String eventName = employee.get().getFirstName() + " " + employee.get().getLastName() + " " + ptoDto.details();
+
+        return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 }
