@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     public static final String VACATION_TYPE = "vacation";
     public static final Double HALF_DAY_OFF = 0.5;
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private PtoRepository ptoRepository;
     private EmployeeRepository employeeRepository;
@@ -66,8 +69,9 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         pto.setDeleted(true);
         if (isVacationType(pto)) {
             vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
+            LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}",
+                    pto.getEmployee().getId(), pto.getDays());
         }
-
         googleService.deleteGoogleCalendarEvent(id.toString());
         return toDTO(pto);
     }
@@ -77,6 +81,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     public PtoDto update(UUID id, PtoDto ptoDto) {
         Pto oldEntity = ptoRepository.findById(id).orElseThrow();
         Pto entityToUpdate = toEntity(ptoDto);
+        LOGGER.info("Started update of pto of type: {}, update to type: {}, amount of days: {} ",
+                oldEntity.getLeaveType().getName(), entityToUpdate.getLeaveType().getName(), entityToUpdate.getDays());
         if (isVacationType(oldEntity) && isVacationType(entityToUpdate) && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
             vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
@@ -85,7 +91,6 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         } else if (!isVacationType(oldEntity) && isVacationType(entityToUpdate)) {
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         }
-
         entityToUpdate.setId(id);
         entityToUpdate.setStatus(Status.APPROVED); // For now all approved
         Pto savedEntity = getRepository().save(entityToUpdate);
@@ -100,6 +105,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto entityToCreate = toEntity(ptoDto);
         entityToCreate.setStatus(Status.APPROVED); // For now all approved
         if (isVacationType(entityToCreate)) {
+            LOGGER.info("PTO of type vacation started creation employeeId: {}, amount of days: {}",
+                    entityToCreate.getEmployee().getId(), entityToCreate.getDays());
             Double totalDaysAsDouble = entityToCreate.getDays();
             if (Objects.equals(totalDaysAsDouble, HALF_DAY_OFF)) {
                 throw new InvalidRequestParametersException("Can't take half a day off on vacations");
@@ -112,9 +119,9 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
-
-
+        
         Pto savedEntity = getRepository().save(entityToCreate);
+        LOGGER.info("PTO of type vacation created employeeId: {}, amount of days: {}", savedEntity.getEmployee().getId(), savedEntity.getDays());
         ptoDto = toDTO(savedEntity);
         CalendarEventDto calendarEventDto = CreateCalendarEventDto(ptoDto);
         googleService.createGoogleCalendarEvent(calendarEventDto);
