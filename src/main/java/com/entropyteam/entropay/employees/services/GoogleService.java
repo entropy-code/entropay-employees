@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -57,7 +58,6 @@ public class GoogleService {
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
             Calendar service = getCalendarService();
-
             Event event = createEvent(calendarEventDto);
 
             String calendarId = googleCredentialsProperties.getCalendarId();

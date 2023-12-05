@@ -72,6 +72,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}",
                     pto.getEmployee().getId(), pto.getDays());
         }
+        googleService.deleteGoogleCalendarEvent(id.toString());
         return toDTO(pto);
     }
 
@@ -93,9 +94,10 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         entityToUpdate.setId(id);
         entityToUpdate.setStatus(Status.APPROVED); // For now all approved
         Pto savedEntity = getRepository().save(entityToUpdate);
+        CalendarEventDto calendarEventDto = CreateCalendarEventDto(ptoDto);
+        googleService.updateGoogleCalendarEvent(calendarEventDto);
         return toDTO(savedEntity);
     }
-
 
     @Transactional
     @Override
@@ -185,7 +187,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     private CalendarEventDto CreateCalendarEventDto(PtoDto ptoDto){
         String eventId = ptoDto.id().toString();
         LocalDate startDate = ptoDto.ptoStartDate();
-        LocalDate endDate = ptoDto.ptoEndDate();
+        LocalDate endDate = ptoDto.ptoEndDate().plusDays(1);
         Optional<Employee> employee = employeeRepository.findById(ptoDto.employeeId());
         String eventName = employee.get().getFirstName() + " " + employee.get().getLastName() + " " + ptoDto.details();
 
