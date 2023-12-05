@@ -21,6 +21,10 @@ public class Filter {
         this.getByDateFieldsFilter = getByDateFieldsFilter;
     }
 
+    public Filter(Map<String, Object> getByFieldsFilter) {
+        this.getByFieldsFilter = getByFieldsFilter;
+    }
+
     public Map<String, List<UUID>> getGetByIdsFilter() {
         return getByIdsFilter;
     }

@@ -14,6 +14,7 @@ public interface EmployeeRepository extends BaseRepository<Employee, UUID> {
 
     List<Employee> findAllByDeletedIsFalseAndActiveIsTrue();
 
-    @Query(value = "SELECT * FROM Employee inner join Contract on Employee.id = Contract.employee_id WHERE Contract.active = true", nativeQuery = true)
+    @Query(value = "SELECT e.* FROM Employee AS e INNER JOIN Contract AS c ON e.id = c.employee_id WHERE c.active = true AND c.deleted = false AND e.deleted = false",
+            nativeQuery = true)
     List<Employee> getEmployeesWithAtLeastAnActiveContract();
 }

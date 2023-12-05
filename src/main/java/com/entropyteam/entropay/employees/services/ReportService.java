@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.auth.AppRole;
 
+import com.entropyteam.entropay.common.Filter;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
@@ -43,7 +45,8 @@ import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 @Service
 public class ReportService {
 
-    private final ObjectMapper objectMapper;
+    private final static String ACTIVE_CONTRACT = "activeContract";
+    private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
     private final AssignmentRepository assignmentRepository;
@@ -52,8 +55,9 @@ public class ReportService {
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
-                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository, ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository,
+                         ReactAdminMapper mapper) {
+        this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
@@ -64,7 +68,7 @@ public class ReportService {
 
     public Page<EmployeeReportDto> getEmployeesReport(ReactAdminParams params) {
         AppRole userRole = getUserRole();
-        List<Employee> employeesList = applyFilters(params);
+        List<Employee> employeesList = getFilteredEmployeesList(mapper.buildReportFilter(params, EmployeeReportDto.class));
         Map<UUID, List<Contract>> employeeContractsMap = contractRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getEmployee().getId()));
@@ -118,18 +122,10 @@ public class ReportService {
         return new PageImpl<>(employeesReportDtoList, Pageable.unpaged(), employeesReportDtoList.size());
     }
 
-    public List<Employee> applyFilters(ReactAdminParams params) {
-        if (params != null && !StringUtils.isEmpty(params.getFilter())) {
-            try {
-                JsonNode jsonNode = objectMapper.readTree(params.getFilter());
-                if (jsonNode.has("active")) {
-                    Boolean active = jsonNode.get("active").asBoolean();
-                    if (active) {
-                        return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
-                    }
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Error processing filter", e);
+    public List<Employee> getFilteredEmployeesList(Filter filter) {
+        if (filter.getGetByFieldsFilter() != null) {
+            if(filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
+                return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
             }
         }
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
