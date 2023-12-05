@@ -29,6 +29,7 @@ public class EmployeeReportDto extends ReportDto {
     private Integer arsPayment;
     private String country;
     private String labourEmail;
+    private Boolean active;
 
     public EmployeeReportDto(UUID id,
                              String internalId,
@@ -47,7 +48,8 @@ public class EmployeeReportDto extends ReportDto {
                              Integer usdPayment,
                              Integer arsPayment,
                              String country,
-                             String labourEmail) {
+                             String labourEmail,
+                             Boolean active) {
         this.id = id;
         this.internalId = internalId;
         this.firstName = firstName;
@@ -66,6 +68,7 @@ public class EmployeeReportDto extends ReportDto {
         this.arsPayment = arsPayment;
         this.country = country;
         this.labourEmail = labourEmail;
+        this.active = active;
     }
 
     public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract latestContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment, String country, String labourEmail) {
@@ -75,7 +78,8 @@ public class EmployeeReportDto extends ReportDto {
                 profile, latestContract != null && latestContract.isActive() ? latestContract.getSeniority().getName() : null,
                 firstContract != null ? firstContract.getStartDate() : null,
                 latestContract != null ? latestContract.getEndDate() : null,
-                employee.isActive(), client, project, technologiesName, usdPayment, arsPayment, employee.getCountry() != null ? employee.getCountry() : "", employee.getLabourEmail() != null ? employee.getLabourEmail() : "");
+                employee.isActive(), client, project, technologiesName, usdPayment, arsPayment, employee.getCountry() != null ? employee.getCountry() : "", employee.getLabourEmail() != null ? employee.getLabourEmail() : "",
+                latestContract != null ? latestContract.isActive() : false);
     }
 
     public String getInternalId() {
@@ -220,5 +224,13 @@ public class EmployeeReportDto extends ReportDto {
 
     public void setLabourEmail() {
         this.labourEmail = labourEmail;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
+    public Boolean isActive() {
+        return active;
     }
 }

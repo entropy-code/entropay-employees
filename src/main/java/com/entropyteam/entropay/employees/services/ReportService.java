@@ -1,6 +1,5 @@
 package com.entropyteam.entropay.employees.services;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,6 +12,7 @@ import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.auth.AppRole;
 
+import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -27,6 +27,8 @@ import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,21 +37,23 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.PageImpl;
 
+
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 @Service
 public class ReportService {
 
+    private final ObjectMapper objectMapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
 
-
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
-                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository) {
+                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository, ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
@@ -58,9 +62,9 @@ public class ReportService {
     }
 
 
-    public Page<EmployeeReportDto> getEmployeesReport() {
+    public Page<EmployeeReportDto> getEmployeesReport(ReactAdminParams params) {
         AppRole userRole = getUserRole();
-        List<Employee> employeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        List<Employee> employeesList = applyFilters(params);
         Map<UUID, List<Contract>> employeeContractsMap = contractRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getEmployee().getId()));
@@ -112,5 +116,22 @@ public class ReportService {
             employeesReportDtoList.add(employeeReportDto);
         }
         return new PageImpl<>(employeesReportDtoList, Pageable.unpaged(), employeesReportDtoList.size());
+    }
+
+    public List<Employee> applyFilters(ReactAdminParams params) {
+        if (params != null && !StringUtils.isEmpty(params.getFilter())) {
+            try {
+                JsonNode jsonNode = objectMapper.readTree(params.getFilter());
+                if (jsonNode.has("active")) {
+                    Boolean active = jsonNode.get("active").asBoolean();
+                    if (active) {
+                        return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Error processing filter", e);
+            }
+        }
+        return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
     }
 }
