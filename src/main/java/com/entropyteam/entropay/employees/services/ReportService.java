@@ -29,8 +29,6 @@ import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
