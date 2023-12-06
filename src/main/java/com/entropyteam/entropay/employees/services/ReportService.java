@@ -121,10 +121,8 @@ public class ReportService {
     }
 
     public List<Employee> getFilteredEmployeesList(Filter filter) {
-        if (filter.getGetByFieldsFilter() != null) {
-            if(filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
-                return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
-            }
+        if(filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
+            return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
         }
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
     }
