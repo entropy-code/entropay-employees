@@ -12,6 +12,8 @@ import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.services.AwsCredentialsProperties;
 import com.entropyteam.entropay.employees.services.AwsService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ import java.util.Map;
 
 @Component
 public class VacationJob {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private final EmployeeRepository employeeRepository;
     private final ContractRepository contractRepository;
@@ -47,9 +50,10 @@ public class VacationJob {
     }
 
     //Job to execute in October and January
-    @Scheduled(cron = "0 0 8 1 1,10 ?")
+    @Scheduled(cron = "0 0 9 1 1,10 ?")
     @Transactional
     public void setEmployeeVacations() throws IOException {
+        LOGGER.info("Starting employees vacation set job");
         Map<String, Integer> summary = findEmployeeVacations();
         String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
         InputStream is = BuilderUtils.convertMapToCSVInputStream(summary);
