@@ -57,13 +57,38 @@ public class GoogleService {
     public void createGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
         try {
             Calendar service = getCalendarService();
-
             Event event = createEvent(calendarEventDto);
 
             String calendarId = googleCredentialsProperties.getCalendarId();
 
             event = service.events().insert(calendarId, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    public void deleteGoogleCalendarEvent(String calendarEventId) {
+        try {
+            Calendar service = getCalendarService();
+            String formattedId = calendarEventId.replace("-", "");
+            String calendarId = googleCredentialsProperties.getCalendarId();
+
+            service.events().delete(calendarId, formattedId).execute();
+            LOGGER.info("Event deleted successfully");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    public void updateGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
+        try {
+            Calendar service = getCalendarService();
+            Event event = createEvent(calendarEventDto);
+            String calendarId = googleCredentialsProperties.getCalendarId();
+
+            event = service.events().update(calendarId, event.getId(), event).execute();
+            LOGGER.info("Event updated " + event.getHtmlLink());
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
