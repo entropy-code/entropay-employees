@@ -1,8 +1,14 @@
 package com.entropyteam.entropay.common;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+
 import java.util.List;
 import java.util.Objects;
-
+import javax.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
@@ -16,14 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
-
-import javax.validation.Valid;
-
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
@@ -67,7 +65,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> delete(@PathVariable(value = "id") K id) {
         T deletedEntity = crudService.delete(id);
-        LOGGER.info("Deleting entity with id: {} of type: {}", id, deletedEntity.getClass().getName());
+        LOGGER.info("Deleted entity {} with id: {}", deletedEntity.getClass().getName(), id);
         return ResponseEntity.ok(deletedEntity);
     }
 
