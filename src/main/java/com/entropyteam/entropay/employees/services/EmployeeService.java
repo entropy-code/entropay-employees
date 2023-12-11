@@ -117,8 +117,11 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
 
-        CalendarEventDto eventData = formatEventData(entityToCreate.getId(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
-        googleService.createGoogleCalendarEvent(eventData);
+        LocalDate birthDate = employeeDto.birthDate();
+        if (birthDate != null) {
+            CalendarEventDto eventData = formatEventData(entityToCreate.getId(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+            googleService.createGoogleCalendarEvent(eventData);
+        }
 
         return toDTO(savedEntity);
     }
@@ -171,7 +174,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignment.setEndDate(LocalDate.now());
         });
         assignmentRepository.saveAll(employeeAssignment);
-        googleService.deleteGoogleCalendarEvent(employeeId.toString());
+        googleService.deleteGoogleCalendarEvent(LocalDate.now().getYear() + employeeId.toString());
         return toDTO(employee);
     }
 
