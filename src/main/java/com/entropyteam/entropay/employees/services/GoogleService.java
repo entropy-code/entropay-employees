@@ -94,32 +94,6 @@ public class GoogleService {
         }
     }
 
-    public void deleteGoogleCalendarEvent(String calendarEventId) {
-        try {
-            Calendar service = getCalendarService();
-            String formattedId = calendarEventId.replace("-", "");
-            String calendarId = googleCredentialsProperties.getCalendarId();
-
-            service.events().delete(calendarId, formattedId).execute();
-            LOGGER.info("Event deleted successfully");
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-    }
-
-    public void updateGoogleCalendarEvent(CalendarEventDto calendarEventDto) {
-        try {
-            Calendar service = getCalendarService();
-            Event event = createEvent(calendarEventDto);
-            String calendarId = googleCredentialsProperties.getCalendarId();
-
-            event = service.events().update(calendarId, event.getId(), event).execute();
-            LOGGER.info("Event updated " + event.getHtmlLink());
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-    }
-
     private Calendar getCalendarService() throws Exception {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         return new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY,
