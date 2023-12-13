@@ -22,7 +22,6 @@ public class EmployeeJob {
     private final EmployeeRepository employeeRepository;
     private final EmployeeService employeeService;
     private final GoogleService googleService;
-    private static final Logger LOGGER = LogManager.getLogger();
 
 
     @Autowired
