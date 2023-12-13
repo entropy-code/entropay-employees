@@ -6,10 +6,10 @@ import java.time.LocalDate;
 import java.util.Set;
 
 public class TestUtils {
-    public static Contract aContract() {
+    public static Contract buildContract() {
         Contract contract = new Contract();
         contract.setCompany(aCompany());
-        contract.setEmployee(anEmployee());
+        contract.setEmployee(buildEmployee());
         contract.setRole(aRole());
         contract.setSeniority(aSeniority());
         contract.setStartDate(LocalDate.of(2019, 5, 22));
@@ -28,11 +28,11 @@ public class TestUtils {
     public static Role aRole() {
         Role role = new Role();
         role.setName("Software Engineers");
-        role.setEmployees(Set.of(anEmployee()));
+        role.setEmployees(Set.of(buildEmployee()));
         return role;
     }
 
-    public static Employee anEmployee() {
+    public static Employee buildEmployee() {
         Employee employee = new Employee();
         employee.setFirstName("Satoshi");
         employee.setLastName("Nakamoto");
