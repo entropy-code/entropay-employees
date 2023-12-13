@@ -52,10 +52,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
-                           EmployeeRepository employeeRepository, RoleRepository roleRepository,
-                           SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
-                           PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
-                           ReactAdminMapper reactAdminMapper) {
+            EmployeeRepository employeeRepository, RoleRepository roleRepository,
+            SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
+            PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
+            ReactAdminMapper reactAdminMapper) {
         super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
@@ -71,7 +71,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     @Override
     public ContractDto create(ContractDto contractDto) {
         Contract entityToCreate = toEntity(contractDto);
-        Contract savedEntity = getRepository().save(checkActiveContract(entityToCreate));
+        Contract savedEntity = getRepository().save(setContractStatus(entityToCreate));
         paymentSettlementService.createPaymentsSettlement(savedEntity.getPaymentsSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
@@ -81,7 +81,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     public ContractDto update(UUID contractId, ContractDto contractDto) {
         Contract entityToUpdate = toEntity(contractDto);
         entityToUpdate.setId(contractId);
-        Contract savedEntity = getRepository().save(checkActiveContract(entityToUpdate));
+        Contract savedEntity = getRepository().save(setContractStatus(entityToUpdate));
         paymentSettlementService.updatePaymentsSettlement(contractDto.paymentSettlement(), savedEntity);
         return toDTO(savedEntity);
     }
@@ -139,14 +139,16 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEmployee(employee);
         contract.setRole(role);
         contract.setSeniority(seniority);
-        contract.setPaymentsSettlement(entity.paymentSettlement() == null ?  Collections.emptySet() : entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
+        contract.setPaymentsSettlement(entity.paymentSettlement() == null ? Collections.emptySet() :
+                entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
         return contract;
     }
 
-    public Contract checkActiveContract(Contract contractToCheck) {
-        Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(contractToCheck.getEmployee().getId());
-        if ((contractToCheck.getEndDate() == null || contractToCheck.getEndDate().isAfter(LocalDate.now())) && (contractToCheck.getStartDate().isBefore(LocalDate.now())) || contractToCheck.getStartDate().isEqual(LocalDate.now())) {
+    public Contract setContractStatus(Contract contractToCheck) {
+        if (DateUtils.isDocumentActive(contractToCheck.getStartDate(), contractToCheck.getEndDate())) {
             contractToCheck.setActive(true);
+            Optional<Contract> activeContract = contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(
+                    contractToCheck.getEmployee().getId());
             activeContract.ifPresent(contract -> {
                 contract.setActive(false);
                 if (contract.getEndDate() == null) {
@@ -159,17 +161,18 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         }
         return contractToCheck;
     }
+
     @Override
-    public Map<String, Object> getRestrictedFields(AppRole userRole){
+    public Map<String, Object> getRestrictedFields(AppRole userRole) {
         Map<String, Object> restrictedFields = new HashMap<>();
-        if(AppRole.ROLE_MANAGER_HR.equals(userRole)){
+        if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
             List<Role> roles = roleRepository.findAllByDeletedIsFalseAndNameLikeIgnoreCase(HR_SEARCH_TERM);
-            if(CollectionUtils.isNotEmpty(roles)){
+            if (CollectionUtils.isNotEmpty(roles)) {
                 restrictedFields.put("role", roles);
             }
         }
 
-        return  restrictedFields;
+        return restrictedFields;
     }
 
     @Override

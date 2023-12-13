@@ -1,10 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.aContract;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildContract;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.anEmployee;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildEmployee;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -81,9 +81,9 @@ class ContractServiceTest {
 
     @BeforeEach
     public void setUp() {
-        existentContract = aContract();
+        existentContract = buildContract();
         existentContract.setId(EXISTENT_CONTRACT_ID);
-        activeContract = aContract();
+        activeContract = buildContract();
         activeContract.setId(ACTIVE_CONTRACT_ID);
         SecurityContextFactory.createSecurityContext();
     }
@@ -95,7 +95,7 @@ class ContractServiceTest {
         ContractDto requestedContract = new ContractDto(existentContract);
 
         // when
-        when(employeeRepository.findById(any())).thenReturn(Optional.of(anEmployee()));
+        when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
@@ -127,7 +127,7 @@ class ContractServiceTest {
         ContractDto requestedContract = new ContractDto(existentContract);
 
         // when
-        when(employeeRepository.findById(any())).thenReturn(Optional.of(anEmployee()));
+        when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
@@ -171,7 +171,7 @@ class ContractServiceTest {
         boolean setActive = true;
         existentContract.setActive(false);
 
-        Contract activated = aContract();
+        Contract activated = buildContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
         ContractDto expected = new ContractDto(activated);
@@ -209,7 +209,7 @@ class ContractServiceTest {
         boolean setActive = true;
         existentContract.setActive(false);
 
-        Contract activated = aContract();
+        Contract activated = buildContract();
         activated.setId(EXISTENT_CONTRACT_ID);
         activated.setActive(true);
         ContractDto expected = new ContractDto(activated);
@@ -283,7 +283,7 @@ class ContractServiceTest {
         boolean setActive = false;
         existentContract.setActive(true);
 
-        Contract deactivated = aContract();
+        Contract deactivated = buildContract();
         deactivated.setId(EXISTENT_CONTRACT_ID);
         deactivated.setActive(false);
         ContractDto expected = new ContractDto(deactivated);
@@ -348,17 +348,17 @@ class ContractServiceTest {
     @Test
     public void testCreateNewActiveContract() {
         //given
-        ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newContractWithValidStartDateAndEndDateAfterNow = new Contract(contractToCreate);
-        newContractWithValidStartDateAndEndDateAfterNow.setActive(false);
-        newContractWithValidStartDateAndEndDateAfterNow.setEndDate(LocalDate.now().plusDays(7));
-        Employee employee = anEmployee();
-        newContractWithValidStartDateAndEndDateAfterNow.setEmployee(employee);
+        Contract newActiveContract = buildContract();
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now().plusDays(-2));
+        newActiveContract.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
         //when
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
                 Optional.of(existentContract));
         //then
-        Contract response = contractService.checkActiveContract(newContractWithValidStartDateAndEndDateAfterNow);
+        Contract response = contractService.setContractStatus(newActiveContract);
         assertTrue(response.isActive());
     }
 
@@ -366,79 +366,143 @@ class ContractServiceTest {
     @Test
     public void testCreateNewInactiveContract() {
         //given
-        ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newContractWithValidStartDateAndEndDateBeforeNow = new Contract(contractToCreate);
-        newContractWithValidStartDateAndEndDateBeforeNow.setActive(false);
-        newContractWithValidStartDateAndEndDateBeforeNow.setEndDate(LocalDate.now().plusDays(-2));
-        Employee employee = anEmployee();
-        newContractWithValidStartDateAndEndDateBeforeNow.setEmployee(employee);
-        //when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
-                Optional.of(existentContract));
+        Contract newInactiveContract = buildContract();
+        newInactiveContract.setActive(false);
+        newInactiveContract.setStartDate(LocalDate.now().plusDays(-5));
+        newInactiveContract.setEndDate(LocalDate.now().plusDays(-2));
+        Employee employee = buildEmployee();
+        newInactiveContract.setEmployee(employee);
+
         //then
-        Contract response = contractService.checkActiveContract(newContractWithValidStartDateAndEndDateBeforeNow);
-        assertTrue(!response.isActive());
+        Contract response = contractService.setContractStatus(newInactiveContract);
+        assertFalse(response.isActive());
+    }
+
+    @DisplayName("when a new contract starts tomorrow it is inactive")
+    @Test
+    public void testCreateStratsTomorrowContract() {
+        //given
+        Contract newInactiveContract = buildContract();
+        newInactiveContract.setActive(false);
+        newInactiveContract.setStartDate(LocalDate.now().plusDays(2));
+        newInactiveContract.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = buildEmployee();
+        newInactiveContract.setEmployee(employee);
+
+        //then
+        Contract response = contractService.setContractStatus(newInactiveContract);
+        assertFalse(response.isActive());
     }
 
     @DisplayName("when a new contract has null end date it is active")
     @Test
     public void testContractWithNullEndDateIsActive() {
         //given
-        ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newContractWithNullEndDate = new Contract(contractToCreate);
-        newContractWithNullEndDate.setActive(false);
-        newContractWithNullEndDate.setEndDate(null);
-        Employee employee = anEmployee();
-        newContractWithNullEndDate.setEmployee(employee);
+        Contract newActiveContract = buildContract();
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now().plusDays(-2));
+        newActiveContract.setEndDate(null);
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
         //when
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
                 Optional.of(existentContract));
         //then
-        Contract response = contractService.checkActiveContract(newContractWithNullEndDate);
+        Contract response = contractService.setContractStatus(newActiveContract);
         assertTrue(response.isActive());
     }
+
+    @DisplayName("when a new contract start today it is active")
+    @Test
+    public void testContractStartsTodayIsActive() {
+        //given
+        Contract newActiveContract = buildContract();
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now());
+        newActiveContract.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.setContractStatus(newActiveContract);
+        assertTrue(response.isActive());
+    }
+
+    @DisplayName("when a new contract start today and has null end date it is active")
+    @Test
+    public void testContractStartsTodayWithNullEndDateIsActive() {
+        //given
+        Contract newActiveContract = buildContract();
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now());
+        newActiveContract.setEndDate(null);
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.setContractStatus(newActiveContract);
+        assertTrue(response.isActive());
+    }
+
+    @DisplayName("when a new contract finish today it is active")
+    @Test
+    public void testContractFinishTodayIsActive() {
+        //given
+        Contract newActiveContract = buildContract();
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now().plusDays(-7));
+        newActiveContract.setEndDate(LocalDate.now());
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
+        //when
+        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
+                Optional.of(existentContract));
+        //then
+        Contract response = contractService.setContractStatus(newActiveContract);
+        assertTrue(response.isActive());
+    }
+
 
     @DisplayName("when a new contract has start date after now and end date after start date is inactive")
     @Test
     public void testContractWithStartDateAfterNowAndEndDateAfterEndDate() {
         //given
-        ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newContractWithStartDateAfterNowAndEndDateAfterStartDate = new Contract(contractToCreate);
-        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setActive(false);
-        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setStartDate(LocalDate.now().plusDays(2));
-        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setEndDate(LocalDate.now().plusDays(7));
-        Employee employee = anEmployee();
-        newContractWithStartDateAfterNowAndEndDateAfterStartDate.setEmployee(employee);
-        //when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
-                Optional.of(existentContract));
+        Contract newInactiveContract = buildContract();
+        newInactiveContract.setActive(false);
+        newInactiveContract.setStartDate(LocalDate.now().plusDays(2));
+        newInactiveContract.setEndDate(LocalDate.now().plusDays(7));
+        Employee employee = buildEmployee();
+        newInactiveContract.setEmployee(employee);
+
         //then
-        Contract response = contractService.checkActiveContract(newContractWithStartDateAfterNowAndEndDateAfterStartDate);
-        assertTrue(!response.isActive());
+        Contract response = contractService.setContractStatus(newInactiveContract);
+        assertFalse(response.isActive());
     }
 
     @DisplayName("when a new active contract is created the last active contract is set inactive")
     @Test
     public void testInactiveLastActiveContractWhenNewActiveContractIsCreated() {
         //given
-        ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newActiveContract = new Contract(contractToCreate);
+        Contract newActiveContract = buildContract();
         newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now().plusDays(-2));
         newActiveContract.setEndDate(LocalDate.now().plusDays(7));
-        Employee employee = anEmployee();
+        Employee employee = buildEmployee();
         newActiveContract.setEmployee(employee);
-        Contract activeContractToInactive = activeContract;
-        activeContractToInactive.setEmployee(employee);
 
         //when
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
                 Optional.of(existentContract));
         //then
-        Contract response = contractService.checkActiveContract(newActiveContract);
+        Contract response = contractService.setContractStatus(newActiveContract);
 
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
 
-        assertTrue(!contractCaptor.getValue().isActive());
+        assertFalse(contractCaptor.getValue().isActive());
         assertTrue(response.isActive());
     }
 
@@ -449,20 +513,16 @@ class ContractServiceTest {
         ContractDto contractToCreate = new ContractDto(existentContract);
         Contract newInactiveContract = new Contract(contractToCreate);
         newInactiveContract.setActive(false);
-        newInactiveContract.setEndDate(LocalDate.now().plusDays(-7));
-        Employee employee = anEmployee();
+        newInactiveContract.setStartDate(LocalDate.now().plusDays(-7));
+        newInactiveContract.setEndDate(LocalDate.now().plusDays(-2));
+        Employee employee = buildEmployee();
         newInactiveContract.setEmployee(employee);
-        Contract activeContractStaysActive = activeContract;
-        activeContractStaysActive.setEmployee(employee);
 
-        //when
-        when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
-                Optional.of(existentContract));
         //then
-        Contract response = contractService.checkActiveContract(newInactiveContract);
+        Contract response = contractService.setContractStatus(newInactiveContract);
 
-        assertTrue(activeContractStaysActive.isActive());
-        assertTrue(!response.isActive());
+        verify(contractRepository, times(0)).saveAndFlush(contractCaptor.capture());
+        assertFalse(response.isActive());
     }
 
     @DisplayName("when a new contract with null end date is created the last active contract is set inactive")
@@ -470,23 +530,22 @@ class ContractServiceTest {
     public void testLastActiveContractSetInactiveWhenNewContractWithNullEndDateIsCreated() {
         //given
         ContractDto contractToCreate = new ContractDto(existentContract);
-        Contract newContractWithNullEndDate = new Contract(contractToCreate);
-        newContractWithNullEndDate.setActive(false);
-        newContractWithNullEndDate.setEndDate(null);
-        Employee employee = anEmployee();
-        newContractWithNullEndDate.setEmployee(employee);
-        Contract activeContractToInactive = activeContract;
-        activeContractToInactive.setEmployee(employee);
+        Contract newActiveContract = new Contract(contractToCreate);
+        newActiveContract.setActive(false);
+        newActiveContract.setStartDate(LocalDate.now().plusDays(-7));
+        newActiveContract.setEndDate(null);
+        Employee employee = buildEmployee();
+        newActiveContract.setEmployee(employee);
 
         //when
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(employee.getId())).thenReturn(
                 Optional.of(existentContract));
         //then
-        Contract response = contractService.checkActiveContract(newContractWithNullEndDate);
+        Contract response = contractService.setContractStatus(newActiveContract);
 
         verify(contractRepository, times(1)).saveAndFlush(contractCaptor.capture());
 
-        assertTrue(!contractCaptor.getValue().isActive());
+        assertFalse(contractCaptor.getValue().isActive());
         assertTrue(response.isActive());
     }
 

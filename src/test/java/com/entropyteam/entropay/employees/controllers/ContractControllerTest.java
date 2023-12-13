@@ -27,7 +27,7 @@ class ContractControllerTest {
     @Test
     public void testCreate() {
         // given
-        ContractDto contractDto = new ContractDto(TestUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.buildContract());
         ResponseEntity<ContractDto> expected = ResponseEntity.ok(contractDto);
 
 
@@ -46,7 +46,7 @@ class ContractControllerTest {
     @Test
     public void testCreateWhenContractServiceThrowsException() {
         // given
-        ContractDto contractDto = new ContractDto(TestUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.buildContract());
 
         // when
         when(contractService.create(any())).thenThrow(new RuntimeException("Test exception thrown!!"));
@@ -62,7 +62,7 @@ class ContractControllerTest {
     @Test
     public void testModifyStatus() {
         // given
-        ContractDto contractDto = new ContractDto(TestUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.buildContract());
         boolean setActive = true;
         ResponseEntity<ContractDto> expected = ResponseEntity.ok(contractDto);
 
@@ -81,7 +81,7 @@ class ContractControllerTest {
     @Test
     public void testModifyStatusWhenContractServiceThrowsException() {
         // given
-        ContractDto contractDto = new ContractDto(TestUtils.aContract());
+        ContractDto contractDto = new ContractDto(TestUtils.buildContract());
         boolean setActive = true;
 
         // when

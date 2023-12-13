@@ -34,13 +34,13 @@ public class EmployeeController extends BaseController<EmployeeDto, UUID> {
         this.employeeJob = employeeJob;
     }
 
-    @GetMapping("/sync-birthday")
+    @GetMapping("/sync-birthdays")
     @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
     @Transactional
-    public ResponseEntity<String> birthdayEmployee() {
+    public ResponseEntity<String> syncEmployeeBirthday() {
         try {
-            employeeJob.createGoogleCalendarEventsForBirthdays();
-            return ResponseEntity.ok("Successful job execute");
+            employeeJob.syncEmployeesBirthdayWithCalendar();
+            return ResponseEntity.ok("Successful job execution: sync employees birthday");
         } catch (IOException exception) {
             String errorMessage = "An error occurred: " + exception.getMessage();
             return ResponseEntity.badRequest().body(errorMessage);

@@ -38,7 +38,7 @@ public class EmployeeServiceTest {
     @Test
     void vacationToApplyToAOldTrJrSsrEmployee() {
         //given
-        Employee oldEmployee = TestUtils.anEmployee();
+        Employee oldEmployee = TestUtils.buildEmployee();
         oldEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -72,7 +72,7 @@ public class EmployeeServiceTest {
     @Test
     void vacationToApplyToAOldSrEmployee() {
         //given
-        Employee oldEmployee = TestUtils.anEmployee();
+        Employee oldEmployee = TestUtils.buildEmployee();
         oldEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -106,7 +106,7 @@ public class EmployeeServiceTest {
     @Test
     void vacationToApplyToANewSrEmployee() {
         //given
-        Employee oldEmployee = TestUtils.anEmployee();
+        Employee oldEmployee = TestUtils.buildEmployee();
         oldEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -140,7 +140,7 @@ public class EmployeeServiceTest {
     @Test
     void vacationToApplyToANewTrJrSsrEmployee() {
         //given
-        Employee newEmployee = TestUtils.anEmployee();
+        Employee newEmployee = TestUtils.buildEmployee();
         newEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -173,7 +173,7 @@ public class EmployeeServiceTest {
     @DisplayName("Default vacation days to employees with 2 years")
     @Test
     void applyDefaultVacationDays() {
-        Employee oldEmployee = TestUtils.anEmployee();
+        Employee oldEmployee = TestUtils.buildEmployee();
         oldEmployee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -207,7 +207,7 @@ public class EmployeeServiceTest {
     @DisplayName("Apply to employee with vacations")
     @Test
     void applyToEmployeeWithVacations() {
-        Employee employee = TestUtils.anEmployee();
+        Employee employee = TestUtils.buildEmployee();
         employee.setId(UUID.randomUUID());
 
         Contract activeContract = new Contract();
@@ -241,7 +241,7 @@ public class EmployeeServiceTest {
     @DisplayName("Vacations to apply to a employee without contract")
     @Test
     void vacationToApplyToAEmployeeWithoutContract() {
-        Employee employee = TestUtils.anEmployee();
+        Employee employee = TestUtils.buildEmployee();
         employee.setId(UUID.randomUUID());
 
         Seniority seniority = new Seniority();
