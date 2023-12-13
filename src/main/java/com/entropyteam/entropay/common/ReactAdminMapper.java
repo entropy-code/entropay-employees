@@ -32,7 +32,6 @@ public class ReactAdminMapper {
     public static final String DATE_FROM_TERM_KEY = "dateFrom";
     public static final String DATE_TO_TERM_KEY = "dateTo";
 
-
     /**
      * The filter param could be:
      * getMany:            GET http://my.api.url/posts?filter={"ids":[123,456,789]}
@@ -111,6 +110,24 @@ public class ReactAdminMapper {
 
         } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on range");
+        }
+    }
+
+    public Filter buildReportFilter(ReactAdminParams params, Class report) {
+        try {
+            Map<String, Object> getByFieldsFilter = new HashMap<>();
+            if (params.getFilter() != null) {
+                Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
+                for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
+                    if (isEntityField(report, filter.getKey())) {
+                        getByFieldsFilter.put(filter.getKey(), filter.getValue());
+                    }
+                }
+            }
+            return new Filter(getByFieldsFilter);
+        }
+        catch (JsonProcessingException e) {
+            throw new InvalidRequestParametersException("Bad param on filters", e);
         }
     }
 
