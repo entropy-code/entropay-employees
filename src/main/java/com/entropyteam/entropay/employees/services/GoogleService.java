@@ -1,7 +1,21 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -12,20 +26,6 @@ import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
 
 @EnableConfigurationProperties(GoogleCredentialsProperties.class)
 @Service
@@ -63,6 +63,7 @@ public class GoogleService {
 
             event = service.events().insert(calendarId, event).setSendNotifications(true).execute();
             LOGGER.info("Event created " + event.getHtmlLink());
+
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
@@ -76,6 +77,13 @@ public class GoogleService {
 
             service.events().delete(calendarId, formattedId).execute();
             LOGGER.info("Event deleted successfully");
+
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                LOGGER.info("Event not found");
+            } else {
+                LOGGER.error(e.getMessage());
+            }
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
@@ -89,6 +97,14 @@ public class GoogleService {
 
             event = service.events().update(calendarId, event.getId(), event).execute();
             LOGGER.info("Event updated " + event.getHtmlLink());
+
+        } catch (GoogleJsonResponseException e) {
+            if (e.getStatusCode() == 404) {
+                LOGGER.info("Event not found, creating new event");
+                createGoogleCalendarEvent(calendarEventDto);
+            } else {
+                LOGGER.error(e.getMessage());
+            }
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }

@@ -34,12 +34,12 @@ public class VacationController extends BaseController<VacationDto, UUID> {
         this.vacationJob = vacationJob;
     }
 
-    @GetMapping("/job")
-    @Secured({ROLE_ADMIN})
-    public ResponseEntity<String> VacationJobTest() {
+    @GetMapping("/set-vacations")
+    @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
+    public ResponseEntity<String> setEmployeeVacations() {
         try {
             vacationJob.setEmployeeVacations();
-            return ResponseEntity.ok("Successful job execute");
+            return ResponseEntity.ok("Successful job execution: set employee vacactions");
         } catch (IOException exception) {
             String errorMessage = "An error occurred: " + exception.getMessage();
             return ResponseEntity.badRequest().body(errorMessage);

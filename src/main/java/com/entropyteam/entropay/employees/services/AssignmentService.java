@@ -42,9 +42,9 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
-                             RoleRepository roleRepository, SeniorityRepository seniorityRepository,
-                             ProjectRepository projectRepository, SecureObjectService secureObjectService,
-                             ReactAdminMapper reactAdminMapper) {
+            RoleRepository roleRepository, SeniorityRepository seniorityRepository,
+            ProjectRepository projectRepository, SecureObjectService secureObjectService,
+            ReactAdminMapper reactAdminMapper) {
         super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
@@ -61,19 +61,19 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
     @Transactional
     @Override
-    public AssignmentDto create(AssignmentDto assignmentDto){
+    public AssignmentDto create(AssignmentDto assignmentDto) {
         Assignment entityToCreate = toEntity(assignmentDto);
-        Assignment savedEntity = getRepository().save(checkActiveAssignment(entityToCreate));
+        Assignment savedEntity = getRepository().save(setAssignmentStatus(entityToCreate));
         return toDTO(savedEntity);
     }
 
 
     @Override
     @Transactional
-    public AssignmentDto update(UUID assignmentId,AssignmentDto assignmentDto){
+    public AssignmentDto update(UUID assignmentId, AssignmentDto assignmentDto) {
         Assignment entityToUpdate = toEntity(assignmentDto);
         entityToUpdate.setId(assignmentId);
-        Assignment savedEntity = getRepository().save(checkActiveAssignment(entityToUpdate));
+        Assignment savedEntity = getRepository().save(setAssignmentStatus(entityToUpdate));
         return toDTO(savedEntity);
     }
 
@@ -99,25 +99,23 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
         return assignment;
     }
-    public Assignment checkActiveAssignment(Assignment assignmentToCheck) {
-        Optional<Assignment> activeAssignment = assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(assignmentToCheck.getEmployee().getId());
-        LocalDate currentDate = LocalDate.now();
-        LocalDate startDate = assignmentToCheck.getStartDate();
-        LocalDate endDate = assignmentToCheck.getEndDate();
 
-        if ((endDate == null || endDate.isAfter(currentDate)) && (startDate.isBefore(currentDate) || startDate.isEqual(currentDate))) {
+    public Assignment setAssignmentStatus(Assignment assignmentToCheck) {
+        if (DateUtils.isDocumentActive(assignmentToCheck.getStartDate(), assignmentToCheck.getEndDate())) {
             assignmentToCheck.setActive(true);
+            Optional<Assignment> activeAssignment =
+                    assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(
+                            assignmentToCheck.getEmployee().getId());
             activeAssignment.ifPresent(assignment -> {
                 assignment.setActive(false);
                 if (assignment.getEndDate() == null) {
-                    assignment.setEndDate(currentDate);
+                    assignment.setEndDate(LocalDate.now());
                 }
                 assignmentRepository.saveAndFlush(assignment);
             });
         } else {
             assignmentToCheck.setActive(false);
         }
-
         return assignmentToCheck;
     }
 

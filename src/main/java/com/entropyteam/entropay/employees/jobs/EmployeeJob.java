@@ -17,6 +17,8 @@ import java.io.IOException;
 
 @Component
 public class EmployeeJob {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private final EmployeeRepository employeeRepository;
     private final EmployeeService employeeService;
     private final GoogleService googleService;
@@ -31,9 +33,10 @@ public class EmployeeJob {
     }
 
     //Job to execute in January
-    @Scheduled(cron = "0 0 8 1 1 ?")
+    @Scheduled(cron = "0 0 9 1 1 ?")
     @Transactional
-    public void createGoogleCalendarEventsForBirthdays() throws IOException {
+    public void syncEmployeesBirthdayWithCalendar() throws IOException {
+        LOGGER.info("Starting employees birthday sync job");
         employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue()
                 .stream()
                 .filter(employee -> employee.getBirthDate() != null)
