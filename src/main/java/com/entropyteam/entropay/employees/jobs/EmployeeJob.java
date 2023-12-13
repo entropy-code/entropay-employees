@@ -23,6 +23,7 @@ public class EmployeeJob {
     private final EmployeeService employeeService;
     private final GoogleService googleService;
 
+
     @Autowired
     public EmployeeJob(EmployeeRepository employeeRepository, EmployeeService employeeService, GoogleService googleService) {
         this.employeeRepository = employeeRepository;
@@ -36,10 +37,12 @@ public class EmployeeJob {
     public void syncEmployeesBirthdayWithCalendar() throws IOException {
         LOGGER.info("Starting employees birthday sync job");
         employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue()
+                .stream()
+                .filter(employee -> employee.getBirthDate() != null)
                 .forEach(employee -> {
                     CalendarEventDto eventData = employeeService.formatEventData(employee.getId(), employee.getBirthDate(), employee.getFirstName(), employee.getLastName());
                     googleService.createGoogleCalendarEvent(eventData);
+                    LOGGER.info("Adding birthday for employee " + employee.getId());
                 });
     }
-
 }
