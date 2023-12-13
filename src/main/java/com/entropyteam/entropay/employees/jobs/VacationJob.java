@@ -65,7 +65,7 @@ public class VacationJob {
 
         LocalDate currentDate = LocalDate.now();
         int currentYear = currentDate.getYear();
-        String vacationYearToAdd = currentDate.getMonthValue() == 10 ? String.valueOf(currentYear + 1) : String.valueOf(currentYear);
+        String vacationYearToAdd = currentDate.getMonthValue() == 10 ? String.valueOf(currentYear) : String.valueOf(currentYear - 1);
 
         List<Holiday> holidaysInPeriod = holidayRepository.findAllByDeletedIsFalse();
         List<Contract> contractsList = contractRepository.findAllByDeletedIsFalse();
