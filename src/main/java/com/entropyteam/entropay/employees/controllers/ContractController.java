@@ -1,9 +1,13 @@
 package com.entropyteam.entropay.employees.controllers;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
+import com.entropyteam.entropay.employees.jobs.ContractJob;
 import com.entropyteam.entropay.employees.models.ContractType;
 import com.entropyteam.entropay.employees.models.Currency;
 import com.entropyteam.entropay.employees.services.ContractService;
@@ -23,11 +28,13 @@ import com.entropyteam.entropay.employees.services.ContractService;
 public class ContractController extends BaseController<ContractDto, UUID> {
 
     private final ContractService contractService;
+    private final ContractJob contractJob;
 
     @Autowired
-    public ContractController(ContractService contractService) {
+    public ContractController(ContractService contractService, ContractJob contractJob) {
         super(contractService);
         this.contractService = contractService;
+        this.contractJob = contractJob;
     }
 
     @PutMapping("/{id}/status")
@@ -49,4 +56,10 @@ public class ContractController extends BaseController<ContractDto, UUID> {
 
     }
 
+    @GetMapping("/update-contracts-status")
+    @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
+    public ResponseEntity<String> updateContractsStatus() {
+        contractJob.updateContractsStatus();
+        return ResponseEntity.ok("Successful job execution: update contracts status");
+    }
 }

@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
@@ -12,6 +13,7 @@ import java.util.UUID;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.Set;
+
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -35,6 +37,7 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
 
 
 @Service
@@ -49,6 +52,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
+    private final GoogleService googleService;
 
 
     @Autowired
@@ -56,7 +60,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationRepository paymentInformationRepository,
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository) {
+                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository, GoogleService googleService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -67,6 +71,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
+        this.googleService = googleService;
     }
 
     @Override
@@ -85,7 +90,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
         Optional<Contract> latestContract =
                 contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        if(latestContract.isEmpty()) {
+        if (latestContract.isEmpty()) {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
@@ -111,6 +116,13 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
+
+        LocalDate birthDate = employeeDto.birthDate();
+        if (birthDate != null) {
+            CalendarEventDto eventData = formatEventData(entityToCreate.getId(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+            googleService.createGoogleCalendarEvent(eventData);
+        }
+
         return toDTO(savedEntity);
     }
 
@@ -135,6 +147,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignmentRepository.saveAll(employeeAssignments);
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
+
+        CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+        googleService.updateGoogleCalendarEvent(eventData);
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
     }
@@ -159,6 +174,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignment.setEndDate(LocalDate.now());
         });
         assignmentRepository.saveAll(employeeAssignment);
+        googleService.deleteGoogleCalendarEvent(LocalDate.now().getYear() + employeeId.toString());
         return toDTO(employee);
     }
 
@@ -215,11 +231,20 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee existingEmployee = getRepository().getById(employeeId);
         return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
+    public CalendarEventDto formatEventData(UUID employeeId, LocalDate birthDate, String firstName, String lastName) {
+        int currentYear = LocalDate.now().getYear();
+        LocalDate startDate = birthDate.withYear(currentYear);
+        LocalDate endDate = startDate.plusDays(1);
+        String eventId = currentYear + employeeId.toString();
+        String eventName = "BirthDay " + firstName + " " + lastName;
 
-    public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract){
+        return new CalendarEventDto(eventId, eventName, startDate, endDate);
+    }
+
+    public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract) {
         LocalDate startDate = firstContract != null ? firstContract.getStartDate() : LocalDate.now();
         LocalDate endDate = LocalDate.now();
-        if(latestContract != null && latestContract.getEndDate() != null){
+        if (latestContract != null && latestContract.getEndDate() != null) {
             endDate = Collections.min(Arrays.asList(latestContract.getEndDate(), endDate));
         }
         Period difference = Period.between(startDate, endDate);

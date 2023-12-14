@@ -4,6 +4,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -19,6 +21,8 @@ import com.entropyteam.entropay.employees.repositories.projections.VacationBalan
 
 @Service
 public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
+
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private final VacationRepository vacationRepository;
     private final EmployeeRepository employeeRepository;
@@ -47,8 +51,9 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
             throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
         }
-
         availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
+        LOGGER.info("Adding vacation debit, employeeId: {}, credit before adding new vacation: {}",
+                employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
         for (VacationBalanceByYear vacation : availableVacations) {
             if (totalDays > 0) {
                 Integer daysToUse = Math.min(totalDays, vacation.getBalance());
@@ -61,6 +66,9 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 vacationRepository.save(vacationDebit);
             }
         }
+        LOGGER.info("Vacation debits added, employeeId: {}, credit after adding new vacation: {}",
+                employee.getId(),
+                vacationRepository.getVacationByYear(employee.getId()).stream().mapToInt(VacationBalanceByYear::getBalance).sum());
     }
 
     public void discountVacationDebit(Employee employee, Integer totalDays) {
@@ -69,7 +77,8 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
         if (CollectionUtils.isEmpty(vacationDebits) || vacationDebits.stream().mapToInt(Vacation::getDebit).sum() < totalDays) {
             throw new InvalidRequestParametersException("No vacations found to discount for the employee");
         }
-
+        LOGGER.info("Discounting vacation debit, employeeId: {}, debit before discount: {}",
+                employee.getId(), vacationDebits.stream().mapToInt(Vacation::getDebit).sum());
         vacationDebits.sort(Comparator.comparing(Vacation::getYear).reversed());
         for (Vacation vacation : vacationDebits) {
             if (totalDays > 0) {
@@ -84,8 +93,10 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                 vacationRepository.save(vacation);
             }
         }
+        LOGGER.info("Vacation debits discounted, employeeId: {}, debit after discount: {}",
+                employee.getId(), vacationRepository.getVacationByEmployeeIdAndDeletedIsFalseAndCreditOrderByYearDesc(
+                        employee.getId(), 0).stream().mapToInt(Vacation::getDebit).sum());
     }
-
 
     @Override
     protected Vacation toEntity(VacationDto entity) {

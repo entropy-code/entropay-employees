@@ -1,7 +1,16 @@
 package com.entropyteam.entropay.common;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+
 import java.util.List;
 import java.util.Objects;
+import javax.validation.Valid;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,17 +23,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Valid;
-
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ANALYST;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
-
 public abstract class BaseController<T, K> implements ReactAdminController<T, K> {
 
     public static final String X_TOTAL_COUNT = "X-Total-Count";
+    private static final Logger LOGGER = LogManager.getLogger();
     private final CrudService<T, K> crudService;
 
     public BaseController(CrudService<T, K> crudService) {
@@ -54,6 +56,7 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @PostMapping
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> create(@Valid @RequestBody T entity) {
+        LOGGER.info("Creating entity: {} ", entity.getClass().getName());
         return ResponseEntity.ok(crudService.create(entity));
     }
 
@@ -61,13 +64,16 @@ public abstract class BaseController<T, K> implements ReactAdminController<T, K>
     @DeleteMapping("/{id}")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> delete(@PathVariable(value = "id") K id) {
-        return ResponseEntity.ok(crudService.delete(id));
+        T deletedEntity = crudService.delete(id);
+        LOGGER.info("Deleted entity {} with id: {}", deletedEntity.getClass().getName(), id);
+        return ResponseEntity.ok(deletedEntity);
     }
 
     @Override
     @PutMapping("/{id}")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     public ResponseEntity<T> update(@PathVariable(value = "id") K id, @Valid @RequestBody T entity) {
+        LOGGER.info("Updating entity: {} with id: {} ", entity.getClass().getName(), id);
         return crudService.findOne(id)
                 .map(e -> {
                     crudService.update(id, entity);
