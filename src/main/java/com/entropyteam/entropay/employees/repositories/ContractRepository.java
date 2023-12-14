@@ -1,11 +1,11 @@
 package com.entropyteam.entropay.employees.repositories;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Contract;
 
@@ -21,5 +21,5 @@ public interface ContractRepository extends BaseRepository<Contract, UUID> {
             + ":date) AND active = FALSE AND deleted = FALSE "
             + "AND employee_id NOT IN (select employee_id FROM contract c2 WHERE c2.active = TRUE AND c2.deleted = "
             + "FALSE)", nativeQuery = true)
-    List<Contract> findAllContractsToActivateInDate(LocalDate date);
+    List<Contract> findAllContractsToActivateInDate(@Param("date") LocalDate date);
 }
