@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -21,5 +22,5 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
             + ":date) AND active = FALSE AND deleted = FALSE "
             + "AND employee_id NOT IN (select employee_id FROM assignment a2 WHERE a2.active = TRUE AND a2.deleted = "
             + "FALSE)", nativeQuery = true)
-    List<Assignment> findAllAssignmentsToActivateInDate(LocalDate date);
+    List<Assignment> findAllAssignmentsToActivateInDate(@Param("date") LocalDate date);
 }
