@@ -106,7 +106,12 @@ public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
         int currentYear = date.getYear();
         LocalDate endDate = date.plusDays(1);
         String eventId = currentYear + holidayId.toString();
-        String eventName = country + " Holiday " + description;
+        String eventName;
+        if (country.equals("ALL")) {
+            eventName = description;
+        } else {
+            eventName = country + " - " + description;
+        }
 
         return new CalendarEventDto(eventId, eventName, date, endDate);
     }

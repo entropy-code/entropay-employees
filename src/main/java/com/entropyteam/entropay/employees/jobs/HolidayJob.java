@@ -7,7 +7,6 @@ import com.entropyteam.entropay.employees.services.HolidayService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,8 +29,6 @@ public class HolidayJob {
         this.googleService = googleService;
     }
 
-    //Job to execute in January
-    @Scheduled(cron = "0 0 9 1 1 ?")
     @Transactional
     public void syncEmployeesBirthdayWithCalendar() throws IOException {
         LOGGER.info("Starting holiday sync job");

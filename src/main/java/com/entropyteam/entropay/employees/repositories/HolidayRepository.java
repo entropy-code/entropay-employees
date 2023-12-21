@@ -7,12 +7,14 @@ import java.util.UUID;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Holiday;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
 
     List<Holiday> findAllByDateBetweenAndDeletedFalseOrderByDateAsc(LocalDate startDate, LocalDate endDate);
 
-    List<Holiday> findAllByDeletedFalseAndYear(int year);
+    @Query("SELECT h FROM Holiday h WHERE h.deleted = false AND YEAR(h.date) = :year")
+    List<Holiday> findAllByDeletedFalseAndYear(@Param("year") int year);
 
     @Query(value = "SELECT DISTINCT extract('Year' FROM date) AS year FROM holiday_calendar WHERE deleted=false "
             + " ORDER BY year ASC", nativeQuery = true)
