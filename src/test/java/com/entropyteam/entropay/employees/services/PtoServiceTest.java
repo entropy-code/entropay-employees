@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 
-import com.entropyteam.entropay.employees.models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +14,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.employees.repositories.HolidayRepository;
+import com.entropyteam.entropay.employees.models.Pto;
+import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.LeaveType;
+import com.entropyteam.entropay.employees.models.Holiday;
 
 @ExtendWith(MockitoExtension.class)
 public class PtoServiceTest {
