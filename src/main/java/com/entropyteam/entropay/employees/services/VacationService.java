@@ -107,4 +107,30 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
         return vacation;
     }
+    public void addVacationCredit(Employee employee, Integer totalDaysToAdd) {
+        List<VacationBalanceByYear> availableVacations = vacationRepository.getVacationByYear(employee.getId());
+        if (CollectionUtils.isEmpty(availableVacations)) {
+            throw new InvalidRequestParametersException("No vacation balances found for the employee");
+        }
+        availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
+        LOGGER.info("Adding vacation credit, employeeId: {}, balance before adding new credit: {}",
+                employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
+
+        for (VacationBalanceByYear vacation : availableVacations) {
+            if (totalDaysToAdd > 0) {
+                Integer daysToAdd = Math.min(totalDaysToAdd, vacation.getBalance());
+                totalDaysToAdd -= daysToAdd;
+                Vacation vacationCredit = new Vacation();
+                vacationCredit.setYear(vacation.getYear());
+                vacationCredit.setCredit(daysToAdd);
+                vacationCredit.setDebit(0);
+                vacationCredit.setEmployee(employee);
+                vacationRepository.save(vacationCredit);
+            }
+        }
+        LOGGER.info("Vacation credit added, employeeId: {}, balance after adding new credit: {}",
+                employee.getId(),
+                vacationRepository.getVacationByYear(employee.getId()).stream().mapToInt(VacationBalanceByYear::getBalance).sum());
+    }
+
 }
