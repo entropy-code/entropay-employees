@@ -3,7 +3,9 @@ package com.entropyteam.entropay.employees.repositories;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Country;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface CountryRepository extends BaseRepository<Country, UUID> {
+    List<Country> findAllByDeletedIsFalseAndNameLikeIgnoreCase(String name);
 }

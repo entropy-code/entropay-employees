@@ -15,18 +15,24 @@ import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 public record EmployeeDto(UUID id,
-                          @NotNull(message = "Internal ID is mandatory") String internalId,
-                          @NotNull(message = "First Name is mandatory") String firstName,
-                          @NotNull(message = "Last Name is mandatory") String lastName,
-                          @Email @NotNull(message = "Email is mandatory") String personalEmail,
+                          @NotNull(message = "Internal ID is mandatory")
+                          String internalId,
+                          @NotNull(message = "First Name is mandatory")
+                          String firstName,
+                          @NotNull(message = "Last Name is mandatory")
+                          String lastName,
+                          @Email @NotNull(message = "Email is mandatory")
+                          String personalEmail,
                           String phoneNumber,
                           String mobileNumber,
                           String address,
                           String city,
                           String state,
                           String zip,
-                          @NotNull(message = "Country is mandatory") String country,
-                          @NotNull(message = "Personal Number is mandatory") String personalNumber,
+                          @NotNull(message = "Country is mandatory")
+                          UUID countryId,
+                          @NotNull(message = "Personal Number is mandatory")
+                          String personalNumber,
                           String taxId,
                           String emergencyContactFullName,
                           String emergencyContactPhone,
@@ -35,20 +41,28 @@ public record EmployeeDto(UUID id,
                           String healthInsurance,
                           List<PaymentInformationDto> paymentInformation,
                           List<UUID> technologies,
-                          @Email String labourEmail,
-                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthDate,
-                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
-                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt,
+                          @Email
+                          String labourEmail,
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate birthDate,
+                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                          LocalDateTime createdAt,
+                          @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+                          LocalDateTime modifiedAt,
                           boolean deleted,
                           String project,
                           String client,
                           String role,
                           UUID lastAssignmentId,
-                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
-                          @NotNull(message = "Active state is mandatory") boolean active,
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate startDate,
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate endDate,
+                          @NotNull(message = "Active state is mandatory")
+                          boolean active,
                           Integer availableDays,
-                          @JsonFormat(pattern = "yyyy-MM-dd") LocalDate nearestPto,
+                          @JsonFormat(pattern = "yyyy-MM-dd")
+                          LocalDate nearestPto,
                           String timeSinceStart) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
@@ -56,7 +70,7 @@ public record EmployeeDto(UUID id,
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
                 employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(),
-                employee.getCountry(), employee.getPersonalNumber(), employee.getTaxId(),
+                employee.getCountry().getId(), employee.getPersonalNumber(), employee.getTaxId(),
                 employee.getEmergencyContactFullName(), employee.getEmergencyContactPhone(),
                 employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getNotes(),
                 employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),

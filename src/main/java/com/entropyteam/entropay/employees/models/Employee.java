@@ -7,13 +7,7 @@ import java.util.Set;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
-import javax.persistence.Entity;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.FetchType;
-import javax.persistence.JoinTable;
-import javax.persistence.JoinColumn;
+import javax.persistence.*;
 
 
 @Entity(name = "Employee")
@@ -30,7 +24,6 @@ public class Employee extends BaseEntity {
     private String city;
     private String state;
     private String zip;
-    private String country;
     private LocalDate birthDate;
     private String personalNumber;
     private String taxId;
@@ -60,6 +53,10 @@ public class Employee extends BaseEntity {
     )
     private Set<Technology> technologies;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id")
+    private Country country;
+
     public Employee() {
     }
 
@@ -74,7 +71,6 @@ public class Employee extends BaseEntity {
         this.city = entity.city();
         this.state = entity.state();
         this.zip = entity.zip();
-        this.country = entity.country();
         this.birthDate = entity.birthDate();
         this.personalNumber = entity.personalNumber();
         this.taxId = entity.taxId();
@@ -150,11 +146,11 @@ public class Employee extends BaseEntity {
         this.zip = zip;
     }
 
-    public String getCountry() {
+    public Country getCountry() {
         return country;
     }
 
-    public void setCountry(String country) {
+    public void setCountry(Country country) {
         this.country = country;
     }
 

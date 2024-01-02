@@ -143,7 +143,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Employee employee = employeeRepository.findById(dto.employeeId()).orElse(null);
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveTypeId()).orElse(null);
         Pto pto = new Pto(dto);
-        setTimeAmount(pto, dto.isHalfDay(), employee.getCountry());
+        setTimeAmount(pto, dto.isHalfDay(), employee.getCountry().getName());
         pto.setEmployee(employee);
         pto.setLeaveType(leaveType);
         return pto;
