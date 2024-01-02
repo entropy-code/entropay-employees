@@ -62,7 +62,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 10);
@@ -96,7 +96,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 15);
@@ -130,7 +130,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 9);
@@ -164,7 +164,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(newEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(newEmployee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(newEmployee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 6);
@@ -197,7 +197,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(oldEmployee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 15);
@@ -231,7 +231,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(employee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(employee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 0);
@@ -255,7 +255,7 @@ public class EmployeeServiceTest {
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);
 
         //then
-        int response = employeeService.applyVacationRuleToEmployee(employee, "2025", employeeContractList, currentDate, holidaysList);
+        int response = employeeService.applyVacationRuleToEmployee(employee, currentYear, employeeContractList, currentDate, holidaysList);
 
         //verify
         assertEquals(response, 0);
