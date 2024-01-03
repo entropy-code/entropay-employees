@@ -89,7 +89,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         }
         entityToUpdate.setId(id);
-        entityToUpdate.setStatus(entityToUpdate.getStatus());
+        entityToUpdate.setStatus(Status.APPROVED); // For now all approved
         Pto savedEntity = getRepository().save(entityToUpdate);
         CalendarEventDto calendarEventDto = createCalendarEventDto(savedEntity);
         googleService.updateGoogleCalendarEvent(calendarEventDto);
@@ -194,19 +194,15 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 
-    public PtoDto cancelPto(UUID id, PtoDto ptoDto) {
-        Pto oldEntity = ptoRepository.findById(id).orElseThrow();
-        Pto entityToUpdate = toEntity(ptoDto);
-        entityToUpdate.setId(id);
-        entityToUpdate.setStatus(entityToUpdate.getStatus());
-        if (isVacationType(oldEntity) && isVacationType(entityToUpdate) && oldEntity.getStatus().equals(Status.APPROVED)
-                && ptoDto.status().equals(Status.CANCELLED)) {
-            vacationService.addVacationCredit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
-            googleService.deleteGoogleCalendarEvent(id.toString());
+    @Transactional
+    public PtoDto cancelPto(UUID id) {
+        Pto pto = ptoRepository.findById(id).orElseThrow();
+        pto.setStatus(Status.CANCELLED);
+        if (isVacationType(pto)) {
+            vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
         }
-        Pto savedEntity = getRepository().save(entityToUpdate);
-        CalendarEventDto calendarEventDto = createCalendarEventDto(savedEntity);
-        googleService.updateGoogleCalendarEvent(calendarEventDto);
+        googleService.deleteGoogleCalendarEvent(id.toString());
+        Pto savedEntity = getRepository().save(pto);
         return toDTO(savedEntity);
     }
 }

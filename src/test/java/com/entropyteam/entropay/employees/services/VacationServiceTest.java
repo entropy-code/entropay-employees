@@ -143,38 +143,4 @@ public class VacationServiceTest {
         Assertions.assertThrows(InvalidRequestParametersException.class,
                 () -> vacationService.discountVacationDebit(employee, 12));
     }
-
-    @Test
-    void addVacationCreditTestNoVacationBalances() {
-        // Config
-        Employee employee = new Employee();
-        employee.setId(UUID.randomUUID());
-        Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(Collections.emptyList());
-
-        // Run
-        Assertions.assertThrows(InvalidRequestParametersException.class,
-                () -> vacationService.addVacationCredit(employee, 7));
-    }
-
-    @Test
-    void addVacationCreditTestTotalDaysExceedsBalance() {
-        // Config
-        Employee employee = new Employee();
-        employee.setId(UUID.randomUUID());
-
-        VacationBalanceByYear balance2022 = Mockito.mock(VacationBalanceByYear.class);
-        Mockito.when(balance2022.getBalance()).thenReturn(5);
-
-        List<VacationBalanceByYear> availableVacations = new ArrayList<>();
-        availableVacations.add(balance2022);
-
-        Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(availableVacations);
-
-        // Run
-        vacationService.addVacationCredit(employee, 10);
-
-        // Assert
-        Mockito.verify(vacationRepository, times(1)).save(Mockito.any(Vacation.class));
-    }
-
 }

@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.services;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     @Autowired
     public VacationService(VacationRepository vacationRepository, ReactAdminMapper reactAdminMapper,
-            EmployeeRepository employeeRepository) {
+                           EmployeeRepository employeeRepository) {
         super(Vacation.class, reactAdminMapper);
         this.vacationRepository = vacationRepository;
         this.employeeRepository = employeeRepository;
@@ -106,31 +107,6 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
         vacation.setEmployee(employee);
 
         return vacation;
-    }
-    public void addVacationCredit(Employee employee, Integer totalDaysToAdd) {
-        List<VacationBalanceByYear> availableVacations = vacationRepository.getVacationByYear(employee.getId());
-        if (CollectionUtils.isEmpty(availableVacations)) {
-            throw new InvalidRequestParametersException("No vacation balances found for the employee");
-        }
-        availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
-        LOGGER.info("Adding vacation credit, employeeId: {}, balance before adding new credit: {}",
-                employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
-
-        for (VacationBalanceByYear vacation : availableVacations) {
-            if (totalDaysToAdd > 0) {
-                Integer daysToAdd = Math.min(totalDaysToAdd, vacation.getBalance());
-                totalDaysToAdd -= daysToAdd;
-                Vacation vacationCredit = new Vacation();
-                vacationCredit.setYear(vacation.getYear());
-                vacationCredit.setCredit(daysToAdd);
-                vacationCredit.setDebit(0);
-                vacationCredit.setEmployee(employee);
-                vacationRepository.save(vacationCredit);
-            }
-        }
-        LOGGER.info("Vacation credit added, employeeId: {}, balance after adding new credit: {}",
-                employee.getId(),
-                vacationRepository.getVacationByYear(employee.getId()).stream().mapToInt(VacationBalanceByYear::getBalance).sum());
     }
 
 }
