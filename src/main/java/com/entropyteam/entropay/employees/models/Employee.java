@@ -3,11 +3,17 @@ package com.entropyteam.entropay.employees.models;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.Table;
+import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.ManyToOne;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
-import javax.persistence.*;
 
 
 @Entity(name = "Employee")

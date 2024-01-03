@@ -7,5 +7,4 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CountryRepository extends BaseRepository<Country, UUID> {
-    List<Country> findAllByDeletedIsFalseAndNameLikeIgnoreCase(String name);
 }

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,10 +37,10 @@ public class PtoServiceTest {
         ptoEntity.setLabourHours(0);
 
         Country country = new Country();
-        country.setName("Argentina");
+        country.setId(UUID.randomUUID());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity, true, country.getName());
+        ptoService.setTimeAmount(ptoEntity, true, country.getId());
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -58,10 +59,10 @@ public class PtoServiceTest {
         ptoEntity.setLeaveType(leaveTypeEntity);
 
         Country country = new Country();
-        country.setName("Argentina");
+        country.setId(UUID.randomUUID());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity, false, country.getName());
+        ptoService.setTimeAmount(ptoEntity, false, country.getId());
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -77,13 +78,13 @@ public class PtoServiceTest {
         ptoEntity.setLabourHours(null);
 
         Country country = new Country();
-        country.setName("Argentina");
+        country.setId(UUID.randomUUID());
 
         Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Collections.emptyList());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity, false, country.getName());
+        ptoService.setTimeAmount(ptoEntity, false, country.getId());
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -99,13 +100,13 @@ public class PtoServiceTest {
         ptoEntity.setLabourHours(null);
 
         Country country = new Country();
-        country.setName("Argentina");
+        country.setId(UUID.randomUUID());
 
         Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Collections.emptyList());
 
         // Run
-        ptoService.setTimeAmount(ptoEntity, false, country.getName());
+        ptoService.setTimeAmount(ptoEntity, false, country.getId());
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());
@@ -122,6 +123,7 @@ public class PtoServiceTest {
 
         Country countryArgentina = new Country();
         countryArgentina.setName("Argentina");
+        countryArgentina.setId(UUID.fromString("e7cccdc7-b9b8-4017-b0c9-541abc1d6f9d"));
         Country countryAll = new Country();
         countryAll.setName("ALL");
 
@@ -132,11 +134,11 @@ public class PtoServiceTest {
         holidayAll.setDate(LocalDate.of(2023, 7, 14));
         holidayAll.setCountry(countryAll);
 
-        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(eq(countryArgentina.getName()), Mockito.any(), Mockito.any()))
+        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(eq(countryArgentina.getId()), Mockito.any(), Mockito.any()))
                 .thenReturn(Arrays.asList(holidayArgentina, holidayAll));
 
         // Run
-        ptoService.setTimeAmount(ptoEntity, false, countryArgentina.getName());
+        ptoService.setTimeAmount(ptoEntity, false, countryArgentina.getId());
 
         // Assert
         assertEquals(0, ptoEntity.getLabourHours());

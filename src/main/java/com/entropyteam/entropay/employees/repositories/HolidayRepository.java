@@ -19,9 +19,10 @@ public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
     @Query(value = "SELECT DISTINCT extract('Year' FROM date) AS year FROM holiday_calendar WHERE deleted=false "
             + " ORDER BY year ASC", nativeQuery = true)
     List<Integer> getHolidaysYears();
+
     @Query(value = "SELECT hc.* FROM holiday_calendar AS hc INNER JOIN country AS c ON hc.country_id = c.id " +
-            " WHERE (c.name LIKE :country or c.name LIKE 'ALL' ) AND hc.date BETWEEN :startDate AND :endDate AND hc.deleted = false ORDER BY hc.date ASC", nativeQuery = true)
-    List<Holiday> findHolidaysByCountryAndPeriod(@Param("country") String country,
+            " WHERE (c.id = :countryId or c.name = 'ALL' ) AND hc.date BETWEEN :startDate AND :endDate AND hc.deleted = false ORDER BY hc.date ASC", nativeQuery = true)
+    List<Holiday> findHolidaysByCountryAndPeriod(@Param("countryId") UUID countryId,
                                                  @Param("startDate") LocalDate startDate,
                                                  @Param("endDate") LocalDate endDate);
 }

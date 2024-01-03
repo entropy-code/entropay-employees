@@ -143,13 +143,13 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Employee employee = employeeRepository.findById(dto.employeeId()).orElse(null);
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveTypeId()).orElse(null);
         Pto pto = new Pto(dto);
-        setTimeAmount(pto, dto.isHalfDay(), employee.getCountry().getName());
+        setTimeAmount(pto, dto.isHalfDay(), employee.getCountry().getId());
         pto.setEmployee(employee);
         pto.setLeaveType(leaveType);
         return pto;
     }
 
-    public void setTimeAmount(Pto entity, boolean isHalfDay, String employeesCountryName) {
+    public void setTimeAmount(Pto entity, boolean isHalfDay, UUID employeesCountryId) {
         Long days = ChronoUnit.DAYS.between(entity.getStartDate(), entity.getEndDate());
         if (days.compareTo(0L) == 0) {
             if (isHalfDay) {
@@ -164,7 +164,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             LocalDate currentDate = entity.getStartDate();
             LocalDate endDate = entity.getEndDate();
             List<Holiday> holidaysInPeriod = holidayRepository.
-                    findHolidaysByCountryAndPeriod(employeesCountryName, currentDate, endDate);
+                    findHolidaysByCountryAndPeriod(employeesCountryId, currentDate, endDate);
             while (!currentDate.isAfter(endDate)) {
                 LocalDate finalCurrentDate = currentDate;
                 if (currentDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
