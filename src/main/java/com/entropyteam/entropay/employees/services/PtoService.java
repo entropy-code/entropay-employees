@@ -19,16 +19,16 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
+import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
+import com.entropyteam.entropay.employees.repositories.HolidayRepository;
+import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.LeaveType;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.models.Status;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.HolidayRepository;
-import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
-import com.entropyteam.entropay.employees.repositories.PtoRepository;
-import com.entropyteam.entropay.employees.repositories.VacationRepository;
 
 @Service
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
@@ -142,14 +142,14 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveTypeId()).orElse(null);
         Status statusType = dto.status();
         Pto pto = new Pto(dto);
-        setTimeAmount(pto, dto.isHalfDay());
+        setTimeAmount(pto, dto.isHalfDay(), employee.getCountry().getId());
         pto.setEmployee(employee);
         pto.setLeaveType(leaveType);
         pto.setStatus(statusType);
         return pto;
     }
 
-    public void setTimeAmount(Pto entity, boolean isHalfDay) {
+    public void setTimeAmount(Pto entity, boolean isHalfDay, UUID employeesCountryId) {
         Long days = ChronoUnit.DAYS.between(entity.getStartDate(), entity.getEndDate());
         if (days.compareTo(0L) == 0) {
             if (isHalfDay) {
@@ -163,8 +163,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             Double labourDays = 0.0;
             LocalDate currentDate = entity.getStartDate();
             LocalDate endDate = entity.getEndDate();
-            List<Holiday> holidaysInPeriod = holidayRepository
-                    .findAllByDateBetweenAndDeletedFalseOrderByDateAsc(currentDate, endDate);
+            List<Holiday> holidaysInPeriod = holidayRepository.
+                    findHolidaysByCountryAndPeriod(employeesCountryId, currentDate, endDate);
             while (!currentDate.isAfter(endDate)) {
                 LocalDate finalCurrentDate = currentDate;
                 if (currentDate.getDayOfWeek() != DayOfWeek.SATURDAY &&

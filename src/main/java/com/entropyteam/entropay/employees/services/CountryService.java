@@ -1,7 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.util.UUID;
-
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.CountryDto;
@@ -14,6 +17,7 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 @Service
 public class CountryService extends BaseService<Country, CountryDto, UUID> {
 
+    public static final String ALL_COUNTRY_NAME = "ALL";
     private final CountryRepository countryRepository;
 
     @Autowired
@@ -36,4 +40,5 @@ public class CountryService extends BaseService<Country, CountryDto, UUID> {
     protected Country toEntity(CountryDto entity) {
         return new Country(entity);
     }
+
 }
