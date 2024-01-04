@@ -104,7 +104,7 @@ public class ReportService {
             }
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
 
-            String country = employee.getCountry();
+            String country = employee.getCountry().getName();
             String labourEmail = employee.getLabourEmail();
             String client = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
             String projectName = lastAssignment.flatMap(assignment -> Optional.ofNullable(assignment.getProject()))
