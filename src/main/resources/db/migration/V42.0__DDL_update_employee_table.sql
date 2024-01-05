@@ -38,7 +38,7 @@ INSERT INTO country (id, name, created_at, modified_at, deleted)
 SELECT '3ba350e6-b0be-4e5a-9b1c-6b62d444f188', 'Venezuela', now(), now(), false
     WHERE NOT EXISTS (SELECT 1 FROM country WHERE country.name = 'Venezuela');
 
-UPDATE employee SET country_id = country.id FROM country WHERE employee.country IS NULL AND country.name = 'Argentina';
+UPDATE employee SET country_id = country.id FROM country WHERE (employee.country IS NULL OR LOWER(employee.country) NOT IN (SELECT LOWER(name) from country)) AND country.name = 'Argentina';
 
 UPDATE employee SET country_id = country.id FROM country WHERE LOWER(employee.country) = LOWER(country.name);
 
