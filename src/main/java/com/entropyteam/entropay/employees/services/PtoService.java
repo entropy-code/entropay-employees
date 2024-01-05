@@ -30,14 +30,12 @@ import com.entropyteam.entropay.employees.models.LeaveType;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.models.Status;
 
-
 @Service
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     public static final String VACATION_TYPE = "vacation";
     public static final Double HALF_DAY_OFF = 0.5;
     private static final Logger LOGGER = LogManager.getLogger();
-
     private PtoRepository ptoRepository;
     private EmployeeRepository employeeRepository;
     private LeaveTypeRepository leaveTypeRepository;
@@ -45,7 +43,6 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     private HolidayRepository holidayRepository;
     private VacationService vacationService;
     private GoogleService googleService;
-
 
     @Autowired
     public PtoService(ReactAdminMapper mapper, PtoRepository ptoRepository, EmployeeRepository employeeRepository,
@@ -82,7 +79,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto entityToUpdate = toEntity(ptoDto);
         LOGGER.info("Started update of pto of type: {}, update to type: {}, amount of days: {} ",
                 oldEntity.getLeaveType().getName(), entityToUpdate.getLeaveType().getName(), entityToUpdate.getDays());
-        if (isVacationType(oldEntity) && isVacationType(entityToUpdate) && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
+        if (isVacationType(oldEntity) && isVacationType(entityToUpdate)
+                && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
             vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         } else if (isVacationType(oldEntity) && !isVacationType(entityToUpdate)) {
@@ -118,7 +116,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
             vacationService.addVacationDebit(entityToCreate.getEmployee(), totalDays);
         }
-        
+
         Pto savedEntity = getRepository().save(entityToCreate);
         LOGGER.info("PTO of type {} created employeeId: {}, amount of days: {}",
                 savedEntity.getLeaveType().getName(), savedEntity.getEmployee().getId(), savedEntity.getDays());
@@ -142,10 +140,12 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     protected Pto toEntity(PtoDto dto) {
         Employee employee = employeeRepository.findById(dto.employeeId()).orElse(null);
         LeaveType leaveType = leaveTypeRepository.findById(dto.leaveTypeId()).orElse(null);
+        Status statusType = dto.status();
         Pto pto = new Pto(dto);
         setTimeAmount(pto, dto.isHalfDay(), employee.getCountry().getId());
         pto.setEmployee(employee);
         pto.setLeaveType(leaveType);
+        pto.setStatus(statusType);
         return pto;
     }
 
@@ -184,7 +184,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         return StringUtils.equalsIgnoreCase(oldEntity.getLeaveType().getName(), VACATION_TYPE);
     }
 
-    private CalendarEventDto createCalendarEventDto(Pto pto){
+    private CalendarEventDto createCalendarEventDto(Pto pto) {
         String eventId = pto.getId().toString();
         LocalDate startDate = pto.getStartDate();
         LocalDate endDate = pto.getEndDate().plusDays(1);
@@ -192,5 +192,17 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         LeaveType leaveType = pto.getLeaveType();
         String eventName = employee.getFirstName() + " " + employee.getLastName() + " " + leaveType.getName();
         return new CalendarEventDto(eventId, eventName, startDate, endDate);
+    }
+
+    @Transactional
+    public PtoDto cancelPto(UUID id) {
+        Pto pto = ptoRepository.findById(id).orElseThrow();
+        pto.setStatus(Status.CANCELLED);
+        if (isVacationType(pto)) {
+            vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
+        }
+        googleService.deleteGoogleCalendarEvent(id.toString());
+        Pto savedEntity = getRepository().save(pto);
+        return toDTO(savedEntity);
     }
 }

@@ -53,7 +53,7 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2023, 5, 5));
         activeContract.setEmployee(oldEmployee);
 
-        LocalDate currentDate = LocalDate.of(2023,10,1);
+        LocalDate currentDate = LocalDate.of(2023, 10, 1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
@@ -90,7 +90,7 @@ public class EmployeeServiceTest {
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
 
-        LocalDate currentDate = LocalDate.of(2023,10,1);
+        LocalDate currentDate = LocalDate.of(2023, 10, 1);
 
         //when
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(oldEmployee.getId(), currentYear)).thenReturn(false);
@@ -121,7 +121,7 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2023, 7, 20));
         activeContract.setEmployee(oldEmployee);
 
-        LocalDate currentDate = LocalDate.of(2024,1,1);
+        LocalDate currentDate = LocalDate.of(2024, 1, 1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
@@ -155,7 +155,7 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2023, 7, 20));
         activeContract.setEmployee(newEmployee);
 
-        LocalDate currentDate = LocalDate.of(2024,1,1);
+        LocalDate currentDate = LocalDate.of(2024, 1, 1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
@@ -188,7 +188,7 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2021, 7, 1));
         activeContract.setEmployee(oldEmployee);
 
-        LocalDate currentDate = LocalDate.of(2023,10,1);
+        LocalDate currentDate = LocalDate.of(2023, 10, 1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
@@ -222,7 +222,7 @@ public class EmployeeServiceTest {
         activeContract.setStartDate(LocalDate.of(2021, 7, 1));
         activeContract.setEmployee(employee);
 
-        LocalDate currentDate = LocalDate.of(2023,10,1);
+        LocalDate currentDate = LocalDate.of(2023, 10, 1);
 
         List<Contract> employeeContractList = new ArrayList<>();
         employeeContractList.add(activeContract);
@@ -249,7 +249,7 @@ public class EmployeeServiceTest {
         seniority.setName("junior");
         seniority.setVacationDays(10);
 
-        LocalDate currentDate = LocalDate.of(2023,10,1);
+        LocalDate currentDate = LocalDate.of(2023, 10, 1);
         List<Contract> employeeContractList = new ArrayList<>();
 
         when(vacationRepository.existsVacationByEmployeeIdAndDeletedIsFalseAndYearIsLike(employee.getId(), currentYear)).thenReturn(true);

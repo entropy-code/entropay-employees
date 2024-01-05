@@ -9,6 +9,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import org.apache.commons.lang3.ObjectUtils;
@@ -117,7 +118,7 @@ public class Pto extends BaseEntity {
         this.leaveType = ptoType;
     }
 
-    public Integer getDaysAsInteger(){
+    public Integer getDaysAsInteger() {
         return days.intValue();
     }
 }

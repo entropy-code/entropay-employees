@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.services;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +30,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     @Autowired
     public VacationService(VacationRepository vacationRepository, ReactAdminMapper reactAdminMapper,
-            EmployeeRepository employeeRepository) {
+                           EmployeeRepository employeeRepository) {
         super(Vacation.class, reactAdminMapper);
         this.vacationRepository = vacationRepository;
         this.employeeRepository = employeeRepository;
@@ -107,4 +108,5 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
         return vacation;
     }
+
 }
