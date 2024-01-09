@@ -33,12 +33,15 @@ public class TestUtils {
     }
 
     public static Employee buildEmployee() {
+        Country country = new Country();
+        country.setName("Japan");
+
         Employee employee = new Employee();
         employee.setFirstName("Satoshi");
         employee.setLastName("Nakamoto");
         employee.setPersonalEmail("satoshin@gmx.com");
         employee.setBirthDate(LocalDate.of(1975, 4, 5));
-        employee.setCountry("Japan");
+        employee.setCountry(country);
         employee.setTaxId("201234310");
         employee.setEmergencyContactFullName("Dorian Nakamoto");
         employee.setEmergencyContactPhone("+1503123513");

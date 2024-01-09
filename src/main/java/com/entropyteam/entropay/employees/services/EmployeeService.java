@@ -21,6 +21,7 @@ import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.models.Holiday;
+import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
@@ -29,6 +30,7 @@ import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import com.entropyteam.entropay.employees.repositories.CountryRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,6 +54,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
+    private final CountryRepository countryRepository;
     private final GoogleService googleService;
 
 
@@ -60,7 +63,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationRepository paymentInformationRepository,
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository, GoogleService googleService) {
+                           ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
+                           CountryRepository countryRepository, GoogleService googleService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -71,6 +75,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
+        this.countryRepository = countryRepository;
         this.googleService = googleService;
     }
 
@@ -103,6 +108,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee employee = new Employee(dto);
         Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.profile());
         Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(dto.technologies());
+        Country country = countryRepository.findById(dto.countryId()).orElseThrow();
+        employee.setCountry(country);
         employee.setRoles(roles);
         employee.setTechnologies(technologies);
         employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
@@ -148,8 +155,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
 
-        CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
-        googleService.updateGoogleCalendarEvent(eventData);
+        if (employeeDto.birthDate() != null) {
+            CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+            googleService.updateGoogleCalendarEvent(eventData);
+        }
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
     }
@@ -196,7 +205,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         //calculate vacations if employee has contract to get seniority
         if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
-            if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(LocalDate.now().getYear(), Month.JULY, 1))) {
+            if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(currentDate.getYear(), Month.JULY, 1))) {
                 int yearDiff = startDate.until(currentDate).getYears();
                 int vacationDays = activeContract.get().getSeniority().getVacationDays();
                 return yearDiff >= 2 ? 15 : vacationDays;

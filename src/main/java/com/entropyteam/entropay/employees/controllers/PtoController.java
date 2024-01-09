@@ -3,24 +3,40 @@ package com.entropyteam.entropay.employees.controllers;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+
 
 import java.util.UUID;
+
+import com.entropyteam.entropay.employees.services.PtoService;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.CrudService;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @CrossOrigin
-@Secured({ROLE_MANAGER_HR, ROLE_ADMIN, ROLE_DEVELOPMENT})
+@Secured({ROLE_MANAGER_HR, ROLE_ADMIN, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
 @RequestMapping(value = "/ptos", produces = MediaType.APPLICATION_JSON_VALUE)
 public class PtoController extends BaseController<PtoDto, UUID> {
 
-    public PtoController(CrudService<PtoDto, UUID> crudService) {
+    private final PtoService ptoService;
+
+    public PtoController(CrudService<PtoDto, UUID> crudService, PtoService ptoService) {
         super(crudService);
+        this.ptoService = ptoService;
+    }
+
+    @PostMapping("/{id}/cancel")
+    @Secured({ROLE_MANAGER_HR, ROLE_ADMIN, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
+    public ResponseEntity<PtoDto> cancelPto(@PathVariable UUID id) {
+        return ResponseEntity.ok(ptoService.cancelPto(id));
     }
 }
