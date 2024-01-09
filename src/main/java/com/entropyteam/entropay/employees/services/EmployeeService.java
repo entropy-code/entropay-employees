@@ -155,8 +155,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
 
-        CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
-        googleService.updateGoogleCalendarEvent(eventData);
+        if (employeeDto.birthDate() != null) {
+            CalendarEventDto eventData = formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(), employeeDto.lastName());
+            googleService.updateGoogleCalendarEvent(eventData);
+        }
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         return toDTO(savedEntity);
     }
