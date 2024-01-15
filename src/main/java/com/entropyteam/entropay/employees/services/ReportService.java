@@ -16,18 +16,9 @@ import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
-import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Technology;
-import com.entropyteam.entropay.employees.models.Project;
-import com.entropyteam.entropay.employees.models.Currency;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.RoleRepository;
-import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
-import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
-import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.dtos.PtoReportDto;
+import com.entropyteam.entropay.employees.models.*;
+import com.entropyteam.entropay.employees.repositories.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,17 +41,19 @@ public class ReportService {
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
+    private final PtoRepository ptoRepository;
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
                          AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository,
-                         ReactAdminMapper mapper) {
+                         ReactAdminMapper mapper, PtoRepository ptoRepository) {
         this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
         this.employeeRepository = employeeRepository;
+        this.ptoRepository = ptoRepository;
     }
 
 
@@ -99,7 +92,7 @@ public class ReportService {
 
             Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
             Optional<Contract> latestContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
-            if(latestContract.isEmpty()) {
+            if (latestContract.isEmpty()) {
                 latestContract = employeeContracts.stream().max(Comparator.comparing((Contract::getStartDate)));
             }
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
@@ -111,8 +104,8 @@ public class ReportService {
                     .map(Project::getName)
                     .orElse("No project");
 
-            Integer usdPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.USD): 0;
-            Integer arsPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.ARS): 0;
+            Integer usdPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.USD) : 0;
+            Integer arsPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.ARS) : 0;
 
             EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), latestContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
             employeesReportDtoList.add(employeeReportDto);
@@ -121,9 +114,34 @@ public class ReportService {
     }
 
     public List<Employee> getFilteredEmployeesList(Filter filter) {
-        if(filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
+        if (filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
             return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
         }
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+    }
+
+    public Page<PtoReportDto> getPtosByEmployeesReport() {
+        List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
+
+        Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
+                .stream()
+                .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
+
+        Map<UUID, Integer> totalPtoDaysMap = ptoRepository.findAllByDeletedIsFalseAndStatusIsApproved()
+                .stream()
+                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingInt(p -> p.getDays().intValue())));
+
+        List<PtoReportDto> ptoReportDtoList = employeeList.stream()
+                .map(employee -> {
+                    List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
+                    Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
+                    String clientName = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
+                    int totalPtoDays = totalPtoDaysMap.getOrDefault(employee.getId(), 0);
+
+                    return new PtoReportDto(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(), clientName, totalPtoDays);
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 }
