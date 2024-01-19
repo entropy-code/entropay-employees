@@ -206,9 +206,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         if (activeContract.isPresent() && firstContract.isPresent()) {
             LocalDate startDate = firstContract.get().getStartDate();
             if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(currentDate.getYear(), Month.JULY, 1))) {
-                int yearDiff = startDate.until(currentDate).getYears();
-                int vacationDays = activeContract.get().getSeniority().getVacationDays();
-                return yearDiff >= 2 ? 15 : vacationDays;
+                return vacationsDayPerSeniority(startDate, currentDate, activeContract);
             } else if (currentDate.getMonthValue() == Month.JANUARY.getValue()) {
                 String seniorityName = activeContract.get().getSeniority().getName();
                 return vacationDaysPerWorkDay(holidaysInPeriod, currentDate, startDate, seniorityName);
@@ -272,5 +270,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             timeSinceStart.append("0 months");
         }
         return timeSinceStart.toString();
+    }
+
+    private int vacationsDayPerSeniority (LocalDate startDate, LocalDate currentDate, Optional <Contract> activeContract){
+        int yearDiff = startDate.until(currentDate).getYears();
+        return yearDiff >= 5 ? 20 : (yearDiff >= 2 ? 15 : activeContract.get().getSeniority().getVacationDays());
     }
 }
