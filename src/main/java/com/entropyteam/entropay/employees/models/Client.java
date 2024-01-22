@@ -19,7 +19,7 @@ public class Client extends BaseEntity {
     @JoinColumn(name = "company_id")
     private Company company;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     @Embedded
