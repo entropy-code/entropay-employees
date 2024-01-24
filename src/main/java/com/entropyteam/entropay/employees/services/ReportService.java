@@ -17,8 +17,21 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDto;
-import com.entropyteam.entropay.employees.models.*;
-import com.entropyteam.entropay.employees.repositories.*;
+import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.Role;
+import com.entropyteam.entropay.employees.models.Technology;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Project;
+import com.entropyteam.entropay.employees.models.Currency;
+import com.entropyteam.entropay.employees.models.Pto;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
+import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
+import com.entropyteam.entropay.employees.repositories.ContractRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.PtoRepository;
+
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +48,7 @@ import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 public class ReportService {
 
     private final static String ACTIVE_CONTRACT = "activeContract";
+    private final static String YEAR = "year";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -120,28 +134,42 @@ public class ReportService {
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
     }
 
-    public Page<PtoReportDto> getPtosByEmployeesReport() {
+    public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
         List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
 
         Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
 
-        Map<UUID, Integer> totalPtoDaysMap = ptoRepository.findAllByDeletedIsFalseAndStatusIsApproved()
+        List<Pto> ptoList = getFilteredPtoList(mapper.buildReportFilter(params, PtoReportDto.class));
+
+        Map<UUID, Integer> totalPtoDaysMap = ptoList
                 .stream()
                 .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingInt(p -> p.getDays().intValue())));
 
         List<PtoReportDto> ptoReportDtoList = employeeList.stream()
+                .filter(employee -> totalPtoDaysMap.containsKey(employee.getId()) && totalPtoDaysMap.get(employee.getId()) > 0)
                 .map(employee -> {
                     List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
                     Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
-                    String clientName = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
+                    String clientName = lastAssignment
+                            .map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
                     int totalPtoDays = totalPtoDaysMap.getOrDefault(employee.getId(), 0);
 
-                    return new PtoReportDto(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(), clientName, totalPtoDays);
+                    return new PtoReportDto(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
+                            clientName, totalPtoDays, 0);
                 })
                 .collect(Collectors.toList());
 
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
+    }
+
+    public List<Pto> getFilteredPtoList(Filter filter) {
+        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
+            Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
+            int year = Integer.parseInt(yearObject.toString());
+            return ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year);
+        }
+        return ptoRepository.findAllByDeletedIsFalseAndStatusIsApproved();
     }
 }

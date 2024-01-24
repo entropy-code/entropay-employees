@@ -1,11 +1,5 @@
 package com.entropyteam.entropay.employees.dtos;
 
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 public class PtoReportDto extends ReportDto {
@@ -15,6 +9,7 @@ public class PtoReportDto extends ReportDto {
     private String lastName;
     private String clientName;
     private Integer totalDays;
+    private Integer year;
 
 
     public PtoReportDto(UUID id,
@@ -22,13 +17,15 @@ public class PtoReportDto extends ReportDto {
                         String firstName,
                         String lastName,
                         String clientName,
-                        Integer totalDays) {
+                        Integer totalDays,
+                        Integer year) {
         this.id = id;
         this.internalId = internalId;
         this.firstName = firstName;
         this.lastName = lastName;
         this.clientName = clientName;
         this.totalDays = totalDays;
+        this.year = year;
     }
 
     public UUID getId() {

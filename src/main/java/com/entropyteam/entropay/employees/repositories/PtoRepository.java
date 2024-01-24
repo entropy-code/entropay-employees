@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.entropyteam.entropay.common.BaseRepository;
-import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Pto;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +22,14 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
             "AND p.status = 'APPROVED'")
     List<Pto> findAllByDeletedIsFalseAndStatusIsApproved();
 
+    @Query(value = "SELECT * FROM pto " +
+            "WHERE deleted = false " +
+            "AND status = 'APPROVED' " +
+            "AND EXTRACT(YEAR FROM start_date) = :year " +
+            "OR EXTRACT(YEAR FROM end_date) = :year", nativeQuery = true)
+    List<Pto> findAllByDeletedIsFalseAndStatusIsApprovedForYear(@Param("year") int year);
+
+    @Query(value = "SELECT DISTINCT extract('Year' FROM start_date) AS year FROM pto WHERE deleted=false "
+            + " ORDER BY year ASC", nativeQuery = true)
+    List<Integer> getPtosYears();
 }

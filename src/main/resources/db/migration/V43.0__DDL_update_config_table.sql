@@ -42,7 +42,7 @@ SET menu='[
       },
       {
       	"name": "Ptos",
-        "href": "/#/reports/ptos",
+        "href": "/#/reports/ptos/employees",
         "key": 72
       }
     ]
@@ -55,7 +55,7 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='b1bf3a8c-ced5-443f-90a3-ee9d283a18c0'::uuid::uuid;
 UPDATE public.config
@@ -159,7 +159,7 @@ SET menu='[
       },
       {
       	"name": "Ptos",
-        "href": "/#/reports/ptos",
+        "href": "/#/reports/ptos/employees",
         "key": 72
       }
     ]
@@ -182,7 +182,7 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='d172386e-46b3-4c6f-b030-14b9204ea059'::uuid::uuid;
 UPDATE public.config
@@ -229,7 +229,7 @@ SET menu='[
       },
       {
       	"name": "Ptos",
-        "href": "/#/reports/ptos",
+        "href": "/#/reports/ptos/employees",
         "key": 72
       }
     ]
@@ -242,6 +242,6 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='160ec32b-b39f-4966-add0-c82e03d2edb7'::uuid::uuid;
