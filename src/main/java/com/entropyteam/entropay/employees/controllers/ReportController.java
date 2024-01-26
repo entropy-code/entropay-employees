@@ -41,7 +41,7 @@ public class ReportController {
                 .body(response.getContent());
     }
 
-    @GetMapping("/ptos")
+    @GetMapping("/ptos/details")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     @Transactional
     public ResponseEntity<List<PtoReportDetailDto>> getPtosReportDetail(ReactAdminParams params) {

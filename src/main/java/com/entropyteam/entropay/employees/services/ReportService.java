@@ -142,60 +142,75 @@ public class ReportService {
     }
 
     public Page<PtoReportDetailDto> getPtoReportDetail(ReactAdminParams params) {
-        List<PtoReportDetailDto> ptoReportDetailDtoList = getFilteredReportDetail(mapper.buildReportFilter(params, PtoReportDetailDto.class));
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+        Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
+        if(filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
+            ptoReportDetailDtoList = getPtoReportDetailByEmployee(employeeRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow());
+        } else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
+            ptoReportDetailDtoList = getPtoReportDetailByClient(clientRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(CLIENT_ID))).orElseThrow());
+        }
+        else {
+            ptoReportDetailDtoList = Collections.emptyList();
+        }
         return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
     }
 
     public List<PtoReportDetailDto> getPtoReportDetailByEmployee(Employee employee) {
-        List<PtoReportDetailDto> ptoReportDetailDtoList = new ArrayList<>();
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+
         List<Assignment> employeesAssignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employee.getId());
         Optional<Assignment> lastAssignment = employeesAssignments.stream().filter(Assignment::isActive).findFirst();
         UUID clientId = lastAssignment.map(assignment -> assignment.getProject().getClient().getId()).orElse(null);
-         String clientName = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
-        List<Pto> employeesPtos = ptoRepository.findPtosByEmployeeIdIsAndDeletedIsFalse(employee.getId());
+        String clientName = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
+        List<Pto> employeesPtosList = ptoRepository.findPtosByEmployeeIdIsAndDeletedIsFalse(employee.getId());
 
-        for (Pto employeePto : employeesPtos) {
-            if(employeePto.getStatus() == Status.APPROVED) {
-                PtoReportDetailDto ptoReportDetailDto = new PtoReportDetailDto(employee.getId(), employee.getInternalId(), employee.getFirstName(),
-                        employee.getLastName(), clientName, employeePto.getLeaveType().getName(), employeePto.getDaysAsInteger(), clientId,
-                        employeePto.getStartDate(), employeePto.getEndDate());
-                ptoReportDetailDtoList.add(ptoReportDetailDto);
-            }
-        }
+        ptoReportDetailDtoList = employeesPtosList.stream()
+                .sorted(Comparator.comparing(Pto::getStartDate))
+                .filter(pto -> pto.getStatus() == Status.APPROVED)
+                .map(pto -> new PtoReportDetailDto(
+                        employee.getId(),
+                        employee.getInternalId(),
+                        employee.getFirstName(),
+                        employee.getLastName(),
+                        clientName,
+                        pto.getLeaveType().getName(),
+                        pto.getDaysAsInteger(),
+                        clientId,
+                        pto.getStartDate(),
+                        pto.getEndDate()
+                ))
+                .collect(Collectors.toList());
+
         return ptoReportDetailDtoList;
     }
 
     public List<PtoReportDetailDto> getPtoReportDetailByClient(Client client) {
-        List<PtoReportDetailDto> ptoReportDetailDtoList = new ArrayList<>();
-        List<Assignment> clientsAssignmentList = assignmentRepository.findAllByDeletedIsFalse()
-                .stream()
-                .filter(assignment -> assignment.getProject().getClient().getId() == client.getId())
-                .toList();
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
 
+        List<Assignment> clientsAssignmentList = assignmentRepository.findAllAssignmentsByClientId(client.getId());
         List<Employee> employeeList = employeeRepository.findAllById(clientsAssignmentList.stream().map(x-> x.getEmployee().getId()).toList());
         List<Pto> employeesPtoList = ptoRepository.findPtosByEmployeeIdInAndDeletedIsFalse(employeeList.stream().map(BaseEntity::getId).toList());
 
-        for (Pto pto : employeesPtoList) {
-            if(pto.getStatus() == Status.APPROVED) {
-                Employee employee = pto.getEmployee();
-                PtoReportDetailDto ptoReportDetailDto = new PtoReportDetailDto(employee.getId(), employee.getInternalId(), employee.getFirstName(),
-                        employee.getLastName(), client.getName(), pto.getLeaveType().getName(), pto.getDaysAsInteger(), client.getId(),
-                        pto.getStartDate(), pto.getEndDate());
-                ptoReportDetailDtoList.add(ptoReportDetailDto);
-            }
-        }
-        return ptoReportDetailDtoList;
-    }
+        ptoReportDetailDtoList = employeesPtoList.stream()
+                .sorted(Comparator.comparing(Pto::getStartDate))
+                .filter(pto -> pto.getStatus() == Status.APPROVED)
+                .map(pto -> {
+                    Employee employee = pto.getEmployee();
+                    return new PtoReportDetailDto(
+                            employee.getId(),
+                            employee.getInternalId(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            client.getName(),
+                            pto.getLeaveType().getName(),
+                            pto.getDaysAsInteger(),
+                            client.getId(),
+                            pto.getStartDate(),
+                            pto.getEndDate()
+                    );
+                })
+                .collect(Collectors.toList());
 
-    public List<PtoReportDetailDto> getFilteredReportDetail(Filter filter) {
-        if(filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
-            return getPtoReportDetailByEmployee(employeeRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow());
-        }
-        else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
-            return getPtoReportDetailByClient(clientRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(CLIENT_ID))).orElseThrow());
-        }
-        else {
-            return Collections.emptyList();
-        }
+        return ptoReportDetailDtoList;
     }
 }

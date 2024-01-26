@@ -23,4 +23,8 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
             + "AND employee_id NOT IN (select employee_id FROM assignment a2 WHERE a2.active = TRUE AND a2.deleted = "
             + "FALSE)", nativeQuery = true)
     List<Assignment> findAllAssignmentsToActivateInDate(@Param("date") LocalDate date);
+
+    @Query(value = "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = :clientId AND a.deleted = false " +
+            " AND p.deleted = FALSE", nativeQuery = true)
+    List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
 }
