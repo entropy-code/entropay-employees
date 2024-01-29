@@ -192,7 +192,7 @@ public class ReportService {
         List<PtoReportDetailDto> ptoReportDetailDtoList;
 
         List<Assignment> clientsAssignmentList = assignmentRepository.findAllAssignmentsByClientId(client.getId());
-        List<Employee> employeeList = employeeRepository.findAllById(clientsAssignmentList.stream().map(x-> x.getEmployee().getId()).toList());
+        List<Employee> employeeList = employeeRepository.findAllById(clientsAssignmentList.stream().map(x -> x.getEmployee().getId()).toList());
         List<Pto> employeesPtoList = ptoRepository.findPtosByEmployeeIdInAndDeletedIsFalse(employeeList.stream().map(BaseEntity::getId).toList());
 
         ptoReportDetailDtoList = employeesPtoList.stream()
@@ -217,7 +217,8 @@ public class ReportService {
                 .collect(Collectors.toList());
 
         return ptoReportDetailDtoList;
-=======
+    }
+    
     public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
         List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
 
