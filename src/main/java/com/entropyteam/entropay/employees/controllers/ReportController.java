@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.controllers;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDto;
 import com.entropyteam.entropay.employees.services.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,6 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
-
     @GetMapping("/employees")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     @Transactional
@@ -42,6 +42,16 @@ public class ReportController {
                 .body(response.getContent());
     }
 
+    @GetMapping("/ptos/details")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Transactional
+    public ResponseEntity<List<PtoReportDetailDto>> getPtosReportDetail(ReactAdminParams params) {
+      Page<PtoReportDetailDto> response = reportService.getPtoReportDetail(params);
+       return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
+    }
+  
     @GetMapping("/ptos/employees")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     @Transactional
@@ -51,5 +61,4 @@ public class ReportController {
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());
     }
-
 }

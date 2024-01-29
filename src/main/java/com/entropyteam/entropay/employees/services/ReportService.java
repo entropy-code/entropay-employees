@@ -12,26 +12,32 @@ import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.auth.AppRole;
 
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDto;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Currency;
 import com.entropyteam.entropay.employees.models.Pto;
+import com.entropyteam.entropay.employees.models.Client;
+import com.entropyteam.entropay.employees.models.Status;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
-
+import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
+import com.entropyteam.entropay.employees.repositories.ClientRepository;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +47,14 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.PageImpl;
 
-
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 @Service
 public class ReportService {
 
     private final static String ACTIVE_CONTRACT = "activeContract";
+    private final static String EMPLOYEE_ID = "employeeId";
+    private final static String CLIENT_ID = "clientId";
     private final static String YEAR = "year";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
@@ -56,11 +63,13 @@ public class ReportService {
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
     private final PtoRepository ptoRepository;
+    private final ClientRepository clientRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
-                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository,
-                         ReactAdminMapper mapper, PtoRepository ptoRepository) {
+                         AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository, PtoRepository ptoRepository,
+                         LeaveTypeRepository leaveTypeRepository, ClientRepository clientRepository, ReactAdminMapper mapper) {
         this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
@@ -68,8 +77,9 @@ public class ReportService {
         this.contractRepository = contractRepository;
         this.employeeRepository = employeeRepository;
         this.ptoRepository = ptoRepository;
+        this.leaveTypeRepository = leaveTypeRepository;
+        this.clientRepository = clientRepository;
     }
-
 
     public Page<EmployeeReportDto> getEmployeesReport(ReactAdminParams params) {
         AppRole userRole = getUserRole();
@@ -134,6 +144,81 @@ public class ReportService {
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
     }
 
+    public Page<PtoReportDetailDto> getPtoReportDetail(ReactAdminParams params) {
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+        Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
+        if(filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
+            ptoReportDetailDtoList = getPtoReportDetailByEmployee(employeeRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow());
+        } else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
+            ptoReportDetailDtoList = getPtoReportDetailByClient(clientRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(CLIENT_ID))).orElseThrow());
+        }
+        else {
+            ptoReportDetailDtoList = Collections.emptyList();
+        }
+        return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
+    }
+
+    public List<PtoReportDetailDto> getPtoReportDetailByEmployee(Employee employee) {
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+
+        List<Assignment> employeesAssignments = assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employee.getId());
+        Optional<Assignment> lastAssignment = employeesAssignments.stream().filter(Assignment::isActive).findFirst();
+        UUID clientId = lastAssignment.map(assignment -> assignment.getProject().getClient().getId()).orElse(null);
+        String clientName = lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
+        List<Pto> employeesPtosList = ptoRepository.findPtosByEmployeeIdIsAndDeletedIsFalse(employee.getId());
+
+        ptoReportDetailDtoList = employeesPtosList.stream()
+                .sorted(Comparator.comparing(Pto::getStartDate))
+                .filter(pto -> pto.getStatus() == Status.APPROVED)
+                .map(pto -> new PtoReportDetailDto(
+                        pto.getId(),
+                        employee.getId(),
+                        employee.getInternalId(),
+                        employee.getFirstName(),
+                        employee.getLastName(),
+                        clientName,
+                        pto.getLeaveType().getName(),
+                        pto.getDaysAsInteger(),
+                        clientId,
+                        pto.getStartDate(),
+                        pto.getEndDate()
+                ))
+                .collect(Collectors.toList());
+
+        return ptoReportDetailDtoList;
+    }
+
+    public List<PtoReportDetailDto> getPtoReportDetailByClient(Client client) {
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+
+        List<Assignment> clientsAssignmentList = assignmentRepository.findAllAssignmentsByClientId(client.getId());
+        List<Employee> employeeList = employeeRepository.findAllById(clientsAssignmentList.stream().map(x -> x.getEmployee().getId()).toList());
+        List<Pto> employeesPtoList = ptoRepository.findPtosByEmployeeIdInAndDeletedIsFalse(employeeList.stream().map(BaseEntity::getId).toList());
+
+        ptoReportDetailDtoList = employeesPtoList.stream()
+                .sorted(Comparator.comparing(Pto::getStartDate))
+                .filter(pto -> pto.getStatus() == Status.APPROVED)
+                .map(pto -> {
+                    Employee employee = pto.getEmployee();
+                    return new PtoReportDetailDto(
+                            pto.getId(),
+                            employee.getId(),
+                            employee.getInternalId(),
+                            employee.getFirstName(),
+                            employee.getLastName(),
+                            client.getName(),
+                            pto.getLeaveType().getName(),
+                            pto.getDaysAsInteger(),
+                            client.getId(),
+                            pto.getStartDate(),
+                            pto.getEndDate()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return ptoReportDetailDtoList;
+    }
+    
     public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
         List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
 

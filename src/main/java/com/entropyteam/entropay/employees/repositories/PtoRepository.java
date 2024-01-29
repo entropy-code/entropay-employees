@@ -17,6 +17,9 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
             "LIMIT 1", nativeQuery = true)
     LocalDate findNearestPto(@Param("employeeId") UUID employeeId);
 
+    List<Pto> findPtosByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
+
+    List<Pto> findPtosByEmployeeIdIsAndDeletedIsFalse(UUID employeeId);
     @Query("SELECT p FROM Pto p " +
             "WHERE p.deleted = false " +
             "AND p.status = 'APPROVED'")
