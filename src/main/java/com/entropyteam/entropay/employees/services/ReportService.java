@@ -18,6 +18,8 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportDto;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Role;
@@ -53,6 +55,7 @@ public class ReportService {
     private final static String ACTIVE_CONTRACT = "activeContract";
     private final static String EMPLOYEE_ID = "employeeId";
     private final static String CLIENT_ID = "clientId";
+    private final static String YEAR = "year";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -113,7 +116,7 @@ public class ReportService {
 
             Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
             Optional<Contract> latestContract = employeeContracts.stream().filter(Contract::isActive).findFirst();
-            if(latestContract.isEmpty()) {
+            if (latestContract.isEmpty()) {
                 latestContract = employeeContracts.stream().max(Comparator.comparing((Contract::getStartDate)));
             }
             Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
@@ -125,8 +128,8 @@ public class ReportService {
                     .map(Project::getName)
                     .orElse("No project");
 
-            Integer usdPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.USD): 0;
-            Integer arsPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.ARS): 0;
+            Integer usdPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.USD) : 0;
+            Integer arsPayment = latestContract.isPresent() && latestContract.get().isActive() ? latestContract.get().getLatestPayment(Currency.ARS) : 0;
 
             EmployeeReportDto employeeReportDto = new EmployeeReportDto(employee, profile, firstContract.orElse(null), latestContract.orElse(null), client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
             employeesReportDtoList.add(employeeReportDto);
@@ -135,7 +138,7 @@ public class ReportService {
     }
 
     public List<Employee> getFilteredEmployeesList(Filter filter) {
-        if(filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
+        if (filter.getGetByFieldsFilter().containsKey(ACTIVE_CONTRACT)) {
             return employeeRepository.getEmployeesWithAtLeastAnActiveContract();
         }
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
@@ -214,5 +217,43 @@ public class ReportService {
                 .collect(Collectors.toList());
 
         return ptoReportDetailDtoList;
+=======
+    public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
+        List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
+
+        Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
+                .stream()
+                .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
+
+        List<Pto> ptoList = getFilteredPtoList(mapper.buildReportFilter(params, PtoReportDto.class));
+
+        Map<UUID, Integer> totalPtoDaysMap = ptoList
+                .stream()
+                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingInt(p -> p.getDays().intValue())));
+
+        List<PtoReportDto> ptoReportDtoList = employeeList.stream()
+                .filter(employee -> totalPtoDaysMap.containsKey(employee.getId()) && totalPtoDaysMap.get(employee.getId()) > 0)
+                .map(employee -> {
+                    List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
+                    Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
+                    String clientName = lastAssignment
+                            .map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
+                    int totalPtoDays = totalPtoDaysMap.getOrDefault(employee.getId(), 0);
+
+                    return new PtoReportDto(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
+                            clientName, totalPtoDays, 0);
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
+    }
+
+    public List<Pto> getFilteredPtoList(Filter filter) {
+        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
+            Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
+            int year = Integer.parseInt(yearObject.toString());
+            return ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year);
+        }
+        return ptoRepository.findAllByDeletedIsFalseAndStatusIsApproved();
     }
 }
