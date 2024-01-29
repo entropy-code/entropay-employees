@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public class PtoReportDetailDto extends ReportDto {
+    private UUID id;
     private UUID employeeId;
     private String internalId;
     private String firstName;
@@ -19,8 +20,9 @@ public class PtoReportDetailDto extends ReportDto {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
 
-    public PtoReportDetailDto(UUID employeeId, String internalId, String firstName, String lastName, String clientName, String leaveTypeName, Integer days, UUID clientId,
+    public PtoReportDetailDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName, String clientName, String leaveTypeName, Integer days, UUID clientId,
                               LocalDate startDate, LocalDate endDate) {
+        this.id = id;
         this.employeeId = employeeId;
         this.internalId = internalId;
         this.firstName = firstName;
@@ -31,6 +33,14 @@ public class PtoReportDetailDto extends ReportDto {
         this.clientId = clientId;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public UUID getEmployeeId() {

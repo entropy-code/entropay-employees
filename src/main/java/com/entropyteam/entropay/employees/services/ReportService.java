@@ -168,6 +168,7 @@ public class ReportService {
                 .sorted(Comparator.comparing(Pto::getStartDate))
                 .filter(pto -> pto.getStatus() == Status.APPROVED)
                 .map(pto -> new PtoReportDetailDto(
+                        pto.getId(),
                         employee.getId(),
                         employee.getInternalId(),
                         employee.getFirstName(),
@@ -197,6 +198,7 @@ public class ReportService {
                 .map(pto -> {
                     Employee employee = pto.getEmployee();
                     return new PtoReportDetailDto(
+                            pto.getId(),
                             employee.getId(),
                             employee.getInternalId(),
                             employee.getFirstName(),
