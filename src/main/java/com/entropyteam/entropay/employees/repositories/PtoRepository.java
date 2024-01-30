@@ -17,11 +17,7 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
             "LIMIT 1", nativeQuery = true)
     LocalDate findNearestPto(@Param("employeeId") UUID employeeId);
 
-    @Query("SELECT p FROM Pto p " +
-            "WHERE p.deleted = false " +
-            "AND p.status = 'APPROVED'")
-    List<Pto> findAllByDeletedIsFalseAndStatusIsApproved();
-
+    List<Pto> findAllByDeletedIsFalseAndStatus(@Param("status") String status);
     @Query(value = "SELECT * FROM pto " +
             "WHERE deleted = false " +
             "AND status = 'APPROVED' " +
@@ -29,7 +25,7 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
             "OR EXTRACT(YEAR FROM end_date) = :year", nativeQuery = true)
     List<Pto> findAllByDeletedIsFalseAndStatusIsApprovedForYear(@Param("year") int year);
 
-    @Query(value = "SELECT DISTINCT extract('Year' FROM start_date) AS year FROM pto WHERE deleted=false "
+    @Query(value = "SELECT DISTINCT EXTRACT(YEAR FROM start_date) AS year FROM pto WHERE deleted=false "
             + " ORDER BY year ASC", nativeQuery = true)
     List<Integer> getPtosYears();
 }
