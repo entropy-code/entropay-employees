@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Pto;
+import com.entropyteam.entropay.employees.models.Status;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,12 +21,9 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
     List<Pto> findPtosByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
 
     List<Pto> findPtosByEmployeeIdIsAndDeletedIsFalse(UUID employeeId);
-    @Query("SELECT p FROM Pto p " +
-            "WHERE p.deleted = false " +
-            "AND p.status = 'APPROVED'")
-    List<Pto> findAllByDeletedIsFalseAndStatusIsApproved();
 
-    List<Pto> findAllByDeletedIsFalseAndStatus(@Param("status") String status);
+    List<Pto> findAllByDeletedIsFalseAndStatusIs(@Param("status") Status status);
+
     @Query(value = "SELECT * FROM pto " +
             "WHERE deleted = false " +
             "AND status = 'APPROVED' " +

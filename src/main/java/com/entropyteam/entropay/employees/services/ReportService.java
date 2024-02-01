@@ -21,7 +21,6 @@ import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDto;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.models.Assignment;
@@ -56,7 +55,6 @@ public class ReportService {
     private final static String EMPLOYEE_ID = "employeeId";
     private final static String CLIENT_ID = "clientId";
     private final static String YEAR = "year";
-    private final  static  String STATUS="APPROVED";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -220,17 +218,22 @@ public class ReportService {
         return ptoReportDetailDtoList;
     }
     
-    public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
-
-        List<Pto> ptoList = getFilteredPtoList(mapper.buildReportFilter(params, PtoReportDto.class));
-
-        List<PtoReportDto> ptoReportDtoList = getPtoReportDtos(ptoList);
-
+    public Page<PtoReportDto> getPtosReportByEmployee(ReactAdminParams params) {
+        List<PtoReportDto> ptoReportDtoList;
+        Filter filter = mapper.buildReportFilter(params, PtoReportDto.class);
+        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
+            Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
+            int year = Integer.parseInt(yearObject.toString());
+            ptoReportDtoList = getPtoReportDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year));
+        }
+        else {
+            ptoReportDtoList = getPtoReportDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIs(Status.APPROVED));
+        }
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
     private List<PtoReportDto> getPtoReportDtos(List<Pto> ptoList) {
-        List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
+        List<Employee> employeeList = employeeRepository.findAllByIdInAndDeletedIsFalse(ptoList.stream().map(pto -> pto.getEmployee().getId()).collect(Collectors.toList()));
 
         Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
                 .stream()
@@ -254,14 +257,5 @@ public class ReportService {
                             clientName, totalPtoDays, 0);
                 })
                 .collect(Collectors.toList());
-    }
-
-    public List<Pto> getFilteredPtoList(Filter filter) {
-        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
-            Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
-            int year = Integer.parseInt(yearObject.toString());
-            return ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year);
-        }
-        return ptoRepository.findAllByDeletedIsFalseAndStatus(STATUS);
     }
 }
