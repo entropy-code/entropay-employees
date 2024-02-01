@@ -56,6 +56,7 @@ public class ReportService {
     private final static String EMPLOYEE_ID = "employeeId";
     private final static String CLIENT_ID = "clientId";
     private final static String YEAR = "year";
+    private final  static  String STATUS="APPROVED";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -220,19 +221,27 @@ public class ReportService {
     }
     
     public Page<PtoReportDto> getPtosByEmployeesReport(ReactAdminParams params) {
+
+        List<Pto> ptoList = getFilteredPtoList(mapper.buildReportFilter(params, PtoReportDto.class));
+
+        List<PtoReportDto> ptoReportDtoList = getPtoReportDtos(ptoList);
+
+        return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
+    }
+
+    private List<PtoReportDto> getPtoReportDtos(List<Pto> ptoList) {
         List<Employee> employeeList = employeeRepository.findAllByDeletedIsFalse();
 
         Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
 
-        List<Pto> ptoList = getFilteredPtoList(mapper.buildReportFilter(params, PtoReportDto.class));
 
         Map<UUID, Integer> totalPtoDaysMap = ptoList
                 .stream()
                 .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingInt(p -> p.getDays().intValue())));
 
-        List<PtoReportDto> ptoReportDtoList = employeeList.stream()
+        return employeeList.stream()
                 .filter(employee -> totalPtoDaysMap.containsKey(employee.getId()) && totalPtoDaysMap.get(employee.getId()) > 0)
                 .map(employee -> {
                     List<Assignment> employeeAssignments = employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
@@ -245,8 +254,6 @@ public class ReportService {
                             clientName, totalPtoDays, 0);
                 })
                 .collect(Collectors.toList());
-
-        return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
     public List<Pto> getFilteredPtoList(Filter filter) {
@@ -255,6 +262,6 @@ public class ReportService {
             int year = Integer.parseInt(yearObject.toString());
             return ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year);
         }
-        return ptoRepository.findAllByDeletedIsFalseAndStatusIsApproved();
+        return ptoRepository.findAllByDeletedIsFalseAndStatus(STATUS);
     }
 }
