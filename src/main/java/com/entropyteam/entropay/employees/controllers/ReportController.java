@@ -3,6 +3,8 @@ package com.entropyteam.entropay.employees.controllers;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportDto;
 import com.entropyteam.entropay.employees.services.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -17,9 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 
 
 @RestController
@@ -29,7 +32,6 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
-
 
     @GetMapping("/employees")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
@@ -41,4 +43,23 @@ public class ReportController {
                 .body(response.getContent());
     }
 
+    @GetMapping("/ptos/details")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
+    @Transactional
+    public ResponseEntity<List<PtoReportDetailDto>> getPtosReportDetail(ReactAdminParams params) {
+      Page<PtoReportDetailDto> response = reportService.getPtoReportDetail(params);
+       return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
+    }
+  
+    @GetMapping("/ptos/employees")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
+    @Transactional
+    public ResponseEntity<List<PtoReportDto>> getPtosByEmployeesReport(ReactAdminParams params) {
+        Page<PtoReportDto> response = reportService.getPtosReportByEmployee(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
+    }
 }

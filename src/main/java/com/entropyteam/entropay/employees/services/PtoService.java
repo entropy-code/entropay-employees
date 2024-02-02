@@ -4,8 +4,12 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -204,5 +208,23 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         googleService.deleteGoogleCalendarEvent(id.toString());
         Pto savedEntity = getRepository().save(pto);
         return toDTO(savedEntity);
+    }
+
+    public List<Map<String, Integer>> getPtosYears() {
+        List<Integer> years = ptoRepository.getPtosYears();
+
+        return years.stream()
+                .map(year -> {
+                    Map<String, Integer> yearMap = new HashMap<>();
+                    yearMap.put("id", year);
+                    yearMap.put("year", year);
+                    return yearMap;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getDateColumnsForSearch() {
+        return List.of("startDate", "endDate");
     }
 }
