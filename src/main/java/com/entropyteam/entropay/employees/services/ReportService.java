@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -227,7 +228,7 @@ public class ReportService {
             ptoReportDtoList = getPtoReportDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(year));
         }
         else {
-            ptoReportDtoList = getPtoReportDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIs(Status.APPROVED));
+            ptoReportDtoList = getPtoReportDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsApprovedForYear(LocalDate.now().getYear()));
         }
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
@@ -235,7 +236,8 @@ public class ReportService {
     private List<PtoReportDto> getPtoReportDtos(List<Pto> ptoList) {
         List<Employee> employeeList = employeeRepository.findAllByIdInAndDeletedIsFalse(ptoList.stream().map(pto -> pto.getEmployee().getId()).collect(Collectors.toList()));
 
-        Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
+        Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByEmployeeIdInAndDeletedIsFalse(
+                employeeList.stream().map(employee -> employee.getId()).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
 

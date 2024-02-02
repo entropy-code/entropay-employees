@@ -27,4 +27,6 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
     @Query(value = "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = :clientId AND a.deleted = false " +
             " AND p.deleted = FALSE", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
+
+    List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
 }

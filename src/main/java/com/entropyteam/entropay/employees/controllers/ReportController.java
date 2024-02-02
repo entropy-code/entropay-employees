@@ -19,9 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 
 
 @RestController
@@ -43,7 +44,7 @@ public class ReportController {
     }
 
     @GetMapping("/ptos/details")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
     public ResponseEntity<List<PtoReportDetailDto>> getPtosReportDetail(ReactAdminParams params) {
       Page<PtoReportDetailDto> response = reportService.getPtoReportDetail(params);
@@ -53,7 +54,7 @@ public class ReportController {
     }
   
     @GetMapping("/ptos/employees")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
     public ResponseEntity<List<PtoReportDto>> getPtosByEmployeesReport(ReactAdminParams params) {
         Page<PtoReportDto> response = reportService.getPtosReportByEmployee(params);
