@@ -24,11 +24,7 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
 
     List<Pto> findAllByDeletedIsFalseAndStatusIs(@Param("status") Status status);
 
-    @Query(value = "SELECT * FROM pto " +
-            "WHERE deleted = false " +
-            "AND status = 'APPROVED' " +
-            "AND EXTRACT(YEAR FROM start_date) = :year " +
-            "OR EXTRACT(YEAR FROM end_date) = :year", nativeQuery = true)
+    @Query(value = "SELECT * FROM pto WHERE (deleted = false AND status = 'APPROVED') AND (EXTRACT(YEAR FROM start_date) = :year OR EXTRACT(YEAR FROM end_date) = :year)", nativeQuery = true)
     List<Pto> findAllByDeletedIsFalseAndStatusIsApprovedForYear(@Param("year") int year);
 
     @Query(value = "SELECT DISTINCT EXTRACT(YEAR FROM start_date) AS year FROM pto WHERE deleted=false "
