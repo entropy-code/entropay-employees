@@ -2,7 +2,7 @@ package com.entropyteam.entropay.employees.dtos;
 
 import java.util.UUID;
 
-public class PtoReportDto extends ReportDto {
+public class PtoReportEmployeeDto extends ReportDto {
     private UUID id;
     private String internalId;
     private String firstName;
@@ -12,13 +12,13 @@ public class PtoReportDto extends ReportDto {
     private Integer year;
 
 
-    public PtoReportDto(UUID id,
-                        String internalId,
-                        String firstName,
-                        String lastName,
-                        String clientName,
-                        Integer totalDays,
-                        Integer year) {
+    public PtoReportEmployeeDto(UUID id,
+                                String internalId,
+                                String firstName,
+                                String lastName,
+                                String clientName,
+                                Integer totalDays,
+                                Integer year) {
         this.id = id;
         this.internalId = internalId;
         this.firstName = firstName;

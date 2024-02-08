@@ -3,8 +3,9 @@ package com.entropyteam.entropay.employees.controllers;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
-import com.entropyteam.entropay.employees.dtos.PtoReportDto;
+import com.entropyteam.entropay.employees.dtos.PtoReportEmployeeDto;
 import com.entropyteam.entropay.employees.services.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,8 +57,18 @@ public class ReportController {
     @GetMapping("/ptos/employees")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
-    public ResponseEntity<List<PtoReportDto>> getPtosByEmployeesReport(ReactAdminParams params) {
-        Page<PtoReportDto> response = reportService.getPtosReportByEmployee(params);
+    public ResponseEntity<List<PtoReportEmployeeDto>> getPtosByEmployeesReport(ReactAdminParams params) {
+        Page<PtoReportEmployeeDto> response = reportService.getPtosReportByEmployees(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
+    }
+
+    @GetMapping("/ptos/clients")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Transactional
+    public ResponseEntity<List<PtoReportClientDto>> getPtosByClientsReport(ReactAdminParams params) {
+        Page<PtoReportClientDto> response = reportService.getPtosReportByClients(params);
         return ResponseEntity.ok()
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());
