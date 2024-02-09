@@ -23,7 +23,7 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
     List<Pto> findPtosByEmployeeIdInAndForYear(@Param("employeeIds")List<UUID> employeesId, @Param("year") int year);
 
     @Query(value = "SELECT * FROM pto WHERE (employee_Id = :employeeId AND deleted = false AND status = 'APPROVED') AND (EXTRACT(YEAR FROM start_date) = :year OR EXTRACT(YEAR FROM end_date) = :year)", nativeQuery = true)
-    List<Pto> findPtosByEmployeeIdIsAndDeletedIsFalse(@Param("employeeId") UUID employeeId, int year);
+    List<Pto> findPtosByEmployeeIdIsAndDeletedIsFalse(@Param("employeeId") UUID employeeId, @Param("year") int year);
 
     List<Pto> findAllByDeletedIsFalseAndStatusIs(@Param("status") Status status);
 
