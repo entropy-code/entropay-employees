@@ -1,9 +1,15 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Objects;
 
 import com.entropyteam.entropay.auth.AppRole;
 
@@ -34,7 +40,6 @@ import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
 import com.entropyteam.entropay.employees.repositories.ClientRepository;
 
-import net.bytebuddy.asm.Advice;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -221,14 +226,11 @@ public class ReportService {
     public Page<PtoReportEmployeeDto> getPtosReportByEmployees(ReactAdminParams params) {
         List<PtoReportEmployeeDto> ptoReportDtoList;
         Filter filter = mapper.buildReportFilter(params, PtoReportEmployeeDto.class);
+        Integer year = LocalDate.now().getYear();
         if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
-            Integer year = getYearFromFilter(filter);
-            ptoReportDtoList = getPtoReportEmployeeDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
+            year = getYearFromFilter(filter);
         }
-        else {
-            Integer year = LocalDate.now().getYear();
-            ptoReportDtoList = getPtoReportEmployeeDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
-        }
+        ptoReportDtoList = getPtoReportEmployeeDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
@@ -263,35 +265,24 @@ public class ReportService {
     public Page<PtoReportClientDto> getPtosReportByClients(ReactAdminParams params) {
         List<PtoReportClientDto> ptoReportDtoList;
         Filter filter = mapper.buildReportFilter(params, PtoReportClientDto.class);
+        Integer year = LocalDate.now().getYear();
         if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
-            Integer year = getYearFromFilter(filter);
-            ptoReportDtoList = getPtoReportClientDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
+            year = getYearFromFilter(filter);
         }
-        else {
-            Integer year = LocalDate.now().getYear();
-            ptoReportDtoList = getPtoReportClientDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
-        }
+        ptoReportDtoList = getPtoReportClientDtos(ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
     private List<PtoReportClientDto> getPtoReportClientDtos(List<Pto> ptoList, Integer year) {
         List<Client> clients = clientRepository.findAllClientsWithAProject();
-        List<Employee> employeeList = employeeRepository.findAllByIdInAndDeletedIsFalse(ptoList.stream().map(pto -> pto.getEmployee().getId()).collect(Collectors.toList()));
-
         Map<UUID, List<Assignment>> assignmentMap = assignmentRepository.findAllAssignmentsByClientIdIn(clients.stream().map(BaseEntity::getId).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.groupingBy(assignment -> assignment.getProject().getClient().getId()));
 
         return clients.stream().map(client -> {
             List<Assignment> clientAssignments = assignmentMap.getOrDefault(client.getId(), Collections.emptyList());
-            List<Employee> clientEmployees = employeeList.stream()
-                    .map(Employee::getId)
-                    .flatMap(employeeId -> clientAssignments.stream()
-                            .map(Assignment::getEmployee)
-                            .filter(employee -> employee.getId().equals(employeeId)))
-                    .distinct()
-                    .toList();
-            List<Pto> employeesPtos = ptoList.stream().filter(pto -> clientEmployees.stream().anyMatch(employee -> employee.getId() == pto.getEmployee().getId())).toList();
+            List<Pto> employeesPtos = ptoList.stream().filter(pto -> clientAssignments.stream().
+                    anyMatch(assignment -> assignment.getEmployee().getId() == pto.getEmployee().getId())).toList();
             int totalDays = employeesPtos.stream().mapToInt(Pto::getDaysAsInteger).sum();
             if(totalDays > 0) {
                 return new PtoReportClientDto(client.getId(), client.getName(), totalDays, year);
