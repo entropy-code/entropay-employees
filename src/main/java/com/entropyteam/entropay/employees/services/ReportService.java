@@ -65,12 +65,11 @@ public class ReportService {
     private final EmployeeRepository employeeRepository;
     private final PtoRepository ptoRepository;
     private final ClientRepository clientRepository;
-    private final LeaveTypeRepository leaveTypeRepository;
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
                          AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository, PtoRepository ptoRepository,
-                         LeaveTypeRepository leaveTypeRepository, ClientRepository clientRepository, ReactAdminMapper mapper) {
+                         ClientRepository clientRepository, ReactAdminMapper mapper) {
         this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
@@ -78,7 +77,6 @@ public class ReportService {
         this.contractRepository = contractRepository;
         this.employeeRepository = employeeRepository;
         this.ptoRepository = ptoRepository;
-        this.leaveTypeRepository = leaveTypeRepository;
         this.clientRepository = clientRepository;
     }
 
@@ -238,7 +236,7 @@ public class ReportService {
         List<Employee> employeeList = employeeRepository.findAllByIdInAndDeletedIsFalse(ptoList.stream().map(pto -> pto.getEmployee().getId()).collect(Collectors.toList()));
 
         Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByEmployeeIdInAndDeletedIsFalse(
-                employeeList.stream().map(employee -> employee.getId()).collect(Collectors.toList()))
+                employeeList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
 
