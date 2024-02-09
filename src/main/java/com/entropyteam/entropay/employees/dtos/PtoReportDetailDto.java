@@ -19,9 +19,10 @@ public class PtoReportDetailDto extends ReportDto {
     private LocalDate startDate;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
+    private Integer year;
 
     public PtoReportDetailDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName, String clientName, String leaveTypeName, Integer days, UUID clientId,
-                              LocalDate startDate, LocalDate endDate) {
+                              LocalDate startDate, LocalDate endDate, Integer year) {
         this.id = id;
         this.employeeId = employeeId;
         this.internalId = internalId;
@@ -33,6 +34,7 @@ public class PtoReportDetailDto extends ReportDto {
         this.clientId = clientId;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.year = year;
     }
 
     public void setId(UUID id) {
@@ -121,5 +123,13 @@ public class PtoReportDetailDto extends ReportDto {
 
     public void setClientId(UUID clientId) {
         this.clientId = clientId;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Integer getYear() {
+        return year;
     }
 }
