@@ -13,7 +13,7 @@ public class PtoReportDetailDto extends ReportDto {
     private String lastName;
     private String clientName;
     private String leaveTypeName;
-    private Integer days;
+    private Double days;
     private UUID clientId;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
@@ -21,7 +21,7 @@ public class PtoReportDetailDto extends ReportDto {
     private LocalDate endDate;
     private Integer year;
 
-    public PtoReportDetailDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName, String clientName, String leaveTypeName, Integer days, UUID clientId,
+    public PtoReportDetailDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName, String clientName, String leaveTypeName, Double days, UUID clientId,
                               LocalDate startDate, LocalDate endDate, Integer year) {
         this.id = id;
         this.employeeId = employeeId;
@@ -93,11 +93,11 @@ public class PtoReportDetailDto extends ReportDto {
         this.leaveTypeName = leaveTypeName;
     }
 
-    public Integer getDays() {
+    public Double getDays() {
         return days;
     }
 
-    public void setDays(Integer days) {
+    public void setDays(Double days) {
         this.days = days;
     }
 

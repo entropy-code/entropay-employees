@@ -5,12 +5,12 @@ import java.util.UUID;
 public class PtoReportClientDto extends ReportDto{
     private UUID id;
     private String clientName;
-    private Integer totalDays;
+    private Double totalDays;
     private Integer year;
 
     public PtoReportClientDto(UUID id,
                                 String clientName,
-                                Integer totalDays,
+                                Double totalDays,
                                 Integer year) {
         this.id = id;
         this.clientName = clientName;
@@ -34,11 +34,11 @@ public class PtoReportClientDto extends ReportDto{
         return clientName;
     }
 
-    public Integer getTotalDays() {
+    public Double getTotalDays() {
         return totalDays;
     }
 
-    public void setTotalDays(Integer totalDays) {
+    public void setTotalDays(Double totalDays) {
         this.totalDays = totalDays;
     }
 
