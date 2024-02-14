@@ -178,7 +178,7 @@ public class ReportService {
                         employee.getLastName(),
                         clientName,
                         pto.getLeaveType().getName(),
-                        pto.getDaysAsInteger(),
+                        pto.getDays(),
                         clientId,
                         pto.getStartDate(),
                         pto.getEndDate(),
@@ -209,7 +209,7 @@ public class ReportService {
                             employee.getLastName(),
                             client.getName(),
                             pto.getLeaveType().getName(),
-                            pto.getDaysAsInteger(),
+                            pto.getDays(),
                             client.getId(),
                             pto.getStartDate(),
                             pto.getEndDate(),
@@ -241,9 +241,9 @@ public class ReportService {
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
 
 
-        Map<UUID, Integer> totalPtoDaysMap = ptoList
+        Map<UUID, Double> totalPtoDaysMap = ptoList
                 .stream()
-                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingInt(p -> p.getDays().intValue())));
+                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingDouble(p -> p.getDays())));
 
         return employeeList.stream()
                 .filter(employee -> totalPtoDaysMap.containsKey(employee.getId()) && totalPtoDaysMap.get(employee.getId()) > 0)
@@ -252,7 +252,7 @@ public class ReportService {
                     Optional<Assignment> lastAssignment = employeeAssignments.stream().filter(Assignment::isActive).findFirst();
                     String clientName = lastAssignment
                             .map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
-                    int totalPtoDays = totalPtoDaysMap.getOrDefault(employee.getId(), 0);
+                    Double totalPtoDays = totalPtoDaysMap.getOrDefault(employee.getId(), 0.0);
 
                     return new PtoReportEmployeeDto(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                             clientName, totalPtoDays, year);
@@ -281,7 +281,7 @@ public class ReportService {
             List<Assignment> clientAssignments = assignmentMap.getOrDefault(client.getId(), Collections.emptyList());
             List<Pto> employeesPtos = ptoList.stream().filter(pto -> clientAssignments.stream().
                     anyMatch(assignment -> assignment.getEmployee().getId() == pto.getEmployee().getId())).toList();
-            int totalDays = employeesPtos.stream().mapToInt(Pto::getDaysAsInteger).sum();
+            Double totalDays = employeesPtos.stream().mapToDouble(Pto::getDays).sum();
             if(totalDays > 0) {
                 return new PtoReportClientDto(client.getId(), client.getName(), totalDays, year);
             }

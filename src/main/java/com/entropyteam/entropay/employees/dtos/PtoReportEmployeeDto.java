@@ -8,7 +8,7 @@ public class PtoReportEmployeeDto extends ReportDto {
     private String firstName;
     private String lastName;
     private String clientName;
-    private Integer totalDays;
+    private Double totalDays;
     private Integer year;
 
 
@@ -17,7 +17,7 @@ public class PtoReportEmployeeDto extends ReportDto {
                                 String firstName,
                                 String lastName,
                                 String clientName,
-                                Integer totalDays,
+                                Double totalDays,
                                 Integer year) {
         this.id = id;
         this.internalId = internalId;
@@ -68,11 +68,11 @@ public class PtoReportEmployeeDto extends ReportDto {
         this.clientName = clientName;
     }
 
-    public Integer getTotalDays() {
+    public Double getTotalDays() {
         return totalDays;
     }
 
-    public void setTotalDays(Integer totalDays) {
+    public void setTotalDays(Double totalDays) {
         this.totalDays = totalDays;
     }
 
