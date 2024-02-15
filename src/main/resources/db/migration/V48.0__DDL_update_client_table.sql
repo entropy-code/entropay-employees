@@ -1,4 +1,4 @@
-ALTER TABLE client ADD internal_id varchar(255) NULL;
+ALTER TABLE client ADD internal_id varchar(50) NULL;
 
 UPDATE client SET internal_id = 'c001' WHERE name = 'Entropy Team';
 UPDATE client SET internal_id = 'c002' WHERE name = 'Dash Solutions';
