@@ -65,7 +65,7 @@ public class ReportController {
     }
 
     @GetMapping("/ptos/clients")
-    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
     public ResponseEntity<List<PtoReportClientDto>> getPtosByClientsReport(ReactAdminParams params) {
         Page<PtoReportClientDto> response = reportService.getPtosReportByClients(params);
