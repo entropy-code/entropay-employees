@@ -372,7 +372,7 @@ SET menu='[
   }
 ]'::json,permissions='[
   {"entity": "employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "contracts", "actions": ["create", "read", "update"]},
+  {"entity": "contracts", "actions": ["create", "read", "delete"]},
   {"entity": "assignments", "actions": ["create", "read", "update", "delete"]},
   {"entity": "clients", "actions": ["create", "read", "update", "delete"]},
   {"entity": "companies", "actions": ["create", "read", "update", "delete"]},
