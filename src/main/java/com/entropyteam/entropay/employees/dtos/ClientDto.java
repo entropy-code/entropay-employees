@@ -23,11 +23,12 @@ public record ClientDto(UUID id,
                         String preferredCurrency,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt,
-                        String internalId) {
+                        String internalId,
+                        boolean active) {
 
     public ClientDto(Client client) {
         this(client.getId(), client.getCompanyId(), client.getName(), client.getAddressLine(), client.getZipCode(),
                 client.getCity(), client.getState(), client.getCountry(), client.getContactFullName(), client.getContactEmail(),
-                client.getPreferredCurrency(), client.getCreatedAt(), client.getModifiedAt(), client.getInternalId());
+                client.getPreferredCurrency(), client.getCreatedAt(), client.getModifiedAt(), client.getInternalId(), client.isActive());
     }
 }
