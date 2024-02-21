@@ -20,11 +20,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 
 @RestController
 @CrossOrigin
-@Secured(ROLE_ADMIN)
+@Secured({ROLE_ADMIN, ROLE_HR_DIRECTOR, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
 @RequestMapping(value = "/holidays", produces = MediaType.APPLICATION_JSON_VALUE)
 public class HolidayController extends BaseController<HolidayDto, UUID> {
 
