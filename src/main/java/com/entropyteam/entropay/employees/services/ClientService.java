@@ -55,12 +55,12 @@ public class ClientService extends BaseService<Client, ClientDto, UUID> {
     public ClientDto update(UUID clientId, ClientDto clientDto) {
         Client entityToUpdate = toEntity(clientDto);
         entityToUpdate.setId(clientId);
-        deactivateClient(clientId, entityToUpdate);
+        canDeactivateClient(clientId, entityToUpdate);
         Client savedEntity = getRepository().save(entityToUpdate);
         return toDTO(savedEntity);
     }
 
-    public void deactivateClient(UUID clientId, Client clientToUpdate) {
+    public void canDeactivateClient(UUID clientId, Client clientToUpdate) {
         Client existingClient = clientRepository.findById(clientId).orElseThrow();
         if(existingClient.isActive() && !clientToUpdate.isActive()) {
             if(assignmentRepository.findAllAssignmentsByClientId(clientId).stream().anyMatch(Assignment::isActive)){

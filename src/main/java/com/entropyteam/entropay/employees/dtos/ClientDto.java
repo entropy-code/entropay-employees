@@ -24,6 +24,7 @@ public record ClientDto(UUID id,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt,
                         String internalId,
+                        @NotNull(message = "Active state is mandatory")
                         boolean active) {
 
     public ClientDto(Client client) {
