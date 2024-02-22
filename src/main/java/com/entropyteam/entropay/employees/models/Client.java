@@ -32,6 +32,7 @@ public class Client extends BaseEntity {
 
     private String preferredCurrency;
     private String internalId;
+    private boolean active;
 
     public Client(ClientDto clientDto) {
         this.name = clientDto.name();
@@ -39,6 +40,7 @@ public class Client extends BaseEntity {
         this.contactEmail = clientDto.contactEmail();
         this.preferredCurrency = clientDto.preferredCurrency();
         this.internalId = clientDto.internalId();
+        this.active = clientDto.active();
         address = new Address();
         address.setCountry(clientDto.country());
         address.setState(clientDto.state());
@@ -128,5 +130,13 @@ public class Client extends BaseEntity {
 
     public String getInternalId() {
         return internalId;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
