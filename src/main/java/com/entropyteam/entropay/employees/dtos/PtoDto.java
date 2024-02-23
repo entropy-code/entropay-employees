@@ -31,12 +31,14 @@ public record PtoDto(UUID id,
                      LocalDateTime createdAt,
                      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                      LocalDateTime modifiedAt,
-                     boolean isHalfDay) {
+                     boolean isHalfDay,
+                     String employeeFullName,
+                     String leaveTypeName) {
 
     public PtoDto(Pto pto) {
         this(pto.getId(), pto.getStartDate(), pto.getEndDate(), pto.getStatus(), pto.getDetails(),
                 pto.getEmployee().getId(), pto.getLeaveType().getId(), pto.getDays(), pto.getLabourHours(),
-                pto.getCreatedAt(), pto.getModifiedAt(), checkHalfDay(pto));
+                pto.getCreatedAt(), pto.getModifiedAt(), checkHalfDay(pto), pto.getEmployee().getFullName(), pto.getLeaveType().getName());
     }
 
     private static boolean checkHalfDay(Pto pto) {

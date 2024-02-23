@@ -63,7 +63,8 @@ public record EmployeeDto(UUID id,
                           Integer availableDays,
                           @JsonFormat(pattern = "yyyy-MM-dd")
                           LocalDate nearestPto,
-                          String timeSinceStart) {
+                          String timeSinceStart,
+                          String countryName) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
             Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto, String timeSinceStart) {
@@ -85,6 +86,6 @@ public record EmployeeDto(UUID id,
                 activeContract != null ? activeContract.getEndDate() : null,
                 employee.isActive(),
                 availableDays != null ? availableDays : 0,
-                nearestPto, timeSinceStart);
+                nearestPto, timeSinceStart, employee.getCountry().getName());
     }
 }
