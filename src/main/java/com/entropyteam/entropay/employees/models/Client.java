@@ -31,12 +31,16 @@ public class Client extends BaseEntity {
     private String contactEmail;
 
     private String preferredCurrency;
+    private String internalId;
+    private boolean active;
 
     public Client(ClientDto clientDto) {
         this.name = clientDto.name();
         this.contactFullName = clientDto.contactFullName();
         this.contactEmail = clientDto.contactEmail();
         this.preferredCurrency = clientDto.preferredCurrency();
+        this.internalId = clientDto.internalId();
+        this.active = clientDto.active();
         address = new Address();
         address.setCountry(clientDto.country());
         address.setState(clientDto.state());
@@ -118,5 +122,21 @@ public class Client extends BaseEntity {
 
     public void setContactEmail(String contactEmail) {
         this.contactEmail = contactEmail;
+    }
+
+    public void setInternalId(String internalId) {
+        this.internalId = internalId;
+    }
+
+    public String getInternalId() {
+        return internalId;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
