@@ -273,4 +273,7 @@ public class Employee extends BaseEntity {
         this.active = active;
     }
 
+    public String getFullName() {
+        return this.firstName + " " + this.lastName;
+    }
 }
