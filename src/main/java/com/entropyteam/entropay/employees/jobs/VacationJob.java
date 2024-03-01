@@ -12,6 +12,7 @@ import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.services.AwsCredentialsProperties;
 import com.entropyteam.entropay.employees.services.AwsService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
+import com.entropyteam.entropay.employees.services.VacationService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,16 +36,20 @@ public class VacationJob {
     private final ContractRepository contractRepository;
     private final HolidayRepository holidayRepository;
     private final EmployeeService employeeService;
+    private final VacationService vacationService;
     private final VacationRepository vacationRepository;
     private final AwsService awsService;
     private final AwsCredentialsProperties awsCredentialsProperties;
 
     @Autowired
-    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, HolidayRepository holidayRepository, EmployeeService employeeService, VacationRepository vacationRepository, AwsService awsService, AwsCredentialsProperties awsCredentialsProperties) {
+    public VacationJob(EmployeeRepository employeeRepository, ContractRepository contractRepository, HolidayRepository holidayRepository,
+                       EmployeeService employeeService, VacationRepository vacationRepository, VacationService vacationService,
+                       AwsService awsService, AwsCredentialsProperties awsCredentialsProperties) {
         this.employeeRepository = employeeRepository;
         this.contractRepository = contractRepository;
         this.holidayRepository = holidayRepository;
         this.employeeService = employeeService;
+        this.vacationService = vacationService;
         this.vacationRepository = vacationRepository;
         this.awsService = awsService;
         this.awsCredentialsProperties = awsCredentialsProperties;
@@ -54,11 +60,18 @@ public class VacationJob {
     @Transactional
     public void setEmployeeVacations() throws IOException {
         LOGGER.info("Starting employees vacation set job");
-        Map<String, Integer> summary = findEmployeeVacations();
+        if (LocalDate.now().getMonthValue() == 3) {
+            List<Vacation> expiredVacations = expireEmployeeVacations();
+            String fileName = LocalDate.now() + "_EmployeesExpiredVacationsSummary.csv";
+            InputStream isExpiredVacations = BuilderUtils.convertVacationToCSVInputStream(expiredVacations);
+            awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName, isExpiredVacations);
+        }
+        Map<String, Integer> creditsSummary = findEmployeeVacations();
         String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
-        InputStream is = BuilderUtils.convertMapToCSVInputStream(summary);
-        awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName,is);
+        InputStream isCredits = BuilderUtils.convertMapToCSVInputStream(creditsSummary);
+        awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName, isCredits);
     }
+
 
     private Map<String, Integer> findEmployeeVacations() {
         List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
@@ -75,6 +88,7 @@ public class VacationJob {
         List<Contract> contractsList = contractRepository.findAllByDeletedIsFalse();
 
         for (Employee employee : employees) {
+
             List<Contract> employeeContracts = contractsList.stream().filter( c -> c.getEmployee().getId() == employee.getId()).toList();
             int vacationsCreditToAdd = employeeService.applyVacationRuleToEmployee(employee, vacationYearToAdd, employeeContracts, currentDate, holidaysInPeriod);
 
@@ -89,9 +103,21 @@ public class VacationJob {
             } else {
                 summary.put(employee.getFirstName() + " " + employee.getLastName(),0);
             }
+
         }
         return summary;
     }
 
-
+    public List<Vacation> expireEmployeeVacations() {
+        List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        List<Vacation> summary = new ArrayList<>();
+        if (employees.isEmpty()) {
+            return summary;
+        }
+        for (Employee employee : employees) {
+            String vacationYearToExpire = String.valueOf(LocalDate.now().getYear() - 1);
+            summary = vacationService.applyExpiredVacationsPolicyToEmployee(employee, vacationYearToExpire);
+        }
+        return summary;
+    }
 }

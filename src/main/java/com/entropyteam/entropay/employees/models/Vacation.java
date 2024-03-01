@@ -27,12 +27,15 @@ public class Vacation extends BaseEntity {
     @JoinColumn(name = "employee_id")
     private Employee employee;
 
+    @Column
+    private String details;
     public Vacation(){
     }
     public Vacation(VacationDto entity){
         this.credit = entity.credit();
         this.debit = entity.debit() != null ? entity.debit() : 0;
         this.year = entity.year();
+        this.details = entity.details();
     }
 
     public String getYear() {
@@ -67,4 +70,11 @@ public class Vacation extends BaseEntity {
         this.employee = employee;
     }
 
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
+    }
 }

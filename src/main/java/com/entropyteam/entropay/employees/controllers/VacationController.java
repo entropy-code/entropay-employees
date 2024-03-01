@@ -39,11 +39,10 @@ public class VacationController extends BaseController<VacationDto, UUID> {
     public ResponseEntity<String> setEmployeeVacations() {
         try {
             vacationJob.setEmployeeVacations();
-            return ResponseEntity.ok("Successful job execution: set employee vacactions");
+            return ResponseEntity.ok("Successful job execution: set employee vacations");
         } catch (IOException exception) {
             String errorMessage = "An error occurred: " + exception.getMessage();
             return ResponseEntity.badRequest().body(errorMessage);
         }
     }
-
 }

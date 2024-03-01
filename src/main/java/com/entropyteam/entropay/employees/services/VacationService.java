@@ -1,8 +1,10 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Optional;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +26,7 @@ import com.entropyteam.entropay.employees.repositories.projections.VacationBalan
 public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     private static final Logger LOGGER = LogManager.getLogger();
-
+    private static final int DAYS_THRESHOLD = 5;
     private final VacationRepository vacationRepository;
     private final EmployeeRepository employeeRepository;
 
@@ -97,6 +99,37 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
         LOGGER.info("Vacation debits discounted, employeeId: {}, debit after discount: {}",
                 employee.getId(), vacationRepository.getVacationByEmployeeIdAndDeletedIsFalseAndCreditOrderByYearDesc(
                         employee.getId(), 0).stream().mapToInt(Vacation::getDebit).sum());
+    }
+
+    public List<Vacation> applyExpiredVacationsPolicyToEmployee(Employee employee, String vacationYearToExpire) {
+        List<Vacation> expiredVacations = new ArrayList<>();
+        List<VacationBalanceByYear> vacations = vacationRepository.getVacationByYearIsPosteriorOrEqualTo(employee.getId(), 2023);
+
+        //if the most recent vacation has more than the threshold should always be expired,
+        //and then if that's the case all the other vacations with more than 0 should expire. It's impossible for the older vacations to have more days than the recent one
+        VacationBalanceByYear recentVacation = vacations.stream()
+                .filter(vacation -> vacation.getYear().equals(vacationYearToExpire)).findFirst().orElse(null);
+
+        if(recentVacation != null && recentVacation.getBalance() > DAYS_THRESHOLD) {
+            expiredVacations.add(expireVacations(recentVacation.getBalance() - DAYS_THRESHOLD, recentVacation.getYear(), employee));
+            vacations.remove(recentVacation);
+            for (VacationBalanceByYear balance : vacations) {
+                if (balance.getBalance() > 0) {
+                    expiredVacations.add(expireVacations(recentVacation.getBalance(), recentVacation.getYear(), employee));
+                }
+            }
+        }
+        return expiredVacations;
+    }
+
+    private Vacation expireVacations(int daysToExpire, String year, Employee employee){
+        Vacation vacationToExpire = new Vacation();
+        vacationToExpire.setYear(year);
+        vacationToExpire.setCredit(0);
+        vacationToExpire.setDebit(daysToExpire);
+        vacationToExpire.setEmployee(employee);
+        vacationToExpire.setDetails("EXPIRED");
+        return vacationRepository.save(vacationToExpire);
     }
 
     @Override
