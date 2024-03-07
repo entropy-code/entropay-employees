@@ -27,6 +27,8 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int DAYS_THRESHOLD = 5;
+    private static final int START_OF_POLICY = 2023;
+    private static final String EXPIRED = "EXPIRED";
     private final VacationRepository vacationRepository;
     private final EmployeeRepository employeeRepository;
 
@@ -101,21 +103,23 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
                         employee.getId(), 0).stream().mapToInt(Vacation::getDebit).sum());
     }
 
-    public List<Vacation> applyExpiredVacationsPolicyToEmployee(Employee employee, String vacationYearToExpire) {
+    public List<Vacation> applyExpiredVacationsPolicyToEmployee(Employee employee, Integer vacationYear) {
+        String vacationYearToExpire = String.valueOf(vacationYear - 1);
         List<Vacation> expiredVacations = new ArrayList<>();
-        List<VacationBalanceByYear> vacations = vacationRepository.getVacationByYearIsPosteriorOrEqualTo(employee.getId(), 2023);
+        List<VacationBalanceByYear> vacations = vacationRepository.getVacationBalanceBetween(employee.getId(), START_OF_POLICY, vacationYear - 1);
 
-        //if the most recent vacation has more than the threshold should always be expired,
+        //if the most recent vacation has more than the threshold, it should always be expired
         //and then if that's the case all the other vacations with more than 0 should expire. It's impossible for the older vacations to have more days than the recent one
-        VacationBalanceByYear recentVacation = vacations.stream()
-                .filter(vacation -> vacation.getYear().equals(vacationYearToExpire)).findFirst().orElse(null);
 
-        if(recentVacation != null && recentVacation.getBalance() > DAYS_THRESHOLD) {
-            expiredVacations.add(expireVacations(recentVacation.getBalance() - DAYS_THRESHOLD, recentVacation.getYear(), employee));
-            vacations.remove(recentVacation);
-            for (VacationBalanceByYear balance : vacations) {
+        for (VacationBalanceByYear balance : vacations) {
+            if (balance.getYear().equals(vacationYearToExpire)) {
+                if (balance.getBalance() > DAYS_THRESHOLD) {
+                    expiredVacations.add(expireVacations(balance.getBalance() - DAYS_THRESHOLD, balance.getYear(), employee));
+                }
+            }
+            else {
                 if (balance.getBalance() > 0) {
-                    expiredVacations.add(expireVacations(recentVacation.getBalance(), recentVacation.getYear(), employee));
+                    expiredVacations.add(expireVacations(balance.getBalance(), balance.getYear(), employee));
                 }
             }
         }
@@ -128,7 +132,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
         vacationToExpire.setCredit(0);
         vacationToExpire.setDebit(daysToExpire);
         vacationToExpire.setEmployee(employee);
-        vacationToExpire.setDetails("EXPIRED");
+        vacationToExpire.setDetails(EXPIRED);
         return vacationRepository.save(vacationToExpire);
     }
 

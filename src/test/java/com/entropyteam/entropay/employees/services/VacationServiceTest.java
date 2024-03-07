@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -145,32 +146,39 @@ public class VacationServiceTest {
     }
 
     @Test
-    void applyExpiredVacationsPolicyToEmployeeTestTwoYearsToExpire(){
+    void applyExpiredVacationsPolicyToEmployeeTestOneYearToExpire(){
         //config
         Employee employee = new Employee();
         employee.setId(UUID.randomUUID());
 
         VacationBalanceByYear availableVacation1 = Mockito.mock(VacationBalanceByYear.class);
-        VacationBalanceByYear availableVacation2 = Mockito.mock(VacationBalanceByYear.class);
-        Mockito.when(availableVacation1.getBalance()).thenReturn(5);
+        Mockito.when(availableVacation1.getBalance()).thenReturn(7);
         Mockito.when(availableVacation1.getYear()).thenReturn("2023");
-        Mockito.when(availableVacation2.getBalance()).thenReturn(10);
-        Mockito.when(availableVacation2.getYear()).thenReturn("2024");
+
         List<VacationBalanceByYear> availableVacations = new ArrayList<>();
         availableVacations.add(availableVacation1);
-        availableVacations.add(availableVacation2);
-        Mockito.when(vacationRepository.getVacationByYearIsPosteriorOrEqualTo(employee.getId(), 2023))
+        Mockito.when(vacationRepository.getVacationBalanceBetween(employee.getId(), 2023, 2023))
                 .thenReturn(availableVacations);
+
+        Vacation expiredVacation1 = new Vacation();
+        expiredVacation1.setYear("2023");
+        expiredVacation1.setCredit(0);
+        expiredVacation1.setDebit(2);
+        expiredVacation1.setEmployee(employee);
+        expiredVacation1.setDetails("EXPIRED");
+
         //run
-        //2024 because its simulating the job running in october 2025
-        vacationService.applyExpiredVacationsPolicyToEmployee(employee, "2024");
+        vacationService.applyExpiredVacationsPolicyToEmployee(employee, 2024);
 
         //assert
-        Mockito.verify(vacationRepository, times(2)).save(Mockito.any(Vacation.class));
+        ArgumentCaptor<Vacation> vacationCaptor = ArgumentCaptor.forClass(Vacation.class);
+        Mockito.verify(vacationRepository, times(1)).save(vacationCaptor.capture());
+        Assertions.assertEquals(expiredVacation1.getYear(), vacationCaptor.getValue().getYear());
+        Assertions.assertEquals(expiredVacation1.getDebit(), vacationCaptor.getValue().getDebit());
     }
 
     @Test
-    void applyExpiredVacationsPolicyToEmployeeTestOneYearToExpire(){
+    void applyExpiredVacationsPolicyToEmployeeTestTwoYearsToExpire(){
         //config
         Employee employee = new Employee();
         employee.setId(UUID.randomUUID());
@@ -180,21 +188,43 @@ public class VacationServiceTest {
         VacationBalanceByYear availableVacation3 = Mockito.mock(VacationBalanceByYear.class);
         Mockito.when(availableVacation1.getBalance()).thenReturn(0);
         Mockito.when(availableVacation1.getYear()).thenReturn("2023");
-        Mockito.when(availableVacation2.getBalance()).thenReturn(0);
+        Mockito.when(availableVacation2.getBalance()).thenReturn(5);
         Mockito.when(availableVacation2.getYear()).thenReturn("2024");
-        Mockito.when(availableVacation3.getBalance()).thenReturn(6);
+        Mockito.when(availableVacation3.getBalance()).thenReturn(10);
         Mockito.when(availableVacation3.getYear()).thenReturn("2025");
+
         List<VacationBalanceByYear> availableVacations = new ArrayList<>();
         availableVacations.add(availableVacation1);
         availableVacations.add(availableVacation2);
         availableVacations.add(availableVacation3);
-        Mockito.when(vacationRepository.getVacationByYearIsPosteriorOrEqualTo(employee.getId(), 2023))
+
+        Vacation expiredVacation1 = new Vacation();
+        expiredVacation1.setYear("2024");
+        expiredVacation1.setCredit(0);
+        expiredVacation1.setDebit(5);
+        expiredVacation1.setEmployee(employee);
+        expiredVacation1.setDetails("EXPIRED");
+
+        Vacation expiredVacation2 = new Vacation();
+        expiredVacation2.setYear("2025");
+        expiredVacation2.setCredit(0);
+        expiredVacation2.setDebit(5);
+        expiredVacation2.setEmployee(employee);
+        expiredVacation2.setDetails("EXPIRED");
+
+        Mockito.when(vacationRepository.getVacationBalanceBetween(employee.getId(), 2023, 2025))
                 .thenReturn(availableVacations);
+
         //run
-        //2025 because its simulating the job running in october 2026
-        vacationService.applyExpiredVacationsPolicyToEmployee(employee, "2025");
+        vacationService.applyExpiredVacationsPolicyToEmployee(employee, 2026);
 
         //assert
-        Mockito.verify(vacationRepository, times(1)).save(Mockito.any(Vacation.class));
+        ArgumentCaptor<Vacation> vacationCaptor = ArgumentCaptor.forClass(Vacation.class);
+        Mockito.verify(vacationRepository, times(2)).save(vacationCaptor.capture());
+        List<Vacation> capturedVacations = vacationCaptor.getAllValues();
+        Assertions.assertEquals(expiredVacation1.getYear(), capturedVacations.get(0).getYear());
+        Assertions.assertEquals(expiredVacation1.getDebit(), capturedVacations.get(0).getDebit());
+        Assertions.assertEquals(expiredVacation2.getYear(), capturedVacations.get(1).getYear());
+        Assertions.assertEquals(expiredVacation2.getDebit(), capturedVacations.get(1).getDebit());
     }
 }

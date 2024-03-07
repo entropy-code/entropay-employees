@@ -20,9 +20,9 @@ public interface VacationRepository extends BaseRepository<Vacation, UUID> {
             @Param("employeeId") UUID employeeId, @Param("credit") Integer credit);
 
     @Query(value = "SELECT year, CAST((SUM(credit) - COALESCE(SUM(debit), 0)) AS int) AS balance " +
-            " FROM vacation WHERE employee_id = :employeeId and deleted = false AND CAST(year AS INT ) >= :year " +
+            " FROM vacation WHERE employee_id = :employeeId and deleted = false AND CAST(year AS INT ) BETWEEN :yearFrom AND :yearTo " +
             " GROUP BY year HAVING CAST((SUM(credit) - COALESCE(SUM(debit), 0)) AS int) > 0 ORDER BY year ASC", nativeQuery = true)
-    List<VacationBalanceByYear> getVacationByYearIsPosteriorOrEqualTo(@Param("employeeId") UUID employeeId, @Param("year") Integer year);
+    List<VacationBalanceByYear> getVacationBalanceBetween(@Param("employeeId") UUID employeeId, @Param("yearFrom") Integer yearFrom, @Param("yearTo") Integer yearTo);
 
     @Query("SELECT CAST((SUM(v.credit) - COALESCE(SUM(v.debit), 0)) AS int) AS total_balance FROM Vacation v WHERE "
             + " v.employee.id = :employeeId AND v.deleted = false GROUP BY v.employee.id")

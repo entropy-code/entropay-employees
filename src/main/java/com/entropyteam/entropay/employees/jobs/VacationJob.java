@@ -60,16 +60,21 @@ public class VacationJob {
     @Transactional
     public void setEmployeeVacations() throws IOException {
         LOGGER.info("Starting employees vacation set job");
-        if (LocalDate.now().getMonthValue() == 3) {
-            List<Vacation> expiredVacations = expireEmployeeVacations();
-            String fileName = LocalDate.now() + "_EmployeesExpiredVacationsSummary.csv";
-            InputStream isExpiredVacations = BuilderUtils.convertVacationToCSVInputStream(expiredVacations);
-            awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName, isExpiredVacations);
-        }
         Map<String, Integer> creditsSummary = findEmployeeVacations();
         String fileName = LocalDate.now() + "_EmployeesVacationsSummary.csv";
         InputStream isCredits = BuilderUtils.convertMapToCSVInputStream(creditsSummary);
         awsService.uploadFile(awsCredentialsProperties.getBucketName(), fileName, isCredits);
+    }
+
+    //job to run on October 10 minutes after the other job
+    @Scheduled(cron = "0 10 9 1 10 ?")
+    @Transactional
+    public void setVacationsAsExpired() throws IOException {
+        LOGGER.info("Starting employees expiring vacations job");
+        List<Vacation> expiredVacations = expireEmployeeVacations();
+        String expiredVacationsFileName = LocalDate.now() + "_EmployeesExpiredVacationsSummary.csv";
+        InputStream isExpiredVacations = BuilderUtils.convertVacationToCSVInputStream(expiredVacations);
+        awsService.uploadFile(awsCredentialsProperties.getBucketName(), expiredVacationsFileName, isExpiredVacations);
     }
 
 
@@ -115,8 +120,7 @@ public class VacationJob {
             return summary;
         }
         for (Employee employee : employees) {
-            String vacationYearToExpire = String.valueOf(LocalDate.now().getYear() - 1);
-            summary = vacationService.applyExpiredVacationsPolicyToEmployee(employee, vacationYearToExpire);
+            summary.addAll(vacationService.applyExpiredVacationsPolicyToEmployee(employee, LocalDate.now().getYear()));
         }
         return summary;
     }

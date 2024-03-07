@@ -45,4 +45,16 @@ public class VacationController extends BaseController<VacationDto, UUID> {
             return ResponseEntity.badRequest().body(errorMessage);
         }
     }
+
+    @GetMapping("/expire-vacations")
+    @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
+    public ResponseEntity<String> expireEmployeeVacations() {
+        try {
+            vacationJob.setVacationsAsExpired();
+            return ResponseEntity.ok("Successful job execution: set vacations as expired");
+        } catch (IOException exception) {
+            String errorMessage = "An error occurred: " + exception.getMessage();
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+    }
 }
