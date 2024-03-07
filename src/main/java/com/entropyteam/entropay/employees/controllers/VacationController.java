@@ -39,11 +39,22 @@ public class VacationController extends BaseController<VacationDto, UUID> {
     public ResponseEntity<String> setEmployeeVacations() {
         try {
             vacationJob.setEmployeeVacations();
-            return ResponseEntity.ok("Successful job execution: set employee vacactions");
+            return ResponseEntity.ok("Successful job execution: set employee vacations");
         } catch (IOException exception) {
             String errorMessage = "An error occurred: " + exception.getMessage();
             return ResponseEntity.badRequest().body(errorMessage);
         }
     }
 
+    @GetMapping("/expire-vacations")
+    @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
+    public ResponseEntity<String> expireEmployeeVacations() {
+        try {
+            vacationJob.setVacationsAsExpired();
+            return ResponseEntity.ok("Successful job execution: set vacations as expired");
+        } catch (IOException exception) {
+            String errorMessage = "An error occurred: " + exception.getMessage();
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+    }
 }
