@@ -13,6 +13,7 @@ import com.entropyteam.entropay.employees.services.AwsCredentialsProperties;
 import com.entropyteam.entropay.employees.services.AwsService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 import com.entropyteam.entropay.employees.services.VacationService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class VacationJob {
@@ -116,11 +115,12 @@ public class VacationJob {
     public List<Vacation> expireEmployeeVacations() {
         List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
         List<Vacation> summary = new ArrayList<>();
-        if (employees.isEmpty()) {
+        if (CollectionUtils.isEmpty(employees)) {
             return summary;
         }
-        for (Employee employee : employees) {
-            summary.addAll(vacationService.applyExpiredVacationsPolicyToEmployee(employee, LocalDate.now().getYear()));
+        else {
+            summary = employees.stream().flatMap(employee -> vacationService.applyExpiredVacationsPolicyToEmployee(employee, LocalDate.now().getYear())
+                            .stream()).collect(Collectors.toList());
         }
         return summary;
     }
