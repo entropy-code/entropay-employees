@@ -1,19 +1,20 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.io.IOException;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Period;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
+import java.util.List;
+import java.util.Collections;
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -22,6 +23,7 @@ import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
@@ -31,6 +33,7 @@ import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
+import com.entropyteam.entropay.employees.repositories.ClientRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -55,6 +58,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
+    private final ClientRepository clientRepository;
     private final GoogleService googleService;
 
 
@@ -64,7 +68,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
                            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-                           CountryRepository countryRepository, GoogleService googleService) {
+                           CountryRepository countryRepository, GoogleService googleService, ClientRepository clientRepository) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -76,6 +80,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
+        this.clientRepository = clientRepository;
         this.googleService = googleService;
     }
 
@@ -275,5 +280,16 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private int vacationsDayPerSeniority (LocalDate startDate, LocalDate currentDate, Optional <Contract> activeContract){
         int yearDiff = startDate.until(currentDate).getYears();
         return yearDiff >= 5 ? 20 : (yearDiff >= 2 ? 15 : activeContract.get().getSeniority().getVacationDays());
+    }
+
+    public List<Employee> getUnassignedEmployees(){
+        List<Employee> fullEmployeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
+        List<Client> clientList = clientRepository.findAllClientsWithAProject();
+        List<Assignment> assignmentsList = assignmentRepository.findAllAssignmentsByClientIdIn(clientList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
+                .stream().toList();
+
+        return fullEmployeesList.stream()
+                .filter(employee -> !assignmentsList.stream().map(assignment -> assignment.getEmployee().getId()).toList().contains(employee.getId()))
+                .collect(Collectors.toList());
     }
 }
