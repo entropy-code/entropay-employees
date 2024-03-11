@@ -281,15 +281,4 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         int yearDiff = startDate.until(currentDate).getYears();
         return yearDiff >= 5 ? 20 : (yearDiff >= 2 ? 15 : activeContract.get().getSeniority().getVacationDays());
     }
-
-    public List<Employee> getUnassignedEmployees(){
-        List<Employee> fullEmployeesList = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
-        List<Client> clientList = clientRepository.findAllClientsWithAProject();
-        List<Assignment> assignmentsList = assignmentRepository.findAllAssignmentsByClientIdIn(clientList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
-                .stream().toList();
-
-        return fullEmployeesList.stream()
-                .filter(employee -> !assignmentsList.stream().map(assignment -> assignment.getEmployee().getId()).toList().contains(employee.getId()))
-                .collect(Collectors.toList());
-    }
 }

@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.Collection;
 import java.util.stream.Collectors;
 
 import com.entropyteam.entropay.auth.AppRole;
@@ -65,12 +64,11 @@ public class ReportService {
     private final EmployeeRepository employeeRepository;
     private final PtoRepository ptoRepository;
     private final ClientRepository clientRepository;
-    private final EmployeeService employeeService;
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
                          AssignmentRepository assignmentRepository, ContractRepository contractRepository, EmployeeRepository employeeRepository, PtoRepository ptoRepository,
-                         ClientRepository clientRepository, ReactAdminMapper mapper, EmployeeService employeeService) {
+                         ClientRepository clientRepository, ReactAdminMapper mapper) {
         this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
@@ -79,7 +77,6 @@ public class ReportService {
         this.employeeRepository = employeeRepository;
         this.ptoRepository = ptoRepository;
         this.clientRepository = clientRepository;
-        this.employeeService = employeeService;
     }
 
     public Page<EmployeeReportDto> getEmployeesReport(ReactAdminParams params) {
@@ -204,7 +201,7 @@ public class ReportService {
             employeeList = employeeRepository.findAllById(clientsAssignmentList.stream().map(x -> x.getEmployee().getId()).toList());
         }
         else {
-            employeeList = employeeService.getUnassignedEmployees();
+            employeeList = employeeRepository.findAllUnassignedEmployees();
         }
         List<Pto> employeesPtoList = ptoRepository.findPtosByEmployeeIdInAndForYear(employeeList.stream().map(BaseEntity::getId).toList(), year);
 
@@ -255,7 +252,7 @@ public class ReportService {
 
         Map<UUID, Double> totalPtoDaysMap = ptoList
                 .stream()
-                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingDouble(p -> p.getDays())));
+                .collect(Collectors.groupingBy(p -> p.getEmployee().getId(), Collectors.summingDouble(Pto::getDays)));
 
         return employeeList.stream()
                 .filter(employee -> totalPtoDaysMap.containsKey(employee.getId()) && totalPtoDaysMap.get(employee.getId()) > 0)
@@ -301,7 +298,7 @@ public class ReportService {
             }
         }).filter(Objects::nonNull).toList());
 
-        List<UUID> unassignedEmployeesIds = employeeService.getUnassignedEmployees().stream().map(BaseEntity::getId).toList();
+        List<UUID> unassignedEmployeesIds = employeeRepository.findAllUnassignedEmployees().stream().map(BaseEntity::getId).toList();
         Double days = ptoList.stream().filter(pto -> unassignedEmployeesIds.contains(pto.getEmployee().getId())).mapToDouble(Pto::getDays).sum();
         ptosByClient.add(new PtoReportClientDto(null, "No client", days, year));
         return ptosByClient;

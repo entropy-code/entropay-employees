@@ -18,4 +18,9 @@ public interface EmployeeRepository extends BaseRepository<Employee, UUID> {
     List<Employee> getEmployeesWithAtLeastAnActiveContract();
 
     List<Employee> findAllByIdInAndDeletedIsFalse(List<UUID> employeesIds);
+
+    @Query(value = "SELECT e.* FROM Employee AS e WHERE e.deleted = false AND e.active = true AND NOT EXISTS(" +
+            "SELECT * FROM Assignment AS a WHERE e.id = a.employee_id AND a.active = true AND a.deleted = false)",
+            nativeQuery = true)
+    List<Employee> findAllUnassignedEmployees();
 }
