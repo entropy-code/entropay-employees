@@ -58,7 +58,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
-    private final ClientRepository clientRepository;
     private final GoogleService googleService;
 
 
@@ -68,7 +67,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
                            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-                           CountryRepository countryRepository, GoogleService googleService, ClientRepository clientRepository) {
+                           CountryRepository countryRepository, GoogleService googleService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -80,7 +79,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
-        this.clientRepository = clientRepository;
         this.googleService = googleService;
     }
 

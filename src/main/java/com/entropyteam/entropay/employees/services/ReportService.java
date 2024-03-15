@@ -56,6 +56,7 @@ public class ReportService {
     private final static String EMPLOYEE_ID = "employeeId";
     private final static String CLIENT_ID = "clientId";
     private final static String YEAR = "year";
+    private final static String NO_CLIENT = "noClient";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
     private final TechnologyRepository technologyRepository;
@@ -149,12 +150,9 @@ public class ReportService {
         if(filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
             ptoReportDetailDtoList = getPtoReportDetailByEmployee(employeeRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow(), year);
         } else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
-            if(filter.getGetByFieldsFilter().get(CLIENT_ID) != null){
-                ptoReportDetailDtoList = getPtoReportDetailByClient(clientRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(CLIENT_ID))).orElseThrow(), year);
-            }
-            else {
-                ptoReportDetailDtoList = getPtoReportDetailByClient(null, year);
-            }
+            Client client = (filter.getGetByFieldsFilter().get(CLIENT_ID)).equals(NO_CLIENT) ? null :
+                    clientRepository.findById(UUID.fromString((String)filter.getGetByFieldsFilter().get(CLIENT_ID))).orElseThrow();
+            ptoReportDetailDtoList = getPtoReportDetailByClient(client, year);
         }
         else {
             ptoReportDetailDtoList = Collections.emptyList();
@@ -282,17 +280,18 @@ public class ReportService {
 
     private List<PtoReportClientDto> getPtoReportClientDtos(List<Pto> ptoList, Integer year) {
         List<Client> clients = clientRepository.findAllClientsWithAProject();
+        List<PtoReportClientDto> ptosByClient = new ArrayList<>();
         Map<UUID, List<Assignment>> assignmentMap = assignmentRepository.findAllAssignmentsByClientIdIn(clients.stream().map(BaseEntity::getId).collect(Collectors.toList()))
                 .stream()
                 .collect(Collectors.groupingBy(assignment -> assignment.getProject().getClient().getId()));
 
-        List<PtoReportClientDto> ptosByClient = new ArrayList<>(clients.stream().map(client -> {
+        ptosByClient.addAll(clients.stream().map(client -> {
             List<Assignment> clientAssignments = assignmentMap.getOrDefault(client.getId(), Collections.emptyList());
             List<Pto> employeesPtos = ptoList.stream().filter(pto -> clientAssignments.stream().
                     anyMatch(assignment -> assignment.getEmployee().getId() == pto.getEmployee().getId())).toList();
             double totalDays = employeesPtos.stream().mapToDouble(Pto::getDays).sum();
             if (totalDays > 0) {
-                return new PtoReportClientDto(client.getId(), client.getName(), totalDays, year);
+                return new PtoReportClientDto(client.getId().toString(), client.getName(), totalDays, year);
             } else {
                 return null;
             }
@@ -300,7 +299,7 @@ public class ReportService {
 
         List<UUID> unassignedEmployeesIds = employeeRepository.findAllUnassignedEmployees().stream().map(BaseEntity::getId).toList();
         Double days = ptoList.stream().filter(pto -> unassignedEmployeesIds.contains(pto.getEmployee().getId())).mapToDouble(Pto::getDays).sum();
-        ptosByClient.add(new PtoReportClientDto(null, "No client", days, year));
+        ptosByClient.add(new PtoReportClientDto(NO_CLIENT, "No client", days, year));
         return ptosByClient;
     }
 
