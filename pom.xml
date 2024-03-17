@@ -16,7 +16,7 @@
     <description>Entropay Employees API</description>
     <properties>
         <apache-commons.version>3.0</apache-commons.version>
-        <apache-commons-collections.version>4.0</apache-commons-collections.version>
+        <apache-commons-collections.version>4.4</apache-commons-collections.version>
         <flywaydb.version>8.5.10</flywaydb.version>
         <google-auth.version>1.20.0</google-auth.version>
         <google-services-calendar.version>v3-rev20220715-2.0.0</google-services-calendar.version>
