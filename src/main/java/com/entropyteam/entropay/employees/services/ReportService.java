@@ -37,7 +37,6 @@ import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
-import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
 import com.entropyteam.entropay.employees.repositories.ClientRepository;
 
 import org.apache.commons.lang3.StringUtils;
@@ -289,6 +288,33 @@ public class ReportService {
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    public Page<PtoReportDetailDto> getPtoReportAllDetails(ReactAdminParams params) {
+        List<PtoReportDetailDto> ptoReportDetailDtoList;
+        Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
+        Integer year = getYearFromFilter(filter);
+        if(filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
+            ptoReportDetailDtoList = getPtoReportAllDetailsByEmployee(year);
+        } else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
+            ptoReportDetailDtoList = getPtoReportAllDetailsByClient(year);
+        }
+        else {
+            ptoReportDetailDtoList = Collections.emptyList();
+        }
+        return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
+    }
+
+    public List<PtoReportDetailDto> getPtoReportAllDetailsByEmployee(Integer year) {
+        return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue().stream()
+                .flatMap(employee -> getPtoReportDetailByEmployee(employee, year).stream())
+                .collect(Collectors.toList());
+    }
+
+    public List<PtoReportDetailDto> getPtoReportAllDetailsByClient(Integer year) {
+        return clientRepository.findAllClientsWithAProject().stream()
+                .flatMap(client -> getPtoReportDetailByClient(client, year).stream())
+                .collect(Collectors.toList());
     }
 
     public Integer getYearFromFilter(Filter filter){
