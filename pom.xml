@@ -19,7 +19,7 @@
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
         <flywaydb.version>8.5.10</flywaydb.version>
         <google-auth.version>1.20.0</google-auth.version>
-        <google-services-calendar.version>v3-rev20220715-2.0.0</google-services-calendar.version>
+        <google-services-calendar.version>v3-rev20240111-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
         <java.version>17</java.version>
         <jdk.version>1.17</jdk.version>
