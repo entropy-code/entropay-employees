@@ -3,12 +3,12 @@ package com.entropyteam.entropay.employees.dtos;
 import java.util.UUID;
 
 public class PtoReportClientDto extends ReportDto{
-    private UUID id;
+    private String id;
     private String clientName;
     private Double totalDays;
     private Integer year;
 
-    public PtoReportClientDto(UUID id,
+    public PtoReportClientDto(String id,
                                 String clientName,
                                 Double totalDays,
                                 Integer year) {
@@ -18,11 +18,11 @@ public class PtoReportClientDto extends ReportDto{
         this.year = year;
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id = id;
     }
 
