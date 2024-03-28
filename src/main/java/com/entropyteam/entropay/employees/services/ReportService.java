@@ -303,6 +303,19 @@ public class ReportService {
         return ptosByClient;
     }
 
+    public Page<PtoReportDetailDto> getPtoReportAllDetails(ReactAdminParams params) {
+        Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
+        Integer year = getYearFromFilter(filter);
+        List<PtoReportDetailDto> ptoReportDetailDtoList = getPtoReportAllDetailsDto(year);
+        return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
+    }
+
+    public List<PtoReportDetailDto> getPtoReportAllDetailsDto(Integer year) {
+        return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue().stream()
+                .flatMap(employee -> getPtoReportDetailByEmployee(employee, year).stream())
+                .collect(Collectors.toList());
+    }
+
     public Integer getYearFromFilter(Filter filter){
         Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
         return Integer.parseInt(yearObject.toString());
