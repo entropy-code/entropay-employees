@@ -53,7 +53,17 @@ public class ReportController {
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());
     }
-  
+
+    @GetMapping("/ptos/all-details")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
+    @Transactional
+    public ResponseEntity<List<PtoReportDetailDto>> getPtosReportAllDetails(ReactAdminParams params) {
+        Page<PtoReportDetailDto> response = reportService.getPtoReportAllDetails(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
+                .body(response.getContent());
+    }
+
     @GetMapping("/ptos/employees")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
