@@ -122,8 +122,7 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='b1bf3a8c-ced5-443f-90a3-ee9d283a18c0'::uuid::uuid; --manager hr role
 UPDATE public.config
@@ -250,8 +249,7 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='160ec32b-b39f-4966-add0-c82e03d2edb7'::uuid::uuid; --hr director role
 UPDATE public.config
@@ -372,8 +370,7 @@ SET menu='[
   {"entity": "countries", "actions": ["create", "read", "update", "delete"]},
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='3c245af9-19fc-4e02-b9b0-a85e8ed06594'::uuid::uuid; --dev role
 UPDATE public.config
@@ -500,7 +497,6 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='d172386e-46b3-4c6f-b030-14b9204ea059'::uuid::uuid; --admin role
