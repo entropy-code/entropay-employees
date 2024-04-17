@@ -1,19 +1,20 @@
 package com.entropyteam.entropay.employees.services;
 
-import java.io.IOException;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Period;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
+import java.util.List;
+import java.util.Collections;
+import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -22,6 +23,7 @@ import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
@@ -31,6 +33,7 @@ import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
+import com.entropyteam.entropay.employees.repositories.ClientRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
