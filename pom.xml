@@ -27,7 +27,7 @@
         <jdk.version>1.17</jdk.version>
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <postgresql.version>42.7.3</postgresql.version>
-        <software-amazon-sdk.version>2.25.16</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.25.55</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
