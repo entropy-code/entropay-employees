@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -26,7 +25,9 @@ import com.entropyteam.entropay.auth.TokenService;
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig {
 
-    private static final String ACTUATOR_URL = "/actuator/**";
+    private static final String[] AUTH_WHITELIST = {
+            "/actuator/**"
+    };
 
     private final TokenService tokenService;
 
@@ -36,10 +37,9 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        List<String> permitAllEndpointList = List.of(ACTUATOR_URL);
         httpSecurity.cors().and().csrf().disable()
                 .authorizeRequests()
-                .antMatchers(permitAllEndpointList.toArray(new String[0])).permitAll()
+                .requestMatchers(AUTH_WHITELIST).permitAll()
                 .anyRequest().authenticated().and()
                 .oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtCustomConverter());
         return httpSecurity.build();

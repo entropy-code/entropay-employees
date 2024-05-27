@@ -1,9 +1,10 @@
 package com.entropyteam.entropay.employees.models;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.TenantDto;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "tenant")

@@ -8,7 +8,7 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 import java.util.List;
 import java.util.Objects;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
