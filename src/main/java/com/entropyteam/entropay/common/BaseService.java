@@ -135,7 +135,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
                         .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
-        if (filter.getGetByDateFieldsFilter().containsKey( DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()
+        if (filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()
                 .containsKey(DATE_FROM_TERM_KEY)) {
             ArrayList<Predicate> searchPredicates = new ArrayList<>();
             for (String column : getDateColumnsForSearch()) {
