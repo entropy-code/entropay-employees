@@ -1,5 +1,9 @@
 package com.entropyteam.entropay.common;
 
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+import static com.entropyteam.entropay.common.ReactAdminMapper.DATE_FROM_TERM_KEY;
+import static com.entropyteam.entropay.common.ReactAdminMapper.DATE_TO_TERM_KEY;
+import static com.entropyteam.entropay.common.ReactAdminMapper.SEARCH_TERM_KEY;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -10,13 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,20 +29,23 @@ import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
 
-import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implements CrudService<DTO, Key> {
 
     private static final Logger LOGGER = LogManager.getLogger();
-    public static final String ID = "id";
+    private static final String ID = "id";
 
     @PersistenceContext
     private EntityManager entityManager;
     private final Class<Entity> entityClass;
     private final ReactAdminMapper mapper;
-    public static final String SEARCH_TERM_KEY = ReactAdminMapper.SEARCH_TERM_KEY;
-    public static final String DATE_FROM_TERM_KEY = ReactAdminMapper.DATE_FROM_TERM_KEY;
-    public static final String DATE_TO_TERM_KEY = ReactAdminMapper.DATE_TO_TERM_KEY;
 
     protected BaseService(Class<Entity> clazz, ReactAdminMapper mapper) {
         this.entityClass = clazz;
@@ -70,12 +70,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             CriteriaQuery<Entity> entityQuery = cb.createQuery(entityClass);
             Root<Entity> root = entityQuery.from(entityClass);
 
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("deleted"), false));
-            predicates.addAll(buildEntityRestrictedFields(root, filter, cb));
-            predicates.addAll(buildIdPredicates(root, filter));
-            predicates.addAll(buildEntityPredicates(root, filter, cb));
-            predicates.addAll(buildEntityRelatedPredicates(root, filter, cb));
+            List<Predicate> predicates = getPredicates(cb, root, filter);
             entityQuery.select(root).where(cb.and(predicates.toArray(new Predicate[0])));
 
             Optional<Order> order = pageable.getSort().stream().findFirst();
@@ -95,19 +90,32 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             List<DTO> entitiesResponse = query.getResultList().stream().map(this::toDTO).collect(Collectors.toList());
 
             // Count query
-            CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+            CriteriaBuilder countBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<Long> countQuery = countBuilder.createQuery(Long.class);
             Root<Entity> rootForCount = countQuery.from(entityClass);
-            root.getJoins().stream().forEach(join -> rootForCount.join(join.getAttribute().getName()));
-            countQuery.select(cb.count(rootForCount))
-                    .where(cb.and(predicates.toArray(new Predicate[predicates.size()])));
+            root.getJoins().forEach(join -> rootForCount.join(join.getAttribute().getName()));
+            List<Predicate> countPredicates = getPredicates(countBuilder, rootForCount, filter);
+            countQuery.select(countBuilder.count(rootForCount))
+                    .where(countBuilder.and(countPredicates.toArray(new Predicate[0])));
+
             Long count = session.createQuery(countQuery).getSingleResult();
 
-            return new PageImpl<DTO>(entitiesResponse, Pageable.unpaged(), count);
+            return new PageImpl<>(entitiesResponse, Pageable.unpaged(), count);
 
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new InvalidRequestParametersException("Bad params error", e);
         }
+    }
+
+    private List<Predicate> getPredicates(CriteriaBuilder cb, Root<Entity> root, Filter filter) {
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(root.get("deleted"), false));
+        predicates.addAll(buildEntityRestrictedFields(root, filter, cb));
+        predicates.addAll(buildIdPredicates(root, filter));
+        predicates.addAll(buildEntityPredicates(root, filter, cb));
+        predicates.addAll(buildEntityRelatedPredicates(root, filter, cb));
+        return predicates;
     }
 
     private Collection<Predicate> buildIdPredicates(Root<Entity> root, Filter filter) {
@@ -127,7 +135,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
                         .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
-        if (filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()
+        if (filter.getGetByDateFieldsFilter().containsKey( DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()
                 .containsKey(DATE_FROM_TERM_KEY)) {
             ArrayList<Predicate> searchPredicates = new ArrayList<>();
             for (String column : getDateColumnsForSearch()) {
