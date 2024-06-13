@@ -22,7 +22,7 @@
         <flywaydb.version>8.5.10</flywaydb.version>
         <google-auth.version>1.23.0</google-auth.version>
         <google-services-calendar.version>v3-rev20240111-2.0.0</google-services-calendar.version>
-        <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.3</postgresql.version>
         <software-amazon-sdk.version>2.25.16</software-amazon-sdk.version>
