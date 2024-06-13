@@ -1,6 +1,6 @@
 package com.entropyteam.entropay.employees.dtos;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record CalendarEventDto(@NotNull String id,

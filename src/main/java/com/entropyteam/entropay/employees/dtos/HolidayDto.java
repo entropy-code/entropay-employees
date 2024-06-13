@@ -3,7 +3,7 @@ package com.entropyteam.entropay.employees.dtos;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;

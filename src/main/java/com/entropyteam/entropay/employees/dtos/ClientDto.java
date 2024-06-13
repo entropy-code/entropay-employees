@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Client;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 
 public record ClientDto(UUID id,

@@ -1,11 +1,14 @@
 package com.entropyteam.entropay.employees.models;
 
-import javax.persistence.*;
-
+import java.util.Set;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.RoleDto;
 
-import java.util.Set;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
 @Entity(name = "Role")
 @Table(name = "role")
@@ -32,7 +35,11 @@ public class Role extends BaseEntity {
         this.name = name;
     }
 
-    public Set<Employee> getEmployees() {return employees;}
+    public Set<Employee> getEmployees() {
+        return employees;
+    }
 
-    public void setEmployees(Set<Employee> employees) {this.employees = employees;}
+    public void setEmployees(Set<Employee> employees) {
+        this.employees = employees;
+    }
 }
