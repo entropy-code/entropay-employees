@@ -241,7 +241,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee existingEmployee = getRepository().getById(employeeId);
         return existingEmployee.isActive() && !entityToUpdate.isActive();
     }
-
     public CalendarEventDto formatEventData(UUID employeeId, LocalDate birthDate, String firstName, String lastName) {
         int currentYear = LocalDate.now().getYear();
         LocalDate startDate = birthDate.withYear(currentYear);

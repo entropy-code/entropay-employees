@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.auth.SecureObjectService;
+import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
