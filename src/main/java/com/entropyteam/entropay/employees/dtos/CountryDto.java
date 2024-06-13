@@ -2,7 +2,7 @@ package com.entropyteam.entropay.employees.dtos;
 
 import com.entropyteam.entropay.employees.models.Country;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record CountryDto(UUID id,

@@ -9,7 +9,7 @@ import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public record ContractDto(UUID id,
                           @NotNull(message = "Company is mandatory")

@@ -6,7 +6,7 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Project;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public record ProjectDto(UUID id,
                         @NotNull(message = "Client is mandatory")

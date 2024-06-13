@@ -1,7 +1,7 @@
 package com.entropyteam.entropay.employees.dtos;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.UUID;
 public record PaymentSettlementDto(UUID id,

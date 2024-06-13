@@ -1,8 +1,7 @@
 package com.entropyteam.entropay.common.exceptions;
 
-import javax.servlet.http.HttpServletRequest;
-
-import com.entropyteam.entropay.common.exceptions.dtos.ErrorResponseDto;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -10,12 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.entropyteam.entropay.common.exceptions.dtos.ErrorResponseDto;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
