@@ -19,7 +19,6 @@
     <properties>
         <apache-commons.version>3.0</apache-commons.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
-        <flywaydb.version>10.15.0</flywaydb.version>
         <google-auth.version>1.23.0</google-auth.version>
         <google-services-calendar.version>v3-rev20240111-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
@@ -95,6 +94,14 @@
             <artifactId>google-auth-library-oauth2-http</artifactId>
             <version>${google-auth.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -113,11 +120,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-maven-plugin</artifactId>
-                <version>${flywaydb.version}</version>
             </plugin>
         </plugins>
     </build>
