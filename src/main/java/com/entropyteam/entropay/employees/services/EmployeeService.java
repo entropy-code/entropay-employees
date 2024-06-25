@@ -210,7 +210,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             LocalDate startDate = firstContract.get().getStartDate();
             if (currentDate.getMonthValue() == Month.OCTOBER.getValue() && startDate.isBefore(LocalDate.of(currentDate.getYear(), Month.JULY, 1))) {
                 return vacationsDayPerSeniority(startDate, currentDate, activeContract);
-            } else if (currentDate.getMonthValue() == Month.JANUARY.getValue()) {
+            } else if (currentDate.getMonthValue() == Month.JANUARY.getValue() && startDate.isAfter(LocalDate.of(currentDate.getYear() - 1, Month.JULY, 1))) {
                 String seniorityName = activeContract.get().getSeniority().getName();
                 return vacationDaysPerWorkDay(holidaysInPeriod, currentDate, startDate, seniorityName);
             }

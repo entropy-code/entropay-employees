@@ -7,7 +7,7 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public record AssignmentDto(UUID id,
                             @NotNull(message ="Project is mandatory")

@@ -1,9 +1,9 @@
 package com.entropyteam.entropay.employees.services;
 
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildContract;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildContract;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildEmployee;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.entropyteam.entropay.employees.models.Employee;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,6 +39,7 @@ import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Contract;
+import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -251,7 +250,7 @@ class ContractServiceTest {
                         contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
-        assertEquals(HttpStatus.NO_CONTENT, thrown.getStatus());
+        assertEquals(HttpStatus.NO_CONTENT.value(), thrown.getStatusCode().value());
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
         verifyNoMoreInteractions(contractRepository);
     }
@@ -271,7 +270,7 @@ class ContractServiceTest {
                         contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
-        assertEquals(HttpStatus.NO_CONTENT, thrown.getStatus());
+        assertEquals(HttpStatus.NO_CONTENT.value(), thrown.getStatusCode().value());
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
         verifyNoMoreInteractions(contractRepository);
     }
@@ -323,7 +322,7 @@ class ContractServiceTest {
                         contractService.modifyStatus(existentContract.getId(), setActive),
                 "ResponseStatusException was expected");
 
-        assertEquals(HttpStatus.NOT_FOUND, thrown.getStatus());
+        assertEquals(HttpStatus.NOT_FOUND.value(), thrown.getStatusCode().value());
         verify(contractRepository, times(1)).findById(eq(existentContract.getId()));
         verifyNoMoreInteractions(contractRepository);
     }

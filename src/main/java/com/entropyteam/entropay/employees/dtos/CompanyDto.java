@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Company;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public record CompanyDto(UUID id,
                         @NotNull(message = "Tenant is mandatory")
