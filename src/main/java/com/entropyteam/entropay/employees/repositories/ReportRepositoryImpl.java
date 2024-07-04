@@ -20,7 +20,7 @@ public class ReportRepositoryImpl implements ReportRepository {
                             where pi.deleted is not true
                             group by pi.employee_id)
                 select
-                    coalesce(ps.id, e.id) as rowId,
+                    coalesce(ps.id, e.id) as id,
                     e.id as employeeId,
                     e.internal_id as internalId,
                     first_name as firstName,
