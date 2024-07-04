@@ -5,26 +5,26 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
+        <version>3.3.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.entropyteam.entropay</groupId>
     <artifactId>entropay-employees</artifactId>
-    <version>1.1.26-SNAPSHOT</version>
+    <version>1.1.29-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>entropay-employees</name>
     <description>Entropay Employees API</description>
 
     <properties>
-        <apache-commons.version>3.0</apache-commons.version>
+        <apache-commons.version>3.14.0</apache-commons.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
         <google-auth.version>1.23.0</google-auth.version>
-        <google-services-calendar.version>v3-rev20240111-2.0.0</google-services-calendar.version>
+        <google-services-calendar.version>v3-rev20240517-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.3</postgresql.version>
-        <software-amazon-sdk.version>2.26.1</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.26.8</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
@@ -101,6 +101,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
