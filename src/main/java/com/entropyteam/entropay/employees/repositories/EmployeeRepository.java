@@ -7,7 +7,7 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Employee;
 import org.springframework.data.jpa.repository.Query;
 
-public interface EmployeeRepository extends BaseRepository<Employee, UUID> {
+public interface EmployeeRepository extends BaseRepository<Employee, UUID>, ReportRepository {
 
     List<Employee> findAllByDeletedIsFalse();
 
