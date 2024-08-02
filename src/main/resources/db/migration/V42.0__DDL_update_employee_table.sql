@@ -44,3 +44,4 @@ UPDATE employee SET country_id = country.id FROM country WHERE LOWER(employee.co
 
 ALTER TABLE employee ALTER COLUMN country_id SET NOT NULL;
 ALTER TABLE employee DROP COLUMN country;
+ALTER TABLE employee ADD COLUMN gender varchar(10);
