@@ -5,11 +5,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import com.entropyteam.entropay.employees.models.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.employees.models.Gender;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.PaymentInformation;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 
@@ -23,7 +26,6 @@ public record EmployeeDto(UUID id,
                           @NotNull(message = "Last Name is mandatory")
                           String lastName,
                           @NotNull(message = "Gender is mandatory")
-//                          String Gender,
                           Gender gender,
                           @Email @NotNull(message = "Email is mandatory")
                           String personalEmail,

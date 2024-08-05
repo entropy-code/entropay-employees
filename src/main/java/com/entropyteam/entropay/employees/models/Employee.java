@@ -1,13 +1,19 @@
 package com.entropyteam.entropay.employees.models;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
-
-import jakarta.persistence.*;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 
 @Entity(name = "Employee")
@@ -17,7 +23,6 @@ public class Employee extends BaseEntity {
     private String internalId;
     private String firstName;
     private String lastName;
-    //private String Gender;
     @Enumerated(EnumType.STRING)
     private Gender gender;
     private String personalEmail;
@@ -105,10 +110,6 @@ public class Employee extends BaseEntity {
     public Gender getGender() { return gender;  }
 
     public void setGender(Gender gender) {  this.gender = gender;   }
-
-    //    public String getGender() { return Gender;  }
-//
-//    public void setGender(String Gender) { this.Gender = Gender;    }
 
     public String getPersonalEmail() {
         return personalEmail;
