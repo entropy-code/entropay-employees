@@ -14,16 +14,8 @@ import java.util.Set;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Contract;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.PaymentInformation;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Technology;
-import com.entropyteam.entropay.employees.models.Holiday;
-import com.entropyteam.entropay.employees.models.Country;
-import com.entropyteam.entropay.employees.models.Client;
+import com.entropyteam.entropay.employees.dtos.ChildrenDto;
+import com.entropyteam.entropay.employees.models.*;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
@@ -33,7 +25,7 @@ import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
-import com.entropyteam.entropay.employees.repositories.ClientRepository;
+import com.entropyteam.entropay.employees.repositories.ChildrenRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,6 +51,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
     private final GoogleService googleService;
+    private final ChildrenRepository childrenRepository;
+    private final ChildrenService childrenService;
 
 
     @Autowired
@@ -67,7 +61,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
                            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-                           CountryRepository countryRepository, GoogleService googleService) {
+                           CountryRepository countryRepository, GoogleService googleService, ChildrenRepository childrenRepository,
+                           ChildrenService childrenService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -80,6 +75,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
         this.googleService = googleService;
+        this.childrenRepository = childrenRepository;
+        this.childrenService = childrenService;
     }
 
     @Override
@@ -91,6 +88,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected EmployeeDto toDTO(Employee entity) {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
+        List<Children> childrenList =
+                childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Assignment> assignment =
                 assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
@@ -103,7 +102,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
+        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart, childrenList);
     }
 
     @Override
@@ -117,6 +116,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         employee.setTechnologies(technologies);
         employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
                 : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        employee.setChildren((dto.children() == null) ? Collections.emptySet()
+                : dto.children().stream().map(Children::new).collect(Collectors.toSet()));
         return employee;
     }
 
