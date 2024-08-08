@@ -1,0 +1,1 @@
+ALTER TABLE children ALTER COLUMN gender TYPE varchar(10);
