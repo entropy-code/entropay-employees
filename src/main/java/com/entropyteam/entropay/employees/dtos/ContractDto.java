@@ -45,7 +45,7 @@ public record ContractDto(UUID id,
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 contract.getPaymentsSettlement().stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
-                contract.isActive(), contract.getEndReason().getId(), contract.getCreatedAt(), contract.getModifiedAt());
+                contract.isActive(), contract.getEndReasonId(), contract.getCreatedAt(), contract.getModifiedAt());
     }
 
     public ContractDto withActive(boolean active) {
