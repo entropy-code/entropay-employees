@@ -10,7 +10,15 @@ import com.entropyteam.entropay.employees.models.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.employees.models.Gender;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.PaymentInformation;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.fasterxml.jackson.annotation.JsonFormat;
+
+
+
 
 public record EmployeeDto(UUID id,
                           @NotNull(message = "Internal ID is mandatory")
@@ -19,6 +27,8 @@ public record EmployeeDto(UUID id,
                           String firstName,
                           @NotNull(message = "Last Name is mandatory")
                           String lastName,
+                          @NotNull(message = "Gender is mandatory")
+                          Gender gender,
                           @Email @NotNull(message = "Email is mandatory")
                           String personalEmail,
                           String phoneNumber,
@@ -65,10 +75,12 @@ public record EmployeeDto(UUID id,
                           String timeSinceStart,
                           String countryName) {
 
-    public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, Assignment lastAssignment,
-                       Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto, String timeSinceStart, List<Children> childrenList) {
+    public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, List<Children> childrenList, Assignment lastAssignment,
+            Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto, String timeSinceStart) {
+//        this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(), employee.getGender(),
+//                       Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto, String timeSinceStart) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
-                employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
+                employee.getGender(), employee.getPersonalEmail(), employee.getPhoneNumber(), employee.getMobileNumber(),
                 employee.getAddress(), employee.getCity(), employee.getState(), employee.getZip(),
                 employee.getCountry().getId(), employee.getPersonalNumber(), employee.getTaxId(),
                 employee.getEmergencyContactFullName(), employee.getEmergencyContactPhone(),
@@ -88,4 +100,7 @@ public record EmployeeDto(UUID id,
                 availableDays != null ? availableDays : 0,
                 nearestPto, timeSinceStart, employee.getCountry().getName());
     }
+
+
+
 }

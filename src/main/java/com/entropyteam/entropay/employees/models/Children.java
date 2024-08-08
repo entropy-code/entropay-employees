@@ -14,7 +14,8 @@ public class Children extends BaseEntity {
 
     private String firstName;
     private String lastName;
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
     @Column
     private LocalDate birthDate;
 
@@ -64,12 +65,13 @@ public class Children extends BaseEntity {
         this.lastName = lastName;
     }
 
-    public String getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(String gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
-
 }
+
+

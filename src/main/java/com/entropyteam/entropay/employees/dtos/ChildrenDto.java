@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.dtos;
 
 import com.entropyteam.entropay.employees.models.Children;
+import com.entropyteam.entropay.employees.models.Gender;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
 
@@ -16,7 +17,7 @@ public record ChildrenDto(UUID id,
                           @NotNull(message = "Last Name is mandatory")
                           String lastName,
                           @NotNull(message = "Gender is mandatory")
-                          String gender,
+                          Gender gender,
                           @JsonFormat(pattern = "yyyy-MM-dd")
                           LocalDate birthDate,
                           boolean deleted,

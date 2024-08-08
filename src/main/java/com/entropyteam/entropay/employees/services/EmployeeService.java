@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import com.entropyteam.entropay.employees.dtos.ChildrenDto;
 import com.entropyteam.entropay.employees.models.*;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
@@ -102,7 +101,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart, childrenList);
+        return new EmployeeDto(entity, paymentInformationList, childrenList, assignment.orElse(null), firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
     }
 
     @Override
@@ -127,6 +126,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
+        childrenService.createChildren(savedEntity.getChildren(), savedEntity);
 
         LocalDate birthDate = employeeDto.birthDate();
         if (birthDate != null) {
@@ -164,6 +164,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             googleService.updateGoogleCalendarEvent(eventData);
         }
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
+        childrenService.updateChildren(employeeDto.children(), savedEntity);
+
+
         return toDTO(savedEntity);
     }
 

@@ -1,19 +1,19 @@
 package com.entropyteam.entropay.employees.models;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
-import jakarta.persistence.Table;
-import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.ManyToOne;
-import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.dtos.EmployeeDto;
-
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 
 @Entity(name = "Employee")
@@ -23,6 +23,8 @@ public class Employee extends BaseEntity {
     private String internalId;
     private String firstName;
     private String lastName;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
     private String personalEmail;
     private String phoneNumber;
     private String mobileNumber;
@@ -74,6 +76,7 @@ public class Employee extends BaseEntity {
         this.internalId = entity.internalId();
         this.firstName = entity.firstName();
         this.lastName = entity.lastName();
+        this.gender = entity.gender();
         this.personalEmail = entity.personalEmail();
         this.phoneNumber = entity.phoneNumber();
         this.mobileNumber = entity.mobileNumber();
@@ -107,6 +110,10 @@ public class Employee extends BaseEntity {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
+    public Gender getGender() { return gender;  }
+
+    public void setGender(Gender gender) {  this.gender = gender;   }
 
     public String getPersonalEmail() {
         return personalEmail;
