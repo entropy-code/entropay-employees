@@ -3,7 +3,9 @@ package com.entropyteam.entropay.employees.models;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +52,9 @@ public class Contract extends BaseEntity {
     private boolean active;
     @OneToMany(mappedBy="contract")
     private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "endReason_id")
+    private EndReason endReason;
 
     public Contract() {
     }
@@ -168,4 +173,15 @@ public class Contract extends BaseEntity {
                 .map(payment -> payment.getSalary().intValue())
                 .orElse(0);
     }
+
+    public EndReason getEndReason() {  return endReason; }
+
+    @Nullable
+    public UUID getEndReasonId() {
+        return endReason != null ? endReason.getId() : null;
+    }
+
+    public void setEndReason(EndReason endReason) { this.endReason = endReason; }
+
+
 }
