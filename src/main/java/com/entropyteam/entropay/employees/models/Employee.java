@@ -65,6 +65,10 @@ public class Employee extends BaseEntity {
     @JoinColumn(name = "country_id")
     private Country country;
 
+    @OneToMany(mappedBy = "employee")
+    private Set<Children> children = new HashSet<>();
+
+
     public Employee() {
     }
 
@@ -282,5 +286,13 @@ public class Employee extends BaseEntity {
 
     public String getFullName() {
         return this.firstName + " " + this.lastName;
+    }
+
+    public Set<Children> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Set<Children> children) {
+        this.children = children;
     }
 }
