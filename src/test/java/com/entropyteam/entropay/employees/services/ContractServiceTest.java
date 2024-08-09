@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.services;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
+import static com.entropyteam.entropay.employees.testUtils.TestUtils.anEndReason;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildContract;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildEmployee;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,6 +44,7 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
@@ -63,6 +65,8 @@ class ContractServiceTest {
     private RoleRepository roleRepository;
     @Mock
     private SeniorityRepository seniorityRepository;
+    @Mock
+    private EndReasonRepository endReasonRepository;
     @Mock
     private PaymentSettlementService paymentSettlementService;
 
@@ -97,6 +101,7 @@ class ContractServiceTest {
         when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
+        when(endReasonRepository.findById(any())).thenReturn(Optional.of(anEndReason()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(
@@ -129,6 +134,7 @@ class ContractServiceTest {
         when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
+        when(endReasonRepository.findById(any())).thenReturn(Optional.of(anEndReason()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(Optional.empty());
