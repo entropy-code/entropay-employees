@@ -24,7 +24,6 @@ import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
-import com.entropyteam.entropay.employees.repositories.ChildrenRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,7 +49,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
     private final GoogleService googleService;
-    private final ChildrenRepository childrenRepository;
     private final ChildrenService childrenService;
 
 
@@ -60,7 +58,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
                            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
                            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-                           CountryRepository countryRepository, GoogleService googleService, ChildrenRepository childrenRepository,
+                           CountryRepository countryRepository, GoogleService googleService,
                            ChildrenService childrenService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
@@ -74,7 +72,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
         this.googleService = googleService;
-        this.childrenRepository = childrenRepository;
         this.childrenService = childrenService;
     }
 
@@ -88,7 +85,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         List<Children> childrenList =
-                childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
+                childrenService.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         Optional<Assignment> assignment =
                 assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());

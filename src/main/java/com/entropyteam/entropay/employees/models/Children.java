@@ -19,7 +19,7 @@ public class Children extends BaseEntity {
     @Column
     private LocalDate birthDate;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id")
     private Employee employee;
 

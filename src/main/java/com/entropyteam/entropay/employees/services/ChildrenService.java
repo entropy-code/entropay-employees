@@ -1,5 +1,12 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -8,11 +15,6 @@ import com.entropyteam.entropay.employees.models.Children;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.ChildrenRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
@@ -22,8 +24,8 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
 
     @Autowired
     public ChildrenService(ChildrenRepository childrenRepository,
-                           EmployeeRepository employeeRepository,
-                           ReactAdminMapper reactAdminMapper) {
+            EmployeeRepository employeeRepository,
+            ReactAdminMapper reactAdminMapper) {
         super(Children.class, reactAdminMapper);
         this.childrenRepository = childrenRepository;
         this.employeeRepository = employeeRepository;
@@ -34,8 +36,14 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
         return childrenRepository;
     }
 
+    protected List<Children> findAllByEmployeeIdAndDeletedIsFalse(UUID employeeId) {
+        return childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
+    }
+
     @Override
-    protected ChildrenDto toDTO(Children entity) { return new ChildrenDto(entity); }
+    protected ChildrenDto toDTO(Children entity) {
+        return new ChildrenDto(entity);
+    }
 
     @Override
     protected Children toEntity(ChildrenDto entity) {
@@ -46,22 +54,23 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
     }
 
     public Set<Children> createChildren(Set<Children> children, Employee savedEntity) {
-        children = children.stream().peek( p -> p.setEmployee(savedEntity)).collect(Collectors.toSet());
+        children.forEach(c -> c.setEmployee(savedEntity));
         return new HashSet<>(childrenRepository.saveAll(children));
     }
 
-    public void updateChildren(List<ChildrenDto> childrenDtos, Employee employee){
+    public void updateChildren(List<ChildrenDto> childrenDtos, Employee employee) {
         List<Children> childrenList = childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(employee.getId());
         List<Children> childrenRequest = childrenDtos.stream().map(this::toEntity).toList();
         List<Children> childrenToDelete = new ArrayList<>();
 
-        for(Children children : childrenList){
-            if(!childrenRequest.contains(children)){
+        for (Children children : childrenList) {
+            if (!childrenRequest.contains(children)) {
                 children.setDeleted(true);
                 childrenToDelete.add(children);
             }
         }
-        childrenRequest = childrenRequest.stream().peek(p -> p.setEmployee(employee)).collect(Collectors.toList());
+
+        childrenRequest.forEach(c -> c.setEmployee(employee));
         childrenRepository.saveAll(childrenRequest);
         childrenRepository.saveAll(childrenToDelete);
     }
