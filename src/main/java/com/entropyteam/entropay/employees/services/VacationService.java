@@ -52,24 +52,33 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     public void addVacationDebit(Employee employee, Integer totalDays) {
         List<VacationBalanceByYear> availableVacations = vacationRepository.getVacationByYear(employee.getId());
-        if (CollectionUtils.isEmpty(availableVacations)
-                || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
-            throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
-        }
+        String currentYear = availableVacations.get(availableVacations.size() - 1).getYear();
+        // if (CollectionUtils.isEmpty(availableVacations)
+        //         || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
+        //     throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
+        // }
         availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
         LOGGER.info("Adding vacation debit, employeeId: {}, credit before adding new vacation: {}",
                 employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
         for (VacationBalanceByYear vacation : availableVacations) {
             if (totalDays > 0) {
-                Integer daysToUse = Math.min(totalDays, vacation.getBalance());
-                totalDays -= daysToUse;
+                // Integer daysToUse = Math.min(totalDays, vacation.getBalance());
+                // totalDays -= daysToUse;
+                Integer daysLeft = totalDays - vacation.getBalance();
+                Integer daysToDebit = totalDays - daysLeft;
                 Vacation vacationDebit = new Vacation();
                 vacationDebit.setYear(vacation.getYear());
                 vacationDebit.setCredit(0);
-                vacationDebit.setDebit(daysToUse);
+                // vacationDebit.setDebit(daysToDebit);
+                if(vacation.getYear().equals(currentYear)) vacationDebit.setDebit(totalDays);
+                else vacationDebit.setDebit(daysToDebit);
                 vacationDebit.setEmployee(employee);
                 vacationRepository.save(vacationDebit);
+                totalDays -= daysToDebit;
             }
+        }
+        if(totalDays > 0) {
+            LOGGER.info("missing days: {}", totalDays);
         }
         LOGGER.info("Vacation debits added, employeeId: {}, credit after adding new vacation: {}",
                 employee.getId(),
