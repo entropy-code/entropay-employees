@@ -1,38 +1,40 @@
 package com.entropyteam.entropay.employees.services;
 
-import com.entropyteam.entropay.common.BaseRepository;
-import com.entropyteam.entropay.common.BaseService;
-import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.dtos.*;
-import com.entropyteam.entropay.employees.models.*;
-import com.entropyteam.entropay.employees.repositories.CountryRepository;
-import com.entropyteam.entropay.employees.repositories.HolidayRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.entropyteam.entropay.common.BaseRepository;
+import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.ReactAdminMapper;
+import com.entropyteam.entropay.employees.calendar.CalendarEventDto;
+import com.entropyteam.entropay.employees.calendar.CalendarService;
+import com.entropyteam.entropay.employees.dtos.HolidayDto;
+import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.Holiday;
+import com.entropyteam.entropay.employees.repositories.CountryRepository;
+import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 
 @Service
 public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
 
     private final HolidayRepository holidayRepository;
     private final CountryRepository countryRepository;
-    private final GoogleService googleService;
+    private final CalendarService calendarService;
 
 
     @Autowired
-    public HolidayService(HolidayRepository holidayRepository, CountryRepository countryRepository, ReactAdminMapper reactAdminMapper,
-                          GoogleService googleService) {
+    public HolidayService(HolidayRepository holidayRepository, CountryRepository countryRepository,
+            ReactAdminMapper reactAdminMapper, CalendarService calendarService) {
         super(Holiday.class, reactAdminMapper);
         this.countryRepository = countryRepository;
         this.holidayRepository = holidayRepository;
-        this.googleService = googleService;
+        this.calendarService = calendarService;
     }
 
     @Override
@@ -77,8 +79,9 @@ public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
     public HolidayDto create(HolidayDto holidayDto) {
         Holiday entityToCreate = toEntity(holidayDto);
         Holiday savedEntity = getRepository().save(entityToCreate);
-        CalendarEventDto eventData = formatEventData(entityToCreate.getId(), holidayDto.date(), holidayDto.description(), entityToCreate.getCountry().getName());
-        googleService.createGoogleCalendarEvent(eventData);
+        calendarService.createHolidayEvent(entityToCreate.getId().toString(), holidayDto.date(),
+                holidayDto.description(),
+                entityToCreate.getCountry().getName());
         return toDTO(savedEntity);
     }
 
@@ -88,8 +91,8 @@ public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
         Holiday entityToUpdate = toEntity(holidayDto);
         entityToUpdate.setId(holidayId);
         Holiday savedEntity = getRepository().save(entityToUpdate);
-        CalendarEventDto eventData = formatEventData(holidayDto.id(), holidayDto.date(), holidayDto.description(), entityToUpdate.getCountry().getName());
-        googleService.updateGoogleCalendarEvent(eventData);
+        calendarService.updateHolidayEvent(holidayId.toString(), holidayDto.date(), holidayDto.description(),
+                entityToUpdate.getCountry().getName());
         return toDTO(savedEntity);
     }
 
@@ -98,7 +101,7 @@ public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
     public HolidayDto delete(UUID id) {
         Holiday holiday = getRepository().findById(id).orElseThrow();
         holiday.setDeleted(true);
-        googleService.deleteGoogleCalendarEvent(LocalDate.now().getYear() + id.toString());
+        calendarService.deleteHolidayEvent(holiday.getId().toString(), holiday.getDate());
         return toDTO(holiday);
     }
 
