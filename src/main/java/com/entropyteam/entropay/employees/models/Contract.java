@@ -53,7 +53,7 @@ public class Contract extends BaseEntity {
     @OneToMany(mappedBy="contract")
     private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "endReason_id")
+    @JoinColumn(name = "end_reason_id")
     private EndReason endReason;
 
     public Contract() {
@@ -174,14 +174,18 @@ public class Contract extends BaseEntity {
                 .orElse(0);
     }
 
-    public EndReason getEndReason() {  return endReason; }
+    public EndReason getEndReason() {
+        return endReason;
+    }
 
     @Nullable
     public UUID getEndReasonId() {
         return endReason != null ? endReason.getId() : null;
     }
 
-    public void setEndReason(EndReason endReason) { this.endReason = endReason; }
+    public void setEndReason(EndReason endReason) {
+        this.endReason = endReason;
+    }
 
 
 }

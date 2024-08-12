@@ -9,6 +9,9 @@ import jakarta.validation.constraints.NotNull;
 public record EndReasonDto(UUID id,
                            @NotNull(message = "Name is mandatory")
                            String name) {
-    public EndReasonDto(EndReason endReason)    { this(endReason.getId(), endReason.getName());    }
+
+    public EndReasonDto(EndReason endReason) {
+        this(endReason.getId(), endReason.getName());
+    }
 
 }
