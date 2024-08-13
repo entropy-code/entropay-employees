@@ -29,7 +29,6 @@ public class Children extends BaseEntity {
         this.lastName = childrenDto.lastName();
         this.gender = childrenDto.gender();
         this.birthDate = childrenDto.birthDate();
-        this.setId(childrenDto.employeeId());
     }
 
     public Children() {
