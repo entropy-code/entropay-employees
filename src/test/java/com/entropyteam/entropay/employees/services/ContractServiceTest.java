@@ -101,7 +101,6 @@ class ContractServiceTest {
         when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
-        when(endReasonRepository.findById(any())).thenReturn(Optional.of(anEndReason()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(
@@ -134,7 +133,6 @@ class ContractServiceTest {
         when(employeeRepository.findById(any())).thenReturn(Optional.of(buildEmployee()));
         when(companyRepository.findById(any())).thenReturn(Optional.of(aCompany()));
         when(roleRepository.findById(any())).thenReturn(Optional.of(aRole()));
-        when(endReasonRepository.findById(any())).thenReturn(Optional.of(anEndReason()));
         when(seniorityRepository.findById(any())).thenReturn(Optional.of(aSeniority()));
         when(contractRepository.save(any())).thenReturn(existentContract);
         when(contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(any())).thenReturn(Optional.empty());
