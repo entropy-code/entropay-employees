@@ -138,7 +138,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
         Role role = roleRepository.findById(entity.roleId()).orElseThrow();
         Seniority seniority = seniorityRepository.findById(entity.seniorityId()).orElseThrow();
-        EndReason endReason = endReasonRepository.findById(entity.endReasonId()).orElseThrow();
+        EndReason endReason = null;
+        if (entity.endReasonId() != null) {
+            endReason = endReasonRepository.findById(entity.endReasonId()).orElseThrow();
+        }
 
         Contract contract = new Contract(entity);
         contract.setCompany(company);

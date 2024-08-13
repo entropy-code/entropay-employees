@@ -9,6 +9,7 @@ import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 public record ContractDto(UUID id,
@@ -33,6 +34,7 @@ public record ContractDto(UUID id,
                           List<PaymentSettlementDto> paymentSettlement,
                           boolean deleted,
                           boolean active,
+                          @Nullable
                           UUID endReasonId,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                           LocalDateTime createdAt,
