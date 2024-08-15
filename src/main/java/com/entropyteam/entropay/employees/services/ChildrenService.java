@@ -14,21 +14,16 @@ import com.entropyteam.entropay.employees.dtos.ChildrenDto;
 import com.entropyteam.entropay.employees.models.Children;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.ChildrenRepository;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 
 @Service
 public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
 
     private final ChildrenRepository childrenRepository;
-    private final EmployeeRepository employeeRepository;
 
     @Autowired
-    public ChildrenService(ChildrenRepository childrenRepository,
-            EmployeeRepository employeeRepository,
-            ReactAdminMapper reactAdminMapper) {
+    public ChildrenService(ChildrenRepository childrenRepository, ReactAdminMapper reactAdminMapper) {
         super(Children.class, reactAdminMapper);
         this.childrenRepository = childrenRepository;
-        this.employeeRepository = employeeRepository;
     }
 
     @Override
@@ -47,10 +42,7 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
 
     @Override
     protected Children toEntity(ChildrenDto entity) {
-        Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
-        Children children = new Children(entity);
-        children.setEmployee(employee);
-        return children;
+        return new Children(entity);
     }
 
     public Set<Children> createChildren(Set<Children> children, Employee savedEntity) {

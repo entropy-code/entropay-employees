@@ -4,7 +4,6 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,7 +20,6 @@ import com.entropyteam.entropay.employees.services.ChildrenService;
 
 public class ChildrenController extends BaseController<ChildrenDto, UUID> {
 
-    @Autowired
     public ChildrenController(ChildrenService childrenService) {
         super(childrenService);
     }
