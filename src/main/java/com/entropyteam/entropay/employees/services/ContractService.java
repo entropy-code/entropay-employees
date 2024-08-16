@@ -26,12 +26,14 @@ import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.EndReason;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
@@ -50,13 +52,14 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     private final SecureObjectService secureObjectService;
     private final PaymentSettlementService paymentSettlementService;
     private final PaymentSettlementRepository paymentSettlementRepository;
+    private final EndReasonRepository endReasonRepository;
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
             EmployeeRepository employeeRepository, RoleRepository roleRepository,
             SeniorityRepository seniorityRepository, SecureObjectService secureObjectService,
             PaymentSettlementService paymentSettlementService, PaymentSettlementRepository paymentSettlementRepository,
-            ReactAdminMapper reactAdminMapper) {
+            EndReasonRepository endReasonRepository, ReactAdminMapper reactAdminMapper) {
         super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
@@ -66,6 +69,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         this.secureObjectService = secureObjectService;
         this.paymentSettlementService = paymentSettlementService;
         this.paymentSettlementRepository = paymentSettlementRepository;
+        this.endReasonRepository = endReasonRepository;
     }
 
     @Transactional
@@ -134,6 +138,10 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
         Role role = roleRepository.findById(entity.roleId()).orElseThrow();
         Seniority seniority = seniorityRepository.findById(entity.seniorityId()).orElseThrow();
+        EndReason endReason = null;
+        if (entity.endReasonId() != null) {
+            endReason = endReasonRepository.findById(entity.endReasonId()).orElseThrow();
+        }
 
         Contract contract = new Contract(entity);
         contract.setCompany(company);
@@ -142,6 +150,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setSeniority(seniority);
         contract.setPaymentsSettlement(entity.paymentSettlement() == null ? Collections.emptySet() :
                 entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
+        contract.setEndReason(endReason);
         return contract;
     }
 
