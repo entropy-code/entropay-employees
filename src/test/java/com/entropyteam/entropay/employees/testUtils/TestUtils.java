@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.testUtils;
 
 import com.entropyteam.entropay.employees.models.*;
+import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -30,6 +31,13 @@ public class TestUtils {
         role.setName("Software Engineers");
         role.setEmployees(Set.of(buildEmployee()));
         return role;
+    }
+
+    public static EndReason anEndReason(){
+        EndReason endReason = new EndReason();
+        endReason.setName("Contract has expired");
+        endReason.setContracts(Set.of(buildContract()));
+        return endReason;
     }
 
     public static Employee buildEmployee() {
