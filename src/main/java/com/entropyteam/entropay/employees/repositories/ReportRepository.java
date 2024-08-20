@@ -8,5 +8,5 @@ public interface ReportRepository {
 
     List<SalariesReportDto> getSalariesReport(ReactAdminSqlParams params);
 
-    Integer getSalariesCount();
+    Integer getSalariesCount(ReactAdminSqlParams params);
 }

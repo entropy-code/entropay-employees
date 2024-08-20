@@ -40,5 +40,4 @@ public class CountryService extends BaseService<Country, CountryDto, UUID> {
     protected Country toEntity(CountryDto entity) {
         return new Country(entity);
     }
-
 }

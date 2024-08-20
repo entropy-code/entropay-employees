@@ -3,17 +3,14 @@ package com.entropyteam.entropay.employees.services;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.HashMap;
 import java.util.stream.Collectors;
-
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,45 +18,42 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
-import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
+import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
-import com.entropyteam.entropay.employees.repositories.PtoRepository;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
-import com.entropyteam.entropay.employees.repositories.HolidayRepository;
-import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.LeaveType;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.models.Status;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.employees.repositories.HolidayRepository;
+import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
+import com.entropyteam.entropay.employees.repositories.PtoRepository;
 
 @Service
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
     public static final String VACATION_TYPE = "vacation";
     public static final Double HALF_DAY_OFF = 0.5;
-    private static final Logger LOGGER = LogManager.getLogger();
-    private PtoRepository ptoRepository;
-    private EmployeeRepository employeeRepository;
-    private LeaveTypeRepository leaveTypeRepository;
-    private VacationRepository vacationRepository;
-    private HolidayRepository holidayRepository;
-    private VacationService vacationService;
-    private GoogleService googleService;
+    private final static Logger LOGGER = LoggerFactory.getLogger(PtoService.class);
+    private final PtoRepository ptoRepository;
+    private final EmployeeRepository employeeRepository;
+    private final LeaveTypeRepository leaveTypeRepository;
+    private final HolidayRepository holidayRepository;
+    private final VacationService vacationService;
+    private final CalendarService calendarService;
 
     @Autowired
     public PtoService(ReactAdminMapper mapper, PtoRepository ptoRepository, EmployeeRepository employeeRepository,
-                      LeaveTypeRepository leaveTypeRepository, VacationRepository vacationRepository,
-                      HolidayRepository holidayRepository, VacationService vacationService, GoogleService googleService) {
+            LeaveTypeRepository leaveTypeRepository, HolidayRepository holidayRepository,
+            VacationService vacationService, CalendarService calendarService) {
         super(Pto.class, mapper);
         this.ptoRepository = ptoRepository;
         this.employeeRepository = employeeRepository;
         this.leaveTypeRepository = leaveTypeRepository;
-        this.vacationRepository = vacationRepository;
         this.holidayRepository = holidayRepository;
         this.vacationService = vacationService;
-        this.googleService = googleService;
+        this.calendarService = calendarService;
     }
 
     @Transactional
@@ -72,7 +66,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}",
                     pto.getEmployee().getId(), pto.getDays());
         }
-        googleService.deleteGoogleCalendarEvent(id.toString());
+        calendarService.deleteLeaveEvent(id.toString());
         return toDTO(pto);
     }
 
@@ -95,8 +89,9 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         entityToUpdate.setId(id);
         entityToUpdate.setStatus(Status.APPROVED); // For now all approved
         Pto savedEntity = getRepository().save(entityToUpdate);
-        CalendarEventDto calendarEventDto = createCalendarEventDto(savedEntity);
-        googleService.updateGoogleCalendarEvent(calendarEventDto);
+        calendarService.updateLeaveEvent(id.toString(), savedEntity.getLeaveType().getName(),
+                savedEntity.getEmployee().getFirstName(), savedEntity.getEmployee().getLastName(),
+                ptoDto.ptoStartDate(), ptoDto.ptoEndDate());
         return toDTO(savedEntity);
     }
 
@@ -124,10 +119,12 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         Pto savedEntity = getRepository().save(entityToCreate);
         LOGGER.info("PTO of type {} created employeeId: {}, amount of days: {}",
                 savedEntity.getLeaveType().getName(), savedEntity.getEmployee().getId(), savedEntity.getDays());
-        ptoDto = toDTO(savedEntity);
-        CalendarEventDto calendarEventDto = createCalendarEventDto(savedEntity);
-        googleService.createGoogleCalendarEvent(calendarEventDto);
-        return ptoDto;
+
+        calendarService.createLeaveEvent(savedEntity.getId().toString(), savedEntity.getLeaveType().getName(),
+                savedEntity.getEmployee().getFirstName(), savedEntity.getEmployee().getLastName(),
+                savedEntity.getStartDate(), savedEntity.getEndDate());
+
+        return toDTO(savedEntity);
     }
 
     @Override
@@ -184,18 +181,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         }
     }
 
-    private static boolean isVacationType(Pto oldEntity) {
-        return StringUtils.equalsIgnoreCase(oldEntity.getLeaveType().getName(), VACATION_TYPE);
-    }
-
-    private CalendarEventDto createCalendarEventDto(Pto pto) {
-        String eventId = pto.getId().toString();
-        LocalDate startDate = pto.getStartDate();
-        LocalDate endDate = pto.getEndDate().plusDays(1);
-        Employee employee = pto.getEmployee();
-        LeaveType leaveType = pto.getLeaveType();
-        String eventName = employee.getFirstName() + " " + employee.getLastName() + " " + leaveType.getName();
-        return new CalendarEventDto(eventId, eventName, startDate, endDate);
+    private static boolean isVacationType(Pto pto) {
+        return VACATION_TYPE.equalsIgnoreCase(pto.getLeaveType().getName());
     }
 
     @Transactional
@@ -205,7 +192,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         if (isVacationType(pto)) {
             vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
         }
-        googleService.deleteGoogleCalendarEvent(id.toString());
+        calendarService.deleteLeaveEvent(id.toString());
         Pto savedEntity = getRepository().save(pto);
         return toDTO(savedEntity);
     }

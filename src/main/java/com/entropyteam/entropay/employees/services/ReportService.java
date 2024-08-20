@@ -26,6 +26,7 @@ import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
+import com.entropyteam.entropay.common.ReactAdminSqlParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
@@ -352,8 +353,10 @@ public class ReportService {
 
     public Page<SalariesReportDto> getSalariesReport(ReactAdminParams params) {
         LOGGER.info("Getting salaries report with params: {}", params);
-        List<SalariesReportDto> salariesReport = employeeRepository.getSalariesReport(sqlMapper.map(params));
-        Integer salariesCount = employeeRepository.getSalariesCount();
+        ReactAdminSqlParams queryParams = sqlMapper.map(params);
+
+        List<SalariesReportDto> salariesReport = employeeRepository.getSalariesReport(queryParams);
+        Integer salariesCount = employeeRepository.getSalariesCount(queryParams);
 
         return new PageImpl<>(salariesReport, Pageable.unpaged(), salariesCount);
     }

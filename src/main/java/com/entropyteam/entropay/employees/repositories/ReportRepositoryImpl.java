@@ -64,9 +64,11 @@ public class ReportRepositoryImpl implements ReportRepository {
     }
 
     @Override
-    public Integer getSalariesCount() {
+    public Integer getSalariesCount(ReactAdminSqlParams params) {
+        Map<String, String> filterMap = params.queryParameters();
+
         return entityManager.createNativeQuery(SALARIES_QUERY)
-                .setParameter("q", "%%")
+                .setParameter("q", filterMap.containsKey("q") ? "%" + filterMap.get("q") + "%" : "%%")
                 .getResultList().size();
     }
 
