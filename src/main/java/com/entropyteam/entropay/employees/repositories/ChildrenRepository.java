@@ -7,5 +7,4 @@ import com.entropyteam.entropay.employees.models.Children;
 
 public interface ChildrenRepository extends BaseRepository<Children, UUID> {
 
-    List<Children> findAllByEmployeeIdAndDeletedIsFalse(UUID id);
 }

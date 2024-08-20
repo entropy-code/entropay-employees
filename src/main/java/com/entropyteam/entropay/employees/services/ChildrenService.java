@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -31,8 +32,10 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
         return childrenRepository;
     }
 
-    protected List<Children> findAllByEmployeeIdAndDeletedIsFalse(UUID employeeId) {
-        return childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
+    protected List<Children> findAllByParentIdAndDeletedIsFalse(UUID parentId) {
+        return childrenRepository.findAll().stream()
+                .filter(c -> c.getParents().stream().anyMatch(p -> p.getId().equals(parentId)) && !c.isDeleted())
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -46,12 +49,12 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
     }
 
     public Set<Children> createChildren(Set<Children> children, Employee savedEntity) {
-        children.forEach(c -> c.setEmployee(savedEntity));
+        children.forEach(c -> c.setParent(savedEntity));
         return new HashSet<>(childrenRepository.saveAll(children));
     }
 
     public void updateChildren(List<ChildrenDto> childrenDtos, Employee employee) {
-        List<Children> childrenList = childrenRepository.findAllByEmployeeIdAndDeletedIsFalse(employee.getId());
+        List<Children> childrenList = findAllByParentIdAndDeletedIsFalse(employee.getId());
         List<Children> childrenRequest = childrenDtos.stream().map(this::toEntity).toList();
         List<Children> childrenToDelete = new ArrayList<>();
 
@@ -62,7 +65,7 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
             }
         }
 
-        childrenRequest.forEach(c -> c.setEmployee(employee));
+        childrenRequest.forEach(c -> c.setParent(employee));
         childrenRepository.saveAll(childrenRequest);
         childrenRepository.saveAll(childrenToDelete);
     }

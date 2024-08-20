@@ -92,7 +92,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         List<PaymentInformation> paymentInformationList =
                 paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
         List<Children> childrenList =
-                childrenService.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
+                childrenService.findAllByParentIdAndDeletedIsFalse(entity.getId());
         Optional<Assignment> assignment =
                 assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
         List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());

@@ -67,8 +67,8 @@ public class Employee extends BaseEntity {
     @JoinColumn(name = "country_id")
     private Country country;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "employee")
-    private Set<Children> children;
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
+    private Set<Children> children = new HashSet<>();
 
 
     public Employee() {

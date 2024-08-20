@@ -35,7 +35,7 @@ public class Children extends BaseEntity {
             joinColumns = {@JoinColumn(name = "children_id")},
             inverseJoinColumns = {@JoinColumn(name = "employee_id")}
     )
-    private Set<Employee> employee;
+    private Set<Employee> parents = new HashSet<>();
 
 
     public Children(ChildrenDto childrenDto) {
@@ -56,19 +56,16 @@ public class Children extends BaseEntity {
         this.firstName = firstName;
     }
 
-    public Set<Employee> getEmployees() {
-        return employee;
+    public Set<Employee> getParents() {
+        return parents;
     }
 
-    public void setEmployees(Set<Employee> employee) {
-        this.employee = employee;
+    public void setParents(Set<Employee> parents) {
+        this.parents = parents;
     }
 
-    public void setEmployee(Employee employee) {
-        if (this.employee == null) {
-            this.employee = new HashSet<>();
-        }
-        this.employee.add(employee);
+    public void setParent(Employee employee) {
+        this.parents.add(employee);
     }
 
     public LocalDate getBirthDate() {

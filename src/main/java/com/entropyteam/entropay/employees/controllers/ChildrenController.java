@@ -17,7 +17,6 @@ import com.entropyteam.entropay.employees.services.ChildrenService;
 @CrossOrigin
 @Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
 @RequestMapping(value = "/children", produces = MediaType.APPLICATION_JSON_VALUE)
-
 public class ChildrenController extends BaseController<ChildrenDto, UUID> {
 
     public ChildrenController(ChildrenService childrenService) {
