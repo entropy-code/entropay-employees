@@ -21,7 +21,7 @@ public class AssignmentJob {
         this.assignmentRepository = assignmentRepository;
     }
 
-    //Job to execute every day at 9:00 AM
+    //Job to execute every day at 9:05 AM
     @Scheduled(cron = "0 5 9 * * ?")
     @Transactional
     public void updateAssignmentsStatus() {
