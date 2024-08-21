@@ -9,6 +9,7 @@ import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 public record ContractDto(UUID id,
@@ -33,6 +34,8 @@ public record ContractDto(UUID id,
                           List<PaymentSettlementDto> paymentSettlement,
                           boolean deleted,
                           boolean active,
+                          @Nullable
+                          UUID endReasonId,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                           LocalDateTime createdAt,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt
@@ -44,7 +47,7 @@ public record ContractDto(UUID id,
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(), contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 contract.getPaymentsSettlement().stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
-                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());
+                contract.isActive(), contract.getEndReasonId(), contract.getCreatedAt(), contract.getModifiedAt());
     }
 
     public ContractDto withActive(boolean active) {
@@ -63,6 +66,7 @@ public record ContractDto(UUID id,
                 this.paymentSettlement,
                 this.deleted,
                 active,
+                this.endReasonId,
                 this.createdAt,
                 this.modifiedAt
         );
@@ -74,7 +78,7 @@ public record ContractDto(UUID id,
                 contract.getStartDate(), contract.getEndDate(),
                 contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
                 paymentSettlementList.stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
-                contract.isActive(), contract.getCreatedAt(), contract.getModifiedAt());
+                contract.isActive(), contract.getEndReasonId(), contract.getCreatedAt(), contract.getModifiedAt());
     }
 
 }

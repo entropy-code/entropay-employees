@@ -50,6 +50,7 @@ public record EmployeeDto(UUID id,
                           List<UUID> technologies,
                           @Email
                           String labourEmail,
+                          @NotNull(message = "Birth Date is mandatory")
                           @JsonFormat(pattern = "yyyy-MM-dd")
                           LocalDate birthDate,
                           @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

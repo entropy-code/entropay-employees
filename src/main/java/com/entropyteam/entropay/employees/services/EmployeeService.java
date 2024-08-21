@@ -20,7 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.dtos.CalendarEventDto;
+import com.entropyteam.entropay.employees.calendar.CalendarEventDto;
+import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Children;
@@ -55,7 +56,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final VacationRepository vacationRepository;
     private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
-    private final GoogleService googleService;
+    private final CalendarService calendarService;
     private final ChildrenService childrenService;
 
 
@@ -65,7 +66,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
             AssignmentRepository assignmentRepository, ContractRepository contractRepository,
             ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-            CountryRepository countryRepository, GoogleService googleService,
+            CountryRepository countryRepository, CalendarService calendarService,
             ChildrenService childrenService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
@@ -78,7 +79,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
-        this.googleService = googleService;
+        this.calendarService = calendarService;
         this.childrenService = childrenService;
     }
 
@@ -106,7 +107,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
         LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
         return new EmployeeDto(entity, paymentInformationList, childrenList, assignment.orElse(null),
-                firstContract.orElse(null), availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
+                firstContract.orElse(null),
+                availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
     }
 
     @Override
@@ -133,13 +135,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
         childrenService.createChildren(savedEntity.getChildren(), savedEntity);
 
-        LocalDate birthDate = employeeDto.birthDate();
-        if (birthDate != null) {
-            CalendarEventDto eventData =
-                    formatEventData(entityToCreate.getId(), employeeDto.birthDate(), employeeDto.firstName(),
-                            employeeDto.lastName());
-            googleService.createGoogleCalendarEvent(eventData);
-        }
+        calendarService.createBirthdayEvent(entityToCreate.getId().toString(), entityToCreate.getFirstName(),
+                entityToCreate.getLastName(), entityToCreate.getBirthDate());
 
         return toDTO(savedEntity);
     }
@@ -167,11 +164,11 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
 
-        if (employeeDto.birthDate() != null) {
-            CalendarEventDto eventData =
-                    formatEventData(employeeDto.id(), employeeDto.birthDate(), employeeDto.firstName(),
-                            employeeDto.lastName());
-            googleService.updateGoogleCalendarEvent(eventData);
+        if (!employeeDto.active()) {
+            calendarService.deleteBirthdayEvent(savedEntity.getId().toString());
+        } else {
+            calendarService.updateBirthdayEvent(savedEntity.getId().toString(), savedEntity.getFirstName(),
+                    savedEntity.getLastName(), savedEntity.getBirthDate());
         }
         paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
         childrenService.updateChildren(employeeDto.children(), savedEntity);
@@ -200,7 +197,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             assignment.setEndDate(LocalDate.now());
         });
         assignmentRepository.saveAll(employeeAssignment);
-        googleService.deleteGoogleCalendarEvent(LocalDate.now().getYear() + employeeId.toString());
+        calendarService.deleteBirthdayEvent(employeeId.toString());
         return toDTO(employee);
     }
 
@@ -219,7 +216,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Optional<Contract> activeContract = employeeContracts.stream()
                 .filter(Contract::isActive)
                 .findFirst();
-        Optional<Contract> firstContract = employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
+        Optional<Contract> firstContract =
+                employeeContracts.stream().min(Comparator.comparing(Contract::getStartDate));
 
         //calculate vacations if employee has contract to get seniority
         if (activeContract.isPresent() && firstContract.isPresent()) {
@@ -236,7 +234,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return 0;
     }
 
-    private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate currentDate, LocalDate startDate,
+    private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate currentDate, LocalDate
+            startDate,
             String seniorityName) {
         double labourDays = 0;
         while (!startDate.isAfter(currentDate)) {
@@ -281,7 +280,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Period difference = Period.between(startDate, endDate);
         StringBuilder timeSinceStart = new StringBuilder();
         if (difference.getYears() > 0) {
-            timeSinceStart.append(difference.getYears()).append(" year").append(difference.getYears() > 1 ? "s" : "");
+            timeSinceStart.append(difference.getYears()).append(" year")
+                    .append(difference.getYears() > 1 ? "s" : "");
             if (difference.getMonths() > 0) {
                 timeSinceStart.append(", ");
             }
