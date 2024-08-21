@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.services;
+package com.entropyteam.entropay.employees.calendar;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
