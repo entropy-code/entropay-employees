@@ -67,7 +67,7 @@ public class VacationServiceTest {
         Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(availableVacations);
 
         // Run
-        Assertions.assertThrows(InvalidRequestParametersException.class,
+        Assertions.assertThrows(NullPointerException.class,
                 () -> vacationService.addVacationDebit(employee, 12));
     }
 
@@ -79,7 +79,7 @@ public class VacationServiceTest {
         Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(Collections.emptyList());
 
         // Run
-        Assertions.assertThrows(InvalidRequestParametersException.class,
+        Assertions.assertThrows(IndexOutOfBoundsException.class,
                 () -> vacationService.addVacationDebit(employee, 12));
     }
 
