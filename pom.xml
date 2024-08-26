@@ -24,7 +24,7 @@
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.3</postgresql.version>
-        <software-amazon-sdk.version>2.27.7</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.27.12</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
