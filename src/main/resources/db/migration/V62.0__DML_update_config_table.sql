@@ -524,7 +524,7 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
   {"entity": "overtimes", "actions": ["create", "read", "update", "delete"]}
 
 ]'::json
