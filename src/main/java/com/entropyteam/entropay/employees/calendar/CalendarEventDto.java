@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.employees.dtos;
+package com.entropyteam.entropay.employees.calendar;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,7 +35,7 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
 
     @Autowired
     public VacationService(VacationRepository vacationRepository, ReactAdminMapper reactAdminMapper,
-                           EmployeeRepository employeeRepository) {
+            EmployeeRepository employeeRepository) {
         super(Vacation.class, reactAdminMapper);
         this.vacationRepository = vacationRepository;
         this.employeeRepository = employeeRepository;
@@ -51,29 +52,45 @@ public class VacationService extends BaseService<Vacation, VacationDto, UUID> {
     }
 
     public void addVacationDebit(Employee employee, Integer totalDays) {
+        String currentYear;
         List<VacationBalanceByYear> availableVacations = vacationRepository.getVacationByYear(employee.getId());
-        if (CollectionUtils.isEmpty(availableVacations)
-                || availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum() < totalDays) {
-            throw new InvalidRequestParametersException("Not enough vacations days available for the employee");
+        if (!availableVacations.isEmpty()) {
+            currentYear = availableVacations.get(availableVacations.size() - 1).getYear();
+            availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
+        } else {
+            currentYear = String.valueOf(LocalDate.now().getYear());
         }
-        availableVacations.sort(Comparator.comparing(VacationBalanceByYear::getYear));
         LOGGER.info("Adding vacation debit, employeeId: {}, credit before adding new vacation: {}",
                 employee.getId(), availableVacations.stream().mapToInt(VacationBalanceByYear::getBalance).sum());
-        for (VacationBalanceByYear vacation : availableVacations) {
-            if (totalDays > 0) {
-                Integer daysToUse = Math.min(totalDays, vacation.getBalance());
-                totalDays -= daysToUse;
+        if (totalDays > 0 && !availableVacations.isEmpty()) {
+            for (VacationBalanceByYear vacation : availableVacations) {
+                Integer daysLeft = totalDays - vacation.getBalance();
+                Integer daysToDebit = totalDays - daysLeft;
                 Vacation vacationDebit = new Vacation();
                 vacationDebit.setYear(vacation.getYear());
                 vacationDebit.setCredit(0);
-                vacationDebit.setDebit(daysToUse);
+                if(vacation.getYear().equals(currentYear)) {
+                    vacationDebit.setDebit(totalDays);
+                }
+                else {
+                    vacationDebit.setDebit(daysToDebit);
+                }
                 vacationDebit.setEmployee(employee);
                 vacationRepository.save(vacationDebit);
+                totalDays -= daysToDebit;
             }
+        } else {
+            Vacation vacationDebit = new Vacation();
+            vacationDebit.setYear(currentYear);
+            vacationDebit.setCredit(0);
+            vacationDebit.setDebit(totalDays);
+            vacationDebit.setEmployee(employee);
+            vacationRepository.save(vacationDebit);
         }
+
         LOGGER.info("Vacation debits added, employeeId: {}, credit after adding new vacation: {}",
                 employee.getId(),
-                vacationRepository.getVacationByYear(employee.getId()).stream().mapToInt(VacationBalanceByYear::getBalance).sum());
+                vacationRepository.getAvailableDays(employee.getId()));
     }
 
     public void discountVacationDebit(Employee employee, Integer totalDays) {

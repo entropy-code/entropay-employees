@@ -1,9 +1,11 @@
 package com.entropyteam.entropay.employees.models;
+
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -65,6 +67,10 @@ public class Employee extends BaseEntity {
     @JoinColumn(name = "country_id")
     private Country country;
 
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
+    private Set<Children> children = new HashSet<>();
+
+
     public Employee() {
     }
 
@@ -107,9 +113,13 @@ public class Employee extends BaseEntity {
         this.lastName = lastName;
     }
 
-    public Gender getGender() { return gender;  }
+    public Gender getGender() {
+        return gender;
+    }
 
-    public void setGender(Gender gender) {  this.gender = gender;   }
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
 
     public String getPersonalEmail() {
         return personalEmail;
@@ -282,5 +292,13 @@ public class Employee extends BaseEntity {
 
     public String getFullName() {
         return this.firstName + " " + this.lastName;
+    }
+
+    public Set<Children> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Set<Children> children) {
+        this.children = children;
     }
 }
