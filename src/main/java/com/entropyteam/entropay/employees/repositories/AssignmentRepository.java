@@ -33,4 +33,5 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
+    
 }
