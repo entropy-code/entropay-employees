@@ -6,13 +6,12 @@ RUN mvn dependency:go-offline
 COPY . ./
 RUN mvn package
 
-# Add New Relic
-RUN mkdir -p /usr/local/newrelic
-ADD ./newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
-ADD ./newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
-
 # Run
 FROM amazoncorretto:21
 WORKDIR /app
 COPY --from=build-env /app/target/entropay-employees.jar ./entropay-employees.jar
+# Add New Relic
+RUN mkdir -p /usr/local/newrelic
+COPY newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
+COPY newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
 CMD ["java", "-javaagent:/usr/local/newrelic/newrelic.jar", "-jar", "/app/entropay-employees.jar", "-Xmx256m"]
