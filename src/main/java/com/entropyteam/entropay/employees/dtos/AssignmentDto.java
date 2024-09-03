@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import jakarta.validation.constraints.NotNull;
 
 public record AssignmentDto(UUID id,
@@ -33,10 +32,7 @@ public record AssignmentDto(UUID id,
                             LocalDateTime createdAt,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime modifiedAt,
-                            String endReason
-
-) {
-
+                            String endReason) {
 
     public AssignmentDto(Assignment assignment) {
         this(

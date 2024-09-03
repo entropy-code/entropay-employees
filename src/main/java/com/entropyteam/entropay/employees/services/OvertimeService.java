@@ -12,9 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-
 
 @Service
 public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
@@ -75,7 +73,5 @@ public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
 
         return overtime;
     }
-
-
 
 }

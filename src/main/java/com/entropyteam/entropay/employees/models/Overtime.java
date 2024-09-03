@@ -3,15 +3,13 @@ package com.entropyteam.entropay.employees.models;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.OvertimeDto;
 import jakarta.persistence.*;
-
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Entity
 @Table(name = "overtime")
 public class Overtime extends BaseEntity {
 
-    private int hours;
+    private float hours;
     private String description;
     private LocalDate date;
     @ManyToOne(fetch = FetchType.LAZY)
@@ -30,11 +28,11 @@ public class Overtime extends BaseEntity {
     public Overtime() {
     }
 
-    public int getHours() {
+    public float getHours() {
         return hours;
     }
 
-    public void setHours(int hours) {
+    public void setHours(float hours) {
         this.hours = hours;
     }
 

@@ -4,7 +4,7 @@ CREATE TABLE overtime (
     modified_at  TIMESTAMP 					 NOT NULL,
     deleted      BOOLEAN                     NOT NULL,
     date   TIMESTAMP 					 NOT NULL,
-    hours INTEGER,
+    hours FLOAT,
     description VARCHAR(100),
     employee_id  UUID,
     assignment_id     UUID,

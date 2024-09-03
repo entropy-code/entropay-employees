@@ -4,7 +4,6 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
-
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.OvertimeDto;
 import com.entropyteam.entropay.employees.services.OvertimeService;
@@ -14,7 +13,6 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.UUID;
 
 @RestController
@@ -28,6 +26,5 @@ public class OvertimeController extends BaseController<OvertimeDto, UUID> {
     public OvertimeController(OvertimeService overtimeService) {
         super(overtimeService);
     }
-
 
 }
