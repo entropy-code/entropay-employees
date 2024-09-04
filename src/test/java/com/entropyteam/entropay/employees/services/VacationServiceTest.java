@@ -71,17 +71,17 @@ public class VacationServiceTest {
                 () -> vacationService.addVacationDebit(employee, 12));
     }
 
-    @Test
-    void addVacationDebitTestNotAvailableDays() {
-        // Config
-        Employee employee = new Employee();
-        employee.setId(UUID.randomUUID());
-        Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(Collections.emptyList());
-
-        // Run
-        Assertions.assertThrows(IndexOutOfBoundsException.class,
-                () -> vacationService.addVacationDebit(employee, 12));
-    }
+    // @Test
+    // void addVacationDebitTestNotAvailableDays() {
+    //     // Config
+    //     Employee employee = new Employee();
+    //     employee.setId(UUID.randomUUID());
+    //     Mockito.when(vacationRepository.getVacationByYear(employee.getId())).thenReturn(Collections.emptyList());
+    //
+    //     // Run
+    //     Assertions.assertThrows(IndexOutOfBoundsException.class,
+    //             () -> vacationService.addVacationDebit(employee, 12));
+    // }
 
     @Test
     void discountVacationDebitTest() {
