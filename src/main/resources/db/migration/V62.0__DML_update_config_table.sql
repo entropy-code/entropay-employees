@@ -502,7 +502,7 @@ SET menu='[
       	"name": "PTOs",
         "href": "/#/reports/ptos/employees",
         "key": 72
-      }
+      },
       {
          "name": "Salaries",
          "href": "/#/reports/salaries",

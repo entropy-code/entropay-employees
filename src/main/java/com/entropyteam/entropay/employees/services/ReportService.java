@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
