@@ -523,6 +523,11 @@ SET menu='[
         "href": "/#/reports/salaries",
         "key": 73
       }
+      {
+         "name": "Salaries",
+         "href": "/#/reports/salaries",
+         "key": 73
+      }
     ]
   }
 ]'::json,permissions='[
