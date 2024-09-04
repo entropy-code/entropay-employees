@@ -5,6 +5,7 @@ import com.entropyteam.entropay.employees.dtos.OvertimeDto;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Entity
 @Table(name = "overtime")

@@ -1,5 +1,3 @@
---added end reasons to the settings menu
-
 UPDATE public.config
 SET menu='[
   {
@@ -83,9 +81,9 @@ SET menu='[
         "key": 69
       },
       {
-        "name": "End Reasons",
-        "href": "/#/end-reasons",
-        "key": 610
+         "name": "End Reasons",
+         "href": "/#/end-reasons",
+         "key": 610
       },
       {
         "name": "Tenants",
@@ -106,8 +104,14 @@ SET menu='[
       },
       {
       	"name": "PTOs",
+      	"name": "Ptos by Employee",
         "href": "/#/reports/ptos/employees",
         "key": 72
+      },
+      {
+      	"name": "Ptos by Client",
+        "href": "/#/reports/ptos/clients",
+        "key": 73
       }
     ]
   }
@@ -130,7 +134,9 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "overtimes", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='b1bf3a8c-ced5-443f-90a3-ee9d283a18c0'::uuid::uuid; --manager hr role
 UPDATE public.config
@@ -238,9 +244,14 @@ SET menu='[
         "key": 71
       },
       {
-      	"name": "PTOs",
+      	"name": "Ptos by Employee",
         "href": "/#/reports/ptos/employees",
         "key": 72
+      },
+      {
+      	"name": "Ptos by Client",
+        "href": "/#/reports/ptos/clients",
+        "key": 73
       }
     ]
   }
@@ -263,7 +274,9 @@ SET menu='[
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
   {"entity": "reports/employees", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "overtimes", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='160ec32b-b39f-4966-add0-c82e03d2edb7'::uuid::uuid; --hr director role
 UPDATE public.config
@@ -366,9 +379,14 @@ SET menu='[
     "key": 7,
     "submenu": [
       {
-      	"name": "PTOs",
+      	"name": "Ptos by Employee",
         "href": "/#/reports/ptos/employees",
         "key": 72
+      },
+            {
+      	"name": "Ptos by Client",
+        "href": "/#/reports/ptos/clients",
+        "key": 73
       }
     ]
   }
@@ -390,7 +408,10 @@ SET menu='[
   {"entity": "countries", "actions": ["create", "read", "update", "delete"]},
   {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
   {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]}
+  {"entity": "reports/ptos/employees", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "reports/ptos/clients", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
+  {"entity": "overtimes", "actions": ["create", "read", "update", "delete"]}
 ]'::json
 WHERE id='3c245af9-19fc-4e02-b9b0-a85e8ed06594'::uuid::uuid; --dev role
 UPDATE public.config
@@ -476,11 +497,6 @@ SET menu='[
         "key": 69
       },
       {
-        "name": "End Reasons",
-        "href": "/#/end-reasons",
-        "key": 610
-      },
-      {
         "name": "Tenants",
         "href": "/#/tenants",
         "key": 611
@@ -498,9 +514,14 @@ SET menu='[
         "key": 71
       },
       {
-      	"name": "PTOs",
+        "name": "PTOs",
         "href": "/#/reports/ptos/employees",
         "key": 72
+      },
+      {
+        "name": "Salaries",
+        "href": "/#/reports/salaries",
+        "key": 73
       }
     ]
   }

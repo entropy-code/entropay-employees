@@ -2,6 +2,8 @@ package com.entropyteam.entropay.employees.controllers;
 
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.OvertimeDto;
@@ -17,8 +19,9 @@ import java.util.UUID;
 
 @RestController
 @CrossOrigin
-@RequestMapping(value = "/overtime", produces = MediaType.APPLICATION_JSON_VALUE)
-@Secured({ROLE_ADMIN, ROLE_DEVELOPMENT})
+@RequestMapping(value = "/overtimes", produces = MediaType.APPLICATION_JSON_VALUE)
+@Secured({ROLE_ADMIN, ROLE_HR_DIRECTOR, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
+
 public class OvertimeController extends BaseController<OvertimeDto, UUID> {
 
     @Autowired

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -67,7 +68,7 @@ public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
     @Override
     protected Overtime toEntity(OvertimeDto entity) {
         Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
-        Assignment assignment = assignmentRepository.findById(entity.assigmentId()).orElseThrow();
+        Assignment assignment = assignmentRepository.findById(entity.assignmentId()).orElseThrow();
         Overtime overtime = new Overtime(entity);
         overtime.setEmployee(employee);
         overtime.setAssignment(assignment);

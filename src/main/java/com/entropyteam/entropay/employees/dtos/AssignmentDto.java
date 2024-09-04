@@ -34,6 +34,7 @@ public record AssignmentDto(UUID id,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime modifiedAt,
                             String endReason
+
 ) {
 
 
