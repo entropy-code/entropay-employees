@@ -5,6 +5,7 @@ on:
     branches:
       - develop
     types: [closed]
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
