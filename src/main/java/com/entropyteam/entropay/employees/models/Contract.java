@@ -12,17 +12,19 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 
 @Entity(name = "Contract")
 @Table(name = "contract")
+@Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
 public class Contract extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -52,6 +54,7 @@ public class Contract extends BaseEntity {
     private ContractType contractType;
     @Column
     private boolean active;
+    @NotAudited
     @OneToMany(mappedBy="contract")
     private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
     @ManyToOne(fetch = FetchType.LAZY)

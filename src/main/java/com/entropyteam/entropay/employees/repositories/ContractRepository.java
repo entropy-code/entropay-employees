@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Contract;
 
-public interface ContractRepository extends BaseRepository<Contract, UUID> {
+public interface ContractRepository extends BaseRepository<Contract, UUID>, RevisionRepository<Contract, UUID, Long> {
 
     List<Contract> findAllByEmployeeIdAndDeletedIsFalse(UUID employeeId);
 
