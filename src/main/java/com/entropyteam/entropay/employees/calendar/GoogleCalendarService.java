@@ -89,7 +89,8 @@ public class GoogleCalendarService implements CalendarService {
 
     @Override
     public void deleteLeaveEvent(String leaveId) {
-        deleteGoogleCalendarEvent(leaveId);
+        String eventId = getLeaveEventId(leaveId);
+        deleteGoogleCalendarEvent(eventId);
     }
 
     private static Event buildBirthdayEvent(String employeeId, String firstName, String lastName, LocalDate birthDate) {
