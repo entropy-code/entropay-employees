@@ -1,7 +1,12 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +83,13 @@ public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
         overtime.setAssignment(assignment);
 
         return overtime;
+    }
+
+    @Override
+    public Map<String, List<String>> getRelatedColumnsForSearch() {
+        Map<String, List<String>> relatedColumns = new HashMap<>();
+        relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
+        return relatedColumns;
     }
 
 }
