@@ -1,0 +1,1 @@
+ALTER TABLE public.overtime ALTER COLUMN description TYPE varchar(1000)
