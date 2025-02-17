@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -33,15 +32,13 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = "
                     + ":clientId AND a.deleted = false "
-                    +
-                    " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
 
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id IN "
                     + ":clientIds AND a.deleted = false "
-                    +
-                    " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
