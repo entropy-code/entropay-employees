@@ -2,6 +2,9 @@ name: Deploy to dev
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -19,7 +22,12 @@ permissions:
 
 jobs:
   tag:
-    if:  ${{ !startsWith(github.head_ref, 'next-version') && github.event.pull_request.merged == true }}
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && 
+       !startsWith(github.head_ref, 'next-version') && 
+       github.event.pull_request.merged == true)
     name: Tag
     runs-on: ubuntu-latest
     environment: development
