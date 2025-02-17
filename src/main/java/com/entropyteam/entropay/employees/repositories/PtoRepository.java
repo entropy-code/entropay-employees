@@ -33,4 +33,14 @@ public interface PtoRepository extends BaseRepository<Pto, UUID> {
     @Query(value = "SELECT DISTINCT EXTRACT(YEAR FROM start_date) AS year FROM pto WHERE deleted=false "
             + " ORDER BY year ASC", nativeQuery = true)
     List<Integer> getPtosYears();
+
+    @Query(value = """
+            FROM Pto p
+            JOIN FETCH p.employee e
+            JOIN FETCH p.leaveType lt
+            WHERE (p.startDate <= :endDate and p.endDate >= :startDate)
+                AND p.status = 'APPROVED'
+                AND p.deleted = FALSE
+            """)
+    List<Pto> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
 }
