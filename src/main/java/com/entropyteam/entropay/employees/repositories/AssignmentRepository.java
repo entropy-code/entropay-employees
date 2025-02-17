@@ -30,13 +30,31 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                           AND a2.deleted = FALSE)""", nativeQuery = true)
     List<Assignment> findAllAssignmentsToActivateInDate(@Param("date") LocalDate date);
 
-    @Query(value = "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = :clientId AND a.deleted = false " +
-            " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+    @Query(value =
+            "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = "
+                    + ":clientId AND a.deleted = false "
+                    +
+                    " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
 
-    @Query(value = "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id IN :clientIds AND a.deleted = false " +
-            " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+    @Query(value =
+            "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id IN "
+                    + ":clientIds AND a.deleted = false "
+                    +
+                    " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
+
+    @Query(value = """
+            FROM Assignment a
+            JOIN FETCH a.employee e
+            JOIN FETCH e.country co
+            JOIN FETCH a.project p
+            JOIN FETCH p.client c
+            WHERE a.startDate <= :endDate
+                AND (a.endDate IS NULL OR a.endDate between :startDate and :endDate)
+                AND a.deleted = FALSE
+                AND e.active = TRUE""")
+    List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
 }

@@ -6,6 +6,8 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -159,5 +161,23 @@ public class Assignment extends BaseEntity {
 
     public void setEndReason(String endReason) {
         this.endReason = endReason;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("hoursPerMonth", hoursPerMonth)
+                .append("project", project)
+                .append("role", role)
+                .append("seniority", seniority)
+                .append("employee", employee)
+                .append("startDate", startDate)
+                .append("endDate", endDate)
+                .append("labourHours", labourHours)
+                .append("billableRate", billableRate)
+                .append("currency", currency)
+                .append("active", active)
+                .append("endReason", endReason)
+                .toString();
     }
 }

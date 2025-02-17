@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
+import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
+import com.entropyteam.entropay.employees.services.BillingService;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
@@ -31,9 +33,11 @@ import com.entropyteam.entropay.employees.services.ReportService;
 public class ReportController {
 
     private final ReportService reportService;
+    private final BillingService billingService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService, BillingService billingService) {
         this.reportService = reportService;
+        this.billingService = billingService;
     }
 
     @GetMapping("/employees")
@@ -50,8 +54,8 @@ public class ReportController {
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR, ROLE_DEVELOPMENT})
     @Transactional
     public ResponseEntity<List<PtoReportDetailDto>> getPtosReportDetail(ReactAdminParams params) {
-      Page<PtoReportDetailDto> response = reportService.getPtoReportDetail(params);
-       return ResponseEntity.ok()
+        Page<PtoReportDetailDto> response = reportService.getPtoReportDetail(params);
+        return ResponseEntity.ok()
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());
     }
@@ -94,5 +98,16 @@ public class ReportController {
         return ResponseEntity.ok()
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
                 .body(response.getContent());
+    }
+
+
+    @GetMapping("/billing")
+    @Secured({ROLE_ADMIN})
+    @Transactional
+    public ResponseEntity<List<BillingDto>> getBillingReport(ReactAdminParams params) {
+        List<BillingDto> billingReport = billingService.generateBilling(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(billingReport.size()))
+                .body(billingReport);
     }
 }
