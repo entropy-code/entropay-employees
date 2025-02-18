@@ -50,8 +50,11 @@ public class EmailLeakCheckService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final NotificationService notificationService;
 
-    private final String leakCheckApiKey;
-    private final String leakCheckApiUrl;
+    @Value("${leakcheck.api.key}")
+    private String leakCheckApiKey;
+
+    @Value("${leakcheck.api.url}")
+    private String leakCheckApiUrl;
 
     public EmailLeakCheckService(EmployeeRepository employeeRepository,
             EmailLeakHistoryRepository emailLeakHistoryRepository,
@@ -64,6 +67,7 @@ public class EmailLeakCheckService {
         this.emailLeakHistoryRepository = emailLeakHistoryRepository;
         this.emailVulnerabilityRepository = emailVulnerabilityRepository;
         this.restTemplate = restTemplate;
+
         this.notificationService = notificationService;
         this.leakCheckApiUrl = leakCheckApiUrl;
         this.leakCheckApiKey = leakCheckApiKey;
