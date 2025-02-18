@@ -7,6 +7,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.security.models.EmailLeakHistory;
+import com.entropyteam.entropay.security.models.EmailVulnerability;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -71,6 +73,12 @@ public class Employee extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
     private Set<Children> children = new HashSet<>();
+
+    // @OneToMany(mappedBy = "employee")
+    // private Set<EmailVulnerability> vulnerabilities = new HashSet<>();
+    //
+    // @OneToMany(mappedBy = "employee")
+    // private Set<EmailLeakHistory> emailLeakHistory = new HashSet<>();
 
 
     public Employee() {
@@ -304,6 +312,7 @@ public class Employee extends BaseEntity {
         this.children = children;
     }
 
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
@@ -312,4 +321,21 @@ public class Employee extends BaseEntity {
                 .append("lastName", lastName)
                 .toString();
     }
+
+    // public Set<EmailVulnerability> getVulnerabilities() {
+    //     return vulnerabilities;
+    // }
+    //
+    // public void setVulnerabilities(Set<EmailVulnerability> vulnerabilities) {
+    //     this.vulnerabilities = vulnerabilities;
+    // }
+    //
+    // public Set<EmailLeakHistory> getEmailLeakHistory() {
+    //     return emailLeakHistory;
+    // }
+    //
+    // public void setEmailLeakHistory(Set<EmailLeakHistory> emailLeakHistory) {
+    //     this.emailLeakHistory = emailLeakHistory;
+    // }
+
 }
