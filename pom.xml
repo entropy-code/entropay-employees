@@ -11,7 +11,7 @@
 
     <groupId>com.entropyteam.entropay</groupId>
     <artifactId>entropay-employees</artifactId>
-    <version>1.1.32-SNAPSHOT</version>
+    <version>1.1.38-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>entropay-employees</name>
     <description>Entropay Employees API</description>
@@ -19,12 +19,12 @@
     <properties>
         <apache-commons.version>3.17.0</apache-commons.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
-        <google-auth.version>1.30.1</google-auth.version>
+        <google-auth.version>1.32.1</google-auth.version>
         <google-services-calendar.version>v3-rev20250115-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
         <java.version>21</java.version>
-        <postgresql.version>42.7.4</postgresql.version>
-        <software-amazon-sdk.version>2.29.50</software-amazon-sdk.version>
+        <postgresql.version>42.7.5</postgresql.version>
+        <software-amazon-sdk.version>2.30.21</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
