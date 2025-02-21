@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.security.models.EmailLeakHistory;
+import com.entropyteam.entropay.security.models.EmailVulnerability;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -69,6 +71,12 @@ public class Employee extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
     private Set<Children> children = new HashSet<>();
+
+    // @OneToMany(mappedBy = "employee")
+    // private Set<EmailVulnerability> vulnerabilities = new HashSet<>();
+    //
+    // @OneToMany(mappedBy = "employee")
+    // private Set<EmailLeakHistory> emailLeakHistory = new HashSet<>();
 
 
     public Employee() {
@@ -301,4 +309,20 @@ public class Employee extends BaseEntity {
     public void setChildren(Set<Children> children) {
         this.children = children;
     }
+
+    // public Set<EmailVulnerability> getVulnerabilities() {
+    //     return vulnerabilities;
+    // }
+    //
+    // public void setVulnerabilities(Set<EmailVulnerability> vulnerabilities) {
+    //     this.vulnerabilities = vulnerabilities;
+    // }
+    //
+    // public Set<EmailLeakHistory> getEmailLeakHistory() {
+    //     return emailLeakHistory;
+    // }
+    //
+    // public void setEmailLeakHistory(Set<EmailLeakHistory> emailLeakHistory) {
+    //     this.emailLeakHistory = emailLeakHistory;
+    // }
 }
