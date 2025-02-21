@@ -14,6 +14,7 @@ import com.entropyteam.entropay.security.models.EmailVulnerability;
 import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
 import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -171,4 +172,32 @@ class EmailLeakCheckServiceTest {
         verify(emailVulnerabilityRepository, never()).save(any(EmailVulnerability.class));
         assertEquals(0, newLeaks);
     }
+
+    @Test
+    void shouldReturnTrueForValidEmails() {
+        Assertions.assertTrue(emailLeakCheckService.isValidEmail("juan.perez@example.com"));
+        Assertions.assertTrue(emailLeakCheckService.isValidEmail("test@domain.co"));
+        Assertions.assertTrue(emailLeakCheckService.isValidEmail("user123@sub.domain.com"));
+        Assertions.assertTrue(emailLeakCheckService.isValidEmail("u.ser+alias@mail.org"));
+    }
+
+    @Test
+    void shouldReturnFalseForInvalidEmails() {
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan.perez@"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("@example.com"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan.perezexample.com"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan@@example.com"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan@.com"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan @ test.com"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan@domain.c"));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("juan@domain."));
+    }
+
+    @Test
+    void shouldReturnFalseForNullOrBlank() {
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail(null));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail(""));
+        Assertions.assertFalse(emailLeakCheckService.isValidEmail("   "));
+    }
+
 }

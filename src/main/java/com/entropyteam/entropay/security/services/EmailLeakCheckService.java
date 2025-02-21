@@ -8,6 +8,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,10 +51,10 @@ public class EmailLeakCheckService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final NotificationService notificationService;
 
-    @Value("${leakcheck.api.key}")
+    @Value("${leakcheck.api.key:DEFAULT_KEY}")
     private String leakCheckApiKey;
 
-    @Value("${leakcheck.api.url}")
+    @Value("${leakcheck.api.url:DEFAULT_URL}")
     private String leakCheckApiUrl;
 
     public EmailLeakCheckService(EmployeeRepository employeeRepository,
@@ -61,8 +62,8 @@ public class EmailLeakCheckService {
             EmailVulnerabilityRepository emailVulnerabilityRepository,
             NotificationService notificationService,
             RestTemplate restTemplate,
-            @Value("${leakcheck.api.url}") String leakCheckApiUrl,
-            @Value("${leakcheck.api.key}") String leakCheckApiKey) {
+            @Value("${leakcheck.api.url:DEFAULT_KEY}") String leakCheckApiUrl,
+            @Value("${leakcheck.api.key:DEFAULT_URL}") String leakCheckApiKey) {
         this.employeeRepository = employeeRepository;
         this.emailLeakHistoryRepository = emailLeakHistoryRepository;
         this.emailVulnerabilityRepository = emailVulnerabilityRepository;
@@ -91,18 +92,39 @@ public class EmailLeakCheckService {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-
+                Thread.currentThread().interrupt();
             }
-            LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), employee.getLabourEmail());
-            int newLabourLeaks = processEmailLeak(employee, employee.getLabourEmail(), vulnerabilityStats);
 
-            LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), employee.getPersonalEmail());
-            int newPersonalLeaks = processEmailLeak(employee, employee.getPersonalEmail(), vulnerabilityStats);
+            int newLabourLeaks = 0;
+            int newPersonalLeaks = 0;
 
+            // Labour email
+            String labourEmail = employee.getLabourEmail();
+            if (isValidEmail(labourEmail)) {
+                LOGGER.info("Checking email leaks for employee: {}, email: {}",
+                        employee.getFullName(), obfuscateEmail(labourEmail));
+                newLabourLeaks = processEmailLeak(employee, labourEmail, vulnerabilityStats);
+            } else {
+                LOGGER.warn("Invalid or null labour email for employee: {} -> {}",
+                        employee.getFullName(), labourEmail);
+            }
+
+            // Personal email
+            String personalEmail = employee.getPersonalEmail();
+            if (isValidEmail(personalEmail)) {
+                LOGGER.info("Checking email leaks for employee: {}, email: {}",
+                        employee.getFullName(), obfuscateEmail(personalEmail));
+                newPersonalLeaks = processEmailLeak(employee, personalEmail, vulnerabilityStats);
+            } else {
+                LOGGER.warn("Invalid or null personal email for employee: {} -> {}",
+                        employee.getFullName(), personalEmail);
+            }
+
+            // Notify
             if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
                 notifyEmployeeLeaks(employee, newLabourLeaks, newPersonalLeaks);
             } else {
-                LOGGER.info("No new vulnerabilities found for employee: {}", employee.getLabourEmail());
+                LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
             }
         });
 
@@ -116,11 +138,13 @@ public class EmailLeakCheckService {
                 .append("*Total New Vulnerabilities:* ").append(newLabourLeaks + newPersonalLeaks).append("\n");
 
         if (newLabourLeaks > 0) {
-            notificationMessage.append("📧 *Labour Email Affected:* ").append(employee.getLabourEmail())
+            notificationMessage.append("📧 *Labour Email Affected:* ")
+                    .append(obfuscateEmail(employee.getLabourEmail()))
                     .append(" | *New Vulnerabilities:* ").append(newLabourLeaks).append("\n");
         }
         if (newPersonalLeaks > 0) {
-            notificationMessage.append("🏠 *Personal Email Affected:* ").append(employee.getPersonalEmail())
+            notificationMessage.append("🏠 *Personal Email Affected:* ")
+                    .append(obfuscateEmail(employee.getPersonalEmail()))
                     .append(" | *New Vulnerabilities:* ").append(newPersonalLeaks).append("\n");
         }
 
@@ -136,11 +160,7 @@ public class EmailLeakCheckService {
     }
 
     private int processEmailLeak(Employee employee, String email, Map<LeakType, Integer> vulnerabilityStats) {
-        if (StringUtils.isBlank(email)) {
-            return 0;
-        }
-
-        LOGGER.info("Checking leaks for email: {}", email);
+        LOGGER.info("Checking leaks for email: {}", obfuscateEmail(email));
 
         HttpEntity<String> entity = new HttpEntity<>(createHeaders());
         String url = leakCheckApiUrl + "/query/" + email;
@@ -259,7 +279,8 @@ public class EmailLeakCheckService {
             finalMessage = statsMessage.toString();
             finalStatus = SlackAlertStatus.WARNING;
         } else {
-            finalMessage = String.format(" *Email Leak Check Completed Successfully* \nTotal Employees Checked: %d\nNo new vulnerabilities found.",
+            finalMessage = String.format(" *Email Leak Check Completed Successfully* " +
+                            "\nTotal Employees Checked: %d\nNo new vulnerabilities found.",
                     totalChecked);
             finalStatus = SlackAlertStatus.SUCCESS;
         }
@@ -344,11 +365,48 @@ public class EmailLeakCheckService {
         }
     }
 
-    public static LocalDate parseBreachDate(String breachDate) {
+    private LocalDate parseBreachDate(String breachDate) {
         if (StringUtils.isBlank(breachDate)) {
             return null;
         }
         return LocalDate.parse(breachDate + "-01", FORMATTER);
     }
+
+    public String obfuscateEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return email;
+        }
+
+        String[] parts = email.split("@");
+        String local = parts[0];
+        String domain = parts[1];
+
+        if (local.length() > 2) {
+            local = local.charAt(0) + "****" + local.charAt(local.length() - 1);
+        } else {
+            local = local.charAt(0) + "*";
+        }
+
+        String[] domainParts = domain.split("\\.");
+        String domainName = domainParts[0];
+        String tld = domainParts.length > 1 ? domainParts[1] : "";
+
+        if (domainName.length() > 1) {
+            domainName = domainName.charAt(0) + "******";
+        }
+
+        return local + "@" + domainName + (tld.isEmpty() ? "" : "." + tld);
+    }
+
+    public boolean isValidEmail(String email) {
+        if (StringUtils.isBlank(email)) {
+            return false;
+        }
+
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return Pattern.compile(emailRegex).matcher(email).matches();
+    }
+
+
 
 }

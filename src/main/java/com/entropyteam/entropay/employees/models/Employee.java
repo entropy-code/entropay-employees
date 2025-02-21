@@ -74,13 +74,6 @@ public class Employee extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
     private Set<Children> children = new HashSet<>();
 
-    // @OneToMany(mappedBy = "employee")
-    // private Set<EmailVulnerability> vulnerabilities = new HashSet<>();
-    //
-    // @OneToMany(mappedBy = "employee")
-    // private Set<EmailLeakHistory> emailLeakHistory = new HashSet<>();
-
-
     public Employee() {
     }
 
@@ -322,21 +315,5 @@ public class Employee extends BaseEntity {
                 .append("lastName", lastName)
                 .toString();
     }
-
-    // public Set<EmailVulnerability> getVulnerabilities() {
-    //     return vulnerabilities;
-    // }
-    //
-    // public void setVulnerabilities(Set<EmailVulnerability> vulnerabilities) {
-    //     this.vulnerabilities = vulnerabilities;
-    // }
-    //
-    // public Set<EmailLeakHistory> getEmailLeakHistory() {
-    //     return emailLeakHistory;
-    // }
-    //
-    // public void setEmailLeakHistory(Set<EmailLeakHistory> emailLeakHistory) {
-    //     this.emailLeakHistory = emailLeakHistory;
-    // }
 
 }
