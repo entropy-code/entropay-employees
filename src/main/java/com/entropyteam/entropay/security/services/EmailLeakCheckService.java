@@ -3,6 +3,7 @@ package com.entropyteam.entropay.security.services;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -78,45 +79,48 @@ public class EmailLeakCheckService {
         ));
 
         List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
-
         Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
-        int totalChecked = 0;
 
-        for (Employee employee : employees) {
+        employees.forEach(employee -> {
             LOGGER.info("Checking email leaks for employee: {}", employee.getLabourEmail());
 
             int newLabourLeaks = processEmailLeak(employee, employee.getLabourEmail(), vulnerabilityStats);
             int newPersonalLeaks = processEmailLeak(employee, employee.getPersonalEmail(), vulnerabilityStats);
-            int totalNewLeaks = newLabourLeaks + newPersonalLeaks;
 
-            if (totalNewLeaks > 0) {
-                StringBuilder notificationMessage = new StringBuilder()
-                        .append("*New Leaks Found!*\n")
-                        .append("👤 *User:* ").append(employee.getFullName()).append("\n")
-                        .append("*Total New Vulnerabilities:* ").append(totalNewLeaks).append("\n");
-
-                if (newLabourLeaks > 0) {
-                    notificationMessage.append("📧 *Labour Email Affected:* ").append(employee.getLabourEmail())
-                            .append(" | *New Vulnerabilities:* ").append(newLabourLeaks).append("\n");
-                }
-                if (newPersonalLeaks > 0) {
-                    notificationMessage.append("🏠 *Personal Email Affected:* ").append(employee.getPersonalEmail())
-                            .append(" | *New Vulnerabilities:* ").append(newPersonalLeaks).append("\n");
-                }
-
-                notificationService.sendSlackNotification(new AlertMessageDto(
-                        EMAIL_LEAK_CHECKER,
-                        notificationMessage.toString(),
-                        SlackAlertStatus.WARNING
-                ));
+            if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
+                notifyEmployeeLeaks(employee, newLabourLeaks, newPersonalLeaks);
             } else {
                 LOGGER.info("No new vulnerabilities found for employee: {}", employee.getLabourEmail());
             }
+        });
 
-            totalChecked++;
+        sendFinalReport(employees.size(), vulnerabilityStats);
+    }
+
+    private void notifyEmployeeLeaks(Employee employee, int newLabourLeaks, int newPersonalLeaks) {
+        StringBuilder notificationMessage = new StringBuilder()
+                .append("*New Leaks Found!*\n")
+                .append("👤 *User:* ").append(employee.getFullName()).append("\n")
+                .append("*Total New Vulnerabilities:* ").append(newLabourLeaks + newPersonalLeaks).append("\n");
+
+        if (newLabourLeaks > 0) {
+            notificationMessage.append("📧 *Labour Email Affected:* ").append(employee.getLabourEmail())
+                    .append(" | *New Vulnerabilities:* ").append(newLabourLeaks).append("\n");
+        }
+        if (newPersonalLeaks > 0) {
+            notificationMessage.append("🏠 *Personal Email Affected:* ").append(employee.getPersonalEmail())
+                    .append(" | *New Vulnerabilities:* ").append(newPersonalLeaks).append("\n");
         }
 
-        sendFinalReport(totalChecked, vulnerabilityStats);
+        notificationService.sendSlackNotification(new AlertMessageDto(
+                EMAIL_LEAK_CHECKER,
+                notificationMessage.toString(),
+                SlackAlertStatus.WARNING
+        ));
+    }
+
+    private boolean hasNewLeaks(int newLabourLeaks, int newPersonalLeaks) {
+        return newLabourLeaks > 0 || newPersonalLeaks > 0;
     }
 
     private int processEmailLeak(Employee employee, String email, Map<LeakType, Integer> vulnerabilityStats) {
@@ -126,28 +130,42 @@ public class EmailLeakCheckService {
 
         LOGGER.info("Checking leaks for email: {}", email);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-API-Key", leakCheckApiKey);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
+        HttpEntity<String> entity = new HttpEntity<>(createHeaders());
         String url = leakCheckApiUrl + "/query/" + email;
+
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
+        saveEmailLeakHistory(employee, email, response.getBody());
+
+        return handleApiResponse(employee, email, response, vulnerabilityStats);
+    }
+
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-API-Key", leakCheckApiKey);
+        return headers;
+    }
+
+    private void saveEmailLeakHistory(Employee employee, String email, String apiResponse) {
         EmailLeakHistory history = new EmailLeakHistory();
         history.setEmail(email);
         history.setEmployee(employee);
         history.setCreatedAt(LocalDateTime.now());
         history.setModifiedAt(LocalDateTime.now());
-        history.setApiResponse(response.getBody());
+        history.setApiResponse(apiResponse);
         emailLeakHistoryRepository.save(history);
+    }
 
+    private int handleApiResponse(Employee employee, String email, ResponseEntity<String> response,
+            Map<LeakType, Integer> vulnerabilityStats) {
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             return processLeakResponse(employee, email, response.getBody(), vulnerabilityStats);
-        } else {
-            LOGGER.error("Failed to check email: {}", email);
-            return 0;
         }
+
+        LOGGER.error("Failed to check email: {}", email);
+        return 0;
     }
+
     private int processLeakResponse(Employee employee, String email, String responseBody, Map<LeakType, Integer> vulnerabilityStats) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -211,7 +229,12 @@ public class EmailLeakCheckService {
                     .append("Total Employees Checked: ").append(totalChecked).append("\n");
 
             vulnerabilityStats.forEach((type, count) ->
-                    statsMessage.append(SlackAlertStatus.WARNING.getSlackEmoji()).append(" ").append(type.name()).append(": ").append(count).append("\n")
+                    statsMessage.append(SlackAlertStatus.WARNING.
+                            getSlackEmoji())
+                            .append(" ")
+                            .append(type.name())
+                            .append(": ")
+                            .append(count).append("\n")
             );
 
             finalMessage = statsMessage.toString();
@@ -227,64 +250,59 @@ public class EmailLeakCheckService {
     }
 
     private String generateLeakKey(EmailVulnerability vulnerability) {
-        switch (vulnerability.getLeakType()) {
-            case STEALER_LOGS_LEAK:
-                return String.join("-",
-                        vulnerability.getEmail(),
-                        vulnerability.getSourceName(),
-                        Optional.ofNullable(vulnerability.getPassword()).orElse(""),
-                        Optional.ofNullable(vulnerability.getOrigin()).orElse("")
-                );
+        return switch (vulnerability.getLeakType()) {
+            case STEALER_LOGS_LEAK -> buildKey(
+                    vulnerability.getEmail(),
+                    vulnerability.getSourceName(),
+                    vulnerability.getPassword(),
+                    vulnerability.getOrigin()
+            );
 
-            case SITE_LEAK:
-                return String.join("-",
-                        vulnerability.getEmail(),
-                        vulnerability.getSourceName(),
-                        Optional.ofNullable(vulnerability.getBreachDate())
-                                .map(LocalDate::toString)
-                                .orElse("")
-                );
+            case SITE_LEAK -> buildKey(
+                    vulnerability.getEmail(),
+                    vulnerability.getSourceName(),
+                    vulnerability.getBreachDate() != null ? vulnerability.getBreachDate().toString() : ""
+            );
 
-            case UNKNOWN_LEAK:
-                return String.join("-",
-                        vulnerability.getEmail(),
-                        vulnerability.getSourceName(),
-                        Optional.ofNullable(vulnerability.getPassword()).orElse("")
-                );
+            case UNKNOWN_LEAK -> buildKey(
+                    vulnerability.getEmail(),
+                    vulnerability.getSourceName(),
+                    vulnerability.getPassword()
+            );
 
-            default:
-                throw new IllegalArgumentException("Unrecognized LeakType: " + vulnerability.getLeakType());
-        }
+            default -> throw new IllegalArgumentException("Unrecognized LeakType: " + vulnerability.getLeakType());
+        };
     }
 
-
     private String generateLeakKey(LeakDto leak, LeakType leakType) {
-        switch (leakType) {
-            case STEALER_LOGS_LEAK:
-                return String.join("-",
-                        leak.getEmail(),
-                        leak.getSource().getName(),
-                        Optional.ofNullable(leak.getPassword()).orElse(""),
-                        String.join(", ", Optional.ofNullable(leak.getOrigin()).orElse(Collections.emptyList()))
-                );
+        return switch (leakType) {
+            case STEALER_LOGS_LEAK -> buildKey(
+                    leak.getEmail(),
+                    leak.getSource().getName(),
+                    leak.getPassword(),
+                    String.join(", ", Optional.ofNullable(leak.getOrigin()).orElse(Collections.emptyList()))
+            );
 
-            case SITE_LEAK:
-                return String.join("-",
-                        leak.getEmail(),
-                        leak.getSource().getName(),
-                        StringUtils.isNotBlank(leak.getSource().getBreachDate())
-                                ? leak.getSource().getBreachDate() + "-01" : "");
+            case SITE_LEAK -> buildKey(
+                    leak.getEmail(),
+                    leak.getSource().getName(),
+                    StringUtils.isNotBlank(leak.getSource().getBreachDate()) ? leak.getSource().getBreachDate() + "-01" : ""
+            );
 
-            case UNKNOWN_LEAK:
-                return String.join("-",
-                        leak.getEmail(),
-                        leak.getSource().getName(),
-                        Optional.ofNullable(leak.getPassword()).orElse("")
-                );
+            case UNKNOWN_LEAK -> buildKey(
+                    leak.getEmail(),
+                    leak.getSource().getName(),
+                    leak.getPassword()
+            );
 
-            default:
-                throw new IllegalArgumentException("Unrecognized LeakType: " + leakType);
-        }
+            default -> throw new IllegalArgumentException("Unrecognized LeakType: " + leakType);
+        };
+    }
+
+    private String buildKey(String... values) {
+        return Arrays.stream(values)
+                .map(v -> v == null ? "" : v)
+                .collect(Collectors.joining("-"));
     }
 
     private LeakType determineLeakType(LeakDto leak) {
