@@ -36,6 +36,7 @@ import com.entropyteam.entropay.security.models.EmailVulnerability;
 import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
 import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 
 @Service
 public class EmailLeakCheckService {
@@ -50,22 +51,23 @@ public class EmailLeakCheckService {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final NotificationService notificationService;
 
-    @Value("${leakcheck.api.key}")
-    private String leakCheckApiKey;
-
-    @Value("${leakcheck.api.url}")
-    private String leakCheckApiUrl;
+    private final String leakCheckApiKey;
+    private final String leakCheckApiUrl;
 
     public EmailLeakCheckService(EmployeeRepository employeeRepository,
             EmailLeakHistoryRepository emailLeakHistoryRepository,
             EmailVulnerabilityRepository emailVulnerabilityRepository,
             NotificationService notificationService,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate,
+            @Value("${leakcheck.api.url}") String leakCheckApiUrl,
+            @Value("${leakcheck.api.key}") String leakCheckApiKey) {
         this.employeeRepository = employeeRepository;
         this.emailLeakHistoryRepository = emailLeakHistoryRepository;
         this.emailVulnerabilityRepository = emailVulnerabilityRepository;
         this.restTemplate = restTemplate;
         this.notificationService = notificationService;
+        this.leakCheckApiUrl = leakCheckApiUrl;
+        this.leakCheckApiKey = leakCheckApiKey;
     }
 
     @Scheduled(cron = "0 30 9 * * ?")
@@ -82,9 +84,10 @@ public class EmailLeakCheckService {
         Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
 
         employees.forEach(employee -> {
-            LOGGER.info("Checking email leaks for employee: {}", employee.getLabourEmail());
-
+            LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), employee.getLabourEmail());
             int newLabourLeaks = processEmailLeak(employee, employee.getLabourEmail(), vulnerabilityStats);
+
+            LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), employee.getPersonalEmail());
             int newPersonalLeaks = processEmailLeak(employee, employee.getPersonalEmail(), vulnerabilityStats);
 
             if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
@@ -166,7 +169,8 @@ public class EmailLeakCheckService {
         return 0;
     }
 
-    private int processLeakResponse(Employee employee, String email, String responseBody, Map<LeakType, Integer> vulnerabilityStats) {
+    int processLeakResponse(Employee employee, String email, String responseBody,
+            Map<LeakType, Integer> vulnerabilityStats) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             LeakResponseDto leakResponse = objectMapper.readValue(responseBody, LeakResponseDto.class);
@@ -179,8 +183,8 @@ public class EmailLeakCheckService {
 
             int newLeaks = 0;
 
-            if (leakResponse.isSuccess() && leakResponse.getResult() != null) {
-                for (LeakDto leak : leakResponse.getResult()) {
+            if (leakResponse.success() && leakResponse.result() != null) {
+                for (LeakDto leak : leakResponse.result()) {
                     LeakType leakType = determineLeakType(leak);
                     String key = generateLeakKey(leak, leakType);
 
@@ -202,18 +206,18 @@ public class EmailLeakCheckService {
         EmailVulnerability vulnerability = new EmailVulnerability();
         vulnerability.setEmployee(employee);
         vulnerability.setEmail(email);
-        vulnerability.setSourceName(leak.getSource().getName());
+        vulnerability.setSourceName(leak.source().name());
         vulnerability.setDetectedAt(LocalDateTime.now());
         vulnerability.setStatus(VulnerabilityStatus.DETECTED);
         vulnerability.setLeakType(leakType);
 
         if (leakType == LeakType.STEALER_LOGS_LEAK) {
-            vulnerability.setPassword(leak.getPassword());
-            vulnerability.setOrigin(String.join(", ", leak.getOrigin()));
+            vulnerability.setPassword(leak.password());
+            vulnerability.setOrigin(String.join(", ", leak.origin()));
         } else if (leakType == LeakType.SITE_LEAK) {
-            vulnerability.setBreachDate(parseBreachDate(leak.getSource().getBreachDate()));
+            vulnerability.setBreachDate(parseBreachDate(leak.source().breachDate()));
         } else if (leakType == LeakType.UNKNOWN_LEAK) {
-            vulnerability.setPassword(leak.getPassword());
+            vulnerability.setPassword(leak.password());
         }
 
         emailVulnerabilityRepository.save(vulnerability);
@@ -277,22 +281,22 @@ public class EmailLeakCheckService {
     private String generateLeakKey(LeakDto leak, LeakType leakType) {
         return switch (leakType) {
             case STEALER_LOGS_LEAK -> buildKey(
-                    leak.getEmail(),
-                    leak.getSource().getName(),
-                    leak.getPassword(),
-                    String.join(", ", Optional.ofNullable(leak.getOrigin()).orElse(Collections.emptyList()))
+                    leak.email(),
+                    leak.source().name(),
+                    leak.password(),
+                    String.join(", ", Optional.ofNullable(leak.origin()).orElse(Collections.emptyList()))
             );
 
             case SITE_LEAK -> buildKey(
-                    leak.getEmail(),
-                    leak.getSource().getName(),
-                    StringUtils.isNotBlank(leak.getSource().getBreachDate()) ? leak.getSource().getBreachDate() + "-01" : ""
+                    leak.email(),
+                    leak.source().name(),
+                    StringUtils.isNotBlank(leak.source().breachDate()) ? leak.source().breachDate() + "-01" : ""
             );
 
             case UNKNOWN_LEAK -> buildKey(
-                    leak.getEmail(),
-                    leak.getSource().getName(),
-                    leak.getPassword()
+                    leak.email(),
+                    leak.source().name(),
+                    leak.password()
             );
 
             default -> throw new IllegalArgumentException("Unrecognized LeakType: " + leakType);
@@ -306,11 +310,11 @@ public class EmailLeakCheckService {
     }
 
     private LeakType determineLeakType(LeakDto leak) {
-        if (STEALER_LOGS.equalsIgnoreCase(leak.getSource().getName()) &&
-                StringUtils.isNotBlank(leak.getPassword()) &&
-                CollectionUtils.isNotEmpty(leak.getOrigin())) {
+        if (STEALER_LOGS.equalsIgnoreCase(leak.source().name()) &&
+                StringUtils.isNotBlank(leak.password()) &&
+                CollectionUtils.isNotEmpty(leak.origin())) {
             return LeakType.STEALER_LOGS_LEAK;
-        } else if (StringUtils.isNotBlank(leak.getSource().getBreachDate())) {
+        } else if (StringUtils.isNotBlank(leak.source().breachDate())) {
             return LeakType.SITE_LEAK;
         } else {
             return LeakType.UNKNOWN_LEAK;
