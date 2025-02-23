@@ -36,7 +36,6 @@ public class EmployeeJob {
                 .forEach(employee -> {
                     calendarService.createBirthdayEvent(employee.getId().toString(), employee.getFirstName(),
                             employee.getLastName(), employee.getBirthDate());
-                    LOGGER.info("Adding birthday for employee {}", employee.getId());
                 });
     }
 }
