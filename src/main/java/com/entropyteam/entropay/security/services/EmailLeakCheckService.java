@@ -3,7 +3,6 @@ package com.entropyteam.entropay.security.services;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -36,7 +35,6 @@ import com.entropyteam.entropay.security.models.EmailVulnerability;
 import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
 import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 
 @Service
 public class EmailLeakCheckService {
@@ -211,13 +209,19 @@ public class EmailLeakCheckService {
         vulnerability.setStatus(VulnerabilityStatus.DETECTED);
         vulnerability.setLeakType(leakType);
 
+        String password = leak.password();
+        vulnerability.setPassword(password);
+
         if (leakType == LeakType.STEALER_LOGS_LEAK) {
-            vulnerability.setPassword(leak.password());
-            vulnerability.setOrigin(String.join(", ", leak.origin()));
-        } else if (leakType == LeakType.SITE_LEAK) {
-            vulnerability.setBreachDate(parseBreachDate(leak.source().breachDate()));
-        } else if (leakType == LeakType.UNKNOWN_LEAK) {
-            vulnerability.setPassword(leak.password());
+            String origin = Optional.ofNullable(leak.origin())
+                    .map(o -> String.join(", ", o))
+                    .orElse("");
+            vulnerability.setOrigin(origin);
+        }
+
+        if (leakType == LeakType.SITE_LEAK) {
+            LocalDate breachDate = parseBreachDate(leak.source().breachDate());
+            vulnerability.setBreachDate(breachDate);
         }
 
         emailVulnerabilityRepository.save(vulnerability);
@@ -254,57 +258,65 @@ public class EmailLeakCheckService {
     }
 
     private String generateLeakKey(EmailVulnerability vulnerability) {
-        return switch (vulnerability.getLeakType()) {
-            case STEALER_LOGS_LEAK -> buildKey(
+        List<String> keyValues = switch (vulnerability.getLeakType()) {
+            case STEALER_LOGS_LEAK -> List.of(
                     vulnerability.getEmail(),
                     vulnerability.getSourceName(),
-                    vulnerability.getPassword(),
-                    vulnerability.getOrigin()
+                    Optional.ofNullable(vulnerability.getPassword()).orElse(""),
+                    Optional.ofNullable(vulnerability.getOrigin()).orElse("")
             );
 
-            case SITE_LEAK -> buildKey(
+            case SITE_LEAK -> List.of(
                     vulnerability.getEmail(),
                     vulnerability.getSourceName(),
-                    vulnerability.getBreachDate() != null ? vulnerability.getBreachDate().toString() : ""
+                    Optional.ofNullable(vulnerability.getBreachDate())
+                            .map(LocalDate::toString).orElse(""),
+                    Optional.ofNullable(vulnerability.getPassword()).orElse("")
             );
 
-            case UNKNOWN_LEAK -> buildKey(
+            case UNKNOWN_LEAK -> List.of(
                     vulnerability.getEmail(),
                     vulnerability.getSourceName(),
-                    vulnerability.getPassword()
+                    Optional.ofNullable(vulnerability.getPassword()).orElse("")
             );
 
             default -> throw new IllegalArgumentException("Unrecognized LeakType: " + vulnerability.getLeakType());
         };
+
+        return buildKey(keyValues);
     }
 
     private String generateLeakKey(LeakDto leak, LeakType leakType) {
-        return switch (leakType) {
-            case STEALER_LOGS_LEAK -> buildKey(
+        List<String> keyValues = switch (leakType) {
+            case STEALER_LOGS_LEAK -> List.of(
                     leak.email(),
                     leak.source().name(),
-                    leak.password(),
+                    Optional.ofNullable(leak.password()).orElse(""),
                     String.join(", ", Optional.ofNullable(leak.origin()).orElse(Collections.emptyList()))
             );
 
-            case SITE_LEAK -> buildKey(
+            case SITE_LEAK -> List.of(
                     leak.email(),
                     leak.source().name(),
-                    StringUtils.isNotBlank(leak.source().breachDate()) ? leak.source().breachDate() + "-01" : ""
+                    Optional.ofNullable(leak.source().breachDate()).filter(StringUtils::isNotBlank)
+                            .map(date -> date + "-01").orElse(""),
+                    Optional.ofNullable(leak.password()).orElse("")
             );
 
-            case UNKNOWN_LEAK -> buildKey(
+            case UNKNOWN_LEAK -> List.of(
                     leak.email(),
                     leak.source().name(),
-                    leak.password()
+                    Optional.ofNullable(leak.password()).orElse("")
             );
 
             default -> throw new IllegalArgumentException("Unrecognized LeakType: " + leakType);
         };
+
+        return buildKey(keyValues);
     }
 
-    private String buildKey(String... values) {
-        return Arrays.stream(values)
+    private String buildKey(List<String> values) {
+        return values.stream()
                 .map(v -> v == null ? "" : v)
                 .collect(Collectors.joining("-"));
     }
