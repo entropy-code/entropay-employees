@@ -17,13 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
-import com.entropyteam.entropay.employees.services.BillingService;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportEmployeeDto;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.SalariesReportDto;
+import com.entropyteam.entropay.employees.services.BillingService;
+import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
 import com.entropyteam.entropay.employees.services.ReportService;
 
 
@@ -105,9 +106,9 @@ public class ReportController {
     @Secured({ROLE_ADMIN})
     @Transactional
     public ResponseEntity<List<BillingDto>> getBillingReport(ReactAdminParams params) {
-        List<BillingDto> billingReport = billingService.generateBilling(params);
+        ReportDto<BillingDto> report = billingService.generateBillingReport(params);
         return ResponseEntity.ok()
-                .header(BaseController.X_TOTAL_COUNT, String.valueOf(billingReport.size()))
-                .body(billingReport);
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(report.size()))
+                .body(report.data());
     }
 }

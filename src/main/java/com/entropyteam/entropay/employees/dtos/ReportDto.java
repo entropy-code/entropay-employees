@@ -1,7 +1,8 @@
 package com.entropyteam.entropay.employees.dtos;
 
 
-public class ReportDto {
+import java.util.List;
 
+public record ReportDto<T>(List<T> data, int size) {
 
 }
