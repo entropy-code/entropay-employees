@@ -10,7 +10,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -138,7 +137,7 @@ public class ReactAdminMapper {
         return Arrays.stream(entityClass.getDeclaredFields()).anyMatch(f -> StringUtils.equals(f.getName(), field));
     }
 
-    static <T> @NotNull Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
+    static <T> Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
 
         return (object1, object2) -> {
             try {
