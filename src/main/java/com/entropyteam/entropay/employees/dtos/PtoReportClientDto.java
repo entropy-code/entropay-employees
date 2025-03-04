@@ -1,8 +1,6 @@
 package com.entropyteam.entropay.employees.dtos;
 
-import java.util.UUID;
-
-public class PtoReportClientDto extends ReportDto{
+public class PtoReportClientDto {
     private String id;
     private String clientName;
     private Double totalDays;

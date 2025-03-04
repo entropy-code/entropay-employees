@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -54,7 +56,7 @@ public class BillingService {
 
     }
 
-    public List<BillingDto> generateBilling(ReactAdminParams params) {
+    public ReportDto<BillingDto> generateBillingReport(ReactAdminParams params) {
         DateRangeDto dateRange = new DateRangeDto(sqlMapper.map(params));
         LocalDate startDate = dateRange.getStartDate();
         LocalDate endDate = dateRange.getEndDate();
@@ -79,7 +81,15 @@ public class BillingService {
             billingList.add(new BillingEntry(assignment, workingDays));
         });
 
-        return billingList.stream().map(BillingEntry::toDto).toList();
+        Range<Integer> range = params.getRangeInterval();
+
+        List<BillingDto> data = billingList.stream()
+                .map(BillingEntry::toDto)
+                .sorted(params.getComparator(BillingDto.class))
+                .toList()
+                .subList(range.getMinimum(), range.getMaximum());
+
+        return new ReportDto<>(data, billingList.size());
     }
 
     /**

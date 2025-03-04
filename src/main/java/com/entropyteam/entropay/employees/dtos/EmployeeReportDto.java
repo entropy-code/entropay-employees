@@ -1,14 +1,13 @@
 package com.entropyteam.entropay.employees.dtos;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
-
-public class EmployeeReportDto extends ReportDto {
+public class EmployeeReportDto {
     private UUID id;
     private String internalId;
     private String firstName;
