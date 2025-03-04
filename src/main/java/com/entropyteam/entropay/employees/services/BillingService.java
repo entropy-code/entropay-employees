@@ -52,7 +52,8 @@ public class BillingService {
     }
 
     public record BillingDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
-                             String clientName, String projectName, BigDecimal rate, int hours, BigDecimal total) {
+                             String clientName, String projectName, BigDecimal rate, int hours, int ptoHours,
+                             BigDecimal total) {
 
     }
 
@@ -78,16 +79,18 @@ public class BillingService {
                 workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
             }
             workingDays.removeAll(ptoDaysByEmployee.getOrDefault(assignment.getEmployee(), Set.of()));
-            billingList.add(new BillingEntry(assignment, workingDays));
+            billingList.add(new BillingEntry(assignment, workingDays, ptoDaysByEmployee));
         });
 
         Range<Integer> range = params.getRangeInterval();
+        int minimum = range.getMinimum();
+        int maximum = billingList.size() <= range.getMaximum() ? billingList.size() : range.getMaximum();
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
                 .sorted(params.getComparator(BillingDto.class))
                 .toList()
-                .subList(range.getMinimum(), range.getMaximum());
+                .subList(minimum, maximum);
 
         return new ReportDto<>(data, billingList.size());
     }
@@ -131,7 +134,8 @@ public class BillingService {
                 ));
     }
 
-    private record BillingEntry(Assignment assignment, Set<LocalDate> days) {
+    private record BillingEntry(Assignment assignment, Set<LocalDate> days,
+                                Map<Employee, Set<LocalDate>> ptoDaysByEmployee) {
 
         @Override
         public String toString() {
@@ -154,6 +158,7 @@ public class BillingService {
             Employee employee = assignment.getEmployee();
             BigDecimal rate = assignment.getBillableRate() != null ? assignment.getBillableRate() : BigDecimal.ZERO;
             int hours = days.size() * 8;
+            int ptoHours = ptoDaysByEmployee.getOrDefault(employee, Set.of()).size() * 8;
             BigDecimal total = rate.multiply(BigDecimal.valueOf(hours));
 
             return new BillingDto(
@@ -166,6 +171,7 @@ public class BillingService {
                     assignment.getProject().getName(),
                     rate,
                     hours,
+                    ptoHours,
                     total
             );
         }
