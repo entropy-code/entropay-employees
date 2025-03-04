@@ -140,7 +140,7 @@ public class ReactAdminMapper {
 
     static <T> @NotNull Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
 
-        return (billing1, billing2) -> {
+        return (object1, object2) -> {
             try {
                 List<String> sortList = MAPPER.readValue(params.getSort(), List.class);
                 String sort = sortList.get(0);
@@ -148,8 +148,8 @@ public class ReactAdminMapper {
 
                 var field = clazz.getDeclaredField(sort);
                 field.setAccessible(true);
-                var fieldValue1 = field.get(billing1);
-                var fieldValue2 = field.get(billing2);
+                var fieldValue1 = field.get(object1);
+                var fieldValue2 = field.get(object2);
                 if (fieldValue1 instanceof Comparable && fieldValue2 instanceof Comparable) {
                     int comparison = ((Comparable) fieldValue1).compareTo(fieldValue2);
                     return "desc".equalsIgnoreCase(order) ? -comparison : comparison;
