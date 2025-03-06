@@ -152,8 +152,6 @@ public class BillingService {
         int minimum = range.getMinimum();
         int maximum = billingList.size() < range.getMaximum() ? billingList.size() : range.getMaximum() + 1;
 
-        LOGGER.info("Retrieving billing entries from {} to {} - {}", minimum, maximum, billingList.size());
-
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
                 .sorted(params.getComparator(BillingDto.class))
