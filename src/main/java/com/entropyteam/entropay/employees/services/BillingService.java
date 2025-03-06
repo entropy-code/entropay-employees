@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
@@ -52,11 +54,20 @@ public class BillingService {
     }
 
     public record BillingDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
-                             String clientName, String projectName, BigDecimal rate, int hours, int ptoHours,
+                             String clientName, String projectName, BigDecimal rate, double hours, double ptoHours,
                              BigDecimal total) {
 
     }
 
+    /**
+     * Generates a billing report based on the provided parameters. This method calculates
+     * billable days for assignments within a specified date range and adjusts for working days
+     * and employee PTO (Paid Time Off) days.
+     *
+     * @param params ReactAdminParams object containing pagination and filter parameters for the report.
+     * @return A paginated report of billing entries encapsulated in ReportDto with BillingDto data.
+     */
+    @Transactional(readOnly = true)
     public ReportDto<BillingDto> generateBillingReport(ReactAdminParams params) {
         DateRangeDto dateRange = new DateRangeDto(sqlMapper.map(params));
         LocalDate startDate = dateRange.getStartDate();
@@ -65,7 +76,7 @@ public class BillingService {
         LOGGER.info("Generating billing for period {} - {}", startDate, endDate);
 
         Map<Country, Set<LocalDate>> workingDaysByCountry = calculateWorkingDays(startDate, endDate);
-        Map<Employee, Set<LocalDate>> ptoDaysByEmployee = retrieveEmployeePtoDays(startDate, endDate);
+        Map<Employee, Double> ptoHoursByEmployee = retrieveEmployeePtoHours(startDate, endDate);
 
         // calculate billable days
         List<BillingEntry> billingList = new ArrayList<>();
@@ -78,21 +89,11 @@ public class BillingService {
             if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
                 workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
             }
-            workingDays.removeAll(ptoDaysByEmployee.getOrDefault(assignment.getEmployee(), Set.of()));
-            billingList.add(new BillingEntry(assignment, workingDays, ptoDaysByEmployee));
+
+            billingList.add(new BillingEntry(assignment, workingDays, ptoHoursByEmployee));
         });
 
-        Range<Integer> range = params.getRangeInterval();
-        int minimum = range.getMinimum();
-        int maximum = billingList.size() <= range.getMaximum() ? billingList.size() : range.getMaximum();
-
-        List<BillingDto> data = billingList.stream()
-                .map(BillingEntry::toDto)
-                .sorted(params.getComparator(BillingDto.class))
-                .toList()
-                .subList(minimum, maximum);
-
-        return new ReportDto<>(data, billingList.size());
+        return getPaginatedBillingEntries(params, billingList);
     }
 
     /**
@@ -124,56 +125,70 @@ public class BillingService {
         return billableDays;
     }
 
-    private Map<Employee, Set<LocalDate>> retrieveEmployeePtoDays(LocalDate startDate, LocalDate endDate) {
+    private Map<Employee, Double> retrieveEmployeePtoHours(LocalDate startDate, LocalDate endDate) {
+
         return ptoRepository.findAllBetweenPeriod(startDate, endDate)
                 .stream()
-                .collect(Collectors.groupingBy(
-                        Pto::getEmployee,
-                        Collectors.flatMapping(pto -> pto.getStartDate().datesUntil(pto.getEndDate().plusDays(1)),
-                                Collectors.toSet())
-                ));
+                .collect(Collectors.groupingBy(Pto::getEmployee, Collectors.toSet()))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Entry::getKey,
+                        entry -> entry.getValue().stream().map(Pto::getDays).reduce(0.0, Double::sum) * 8,
+                        (a, b) -> b));
     }
 
-    private record BillingEntry(Assignment assignment, Set<LocalDate> days,
-                                Map<Employee, Set<LocalDate>> ptoDaysByEmployee) {
+
+    /**
+     * Retrieves a paginated list of billing entries based on the specified parameters.
+     *
+     * @param params the ReactAdminParams object containing pagination and sorting parameters
+     * @param billingList the list of BillingEntry objects to be paginated and processed
+     * @return a ReportDto containing the paginated and sorted list of BillingDto objects
+     *         and the total size of the original billing list
+     */
+    private static ReportDto<BillingDto> getPaginatedBillingEntries(ReactAdminParams params,
+            List<BillingEntry> billingList) {
+        Range<Integer> range = params.getRangeInterval();
+        int minimum = range.getMinimum();
+        int maximum = billingList.size() < range.getMaximum() ? billingList.size() : range.getMaximum() + 1;
+
+        LOGGER.info("Retrieving billing entries from {} to {} - {}", minimum, maximum, billingList.size());
+
+        List<BillingDto> data = billingList.stream()
+                .map(BillingEntry::toDto)
+                .sorted(params.getComparator(BillingDto.class))
+                .toList()
+                .subList(minimum, maximum);
+
+        return new ReportDto<>(data, billingList.size());
+    }
+
+    private record BillingEntry(Assignment assignment, Set<LocalDate> days, Map<Employee, Double> ptoHoursByEmployee) {
 
         @Override
         public String toString() {
             Employee employee = assignment.getEmployee();
             BigDecimal rate = assignment.getBillableRate() != null ? assignment.getBillableRate() : BigDecimal.ZERO;
 
-            return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
-                    .append("internalId", employee.getInternalId())
-                    .append("first name", employee.getFirstName())
-                    .append("last name", employee.getLastName())
+            return new ToStringBuilder(this, ToStringStyle.JSON_STYLE).append("internalId", employee.getInternalId())
+                    .append("first name", employee.getFirstName()).append("last name", employee.getLastName())
                     .append("client", assignment.getProject().getClient().getName())
-                    .append("project", assignment.getProject().getName())
-                    .append("rate", rate)
+                    .append("project", assignment.getProject().getName()).append("rate", rate)
                     .append("hours", days.size() * 8)
-                    .append("total", rate.multiply(BigDecimal.valueOf(days.size() * 8L)))
-                    .toString();
+                    .append("ptoHours", ptoHoursByEmployee.getOrDefault(employee, 0.0))
+                    .append("total", rate.multiply(BigDecimal.valueOf(days.size() * 8L))).toString();
         }
 
         public BillingDto toDto() {
             Employee employee = assignment.getEmployee();
             BigDecimal rate = assignment.getBillableRate() != null ? assignment.getBillableRate() : BigDecimal.ZERO;
-            int hours = days.size() * 8;
-            int ptoHours = ptoDaysByEmployee.getOrDefault(employee, Set.of()).size() * 8;
+            double ptoHours = ptoHoursByEmployee.getOrDefault(employee, 0.0);
+            double hours = days.size() * 8 - ptoHours;
             BigDecimal total = rate.multiply(BigDecimal.valueOf(hours));
 
-            return new BillingDto(
-                    assignment.getId(),
-                    employee.getId(),
-                    employee.getInternalId(),
-                    employee.getFirstName(),
-                    employee.getLastName(),
-                    assignment.getProject().getClient().getName(),
-                    assignment.getProject().getName(),
-                    rate,
-                    hours,
-                    ptoHours,
-                    total
-            );
+            return new BillingDto(assignment.getId(), employee.getId(), employee.getInternalId(),
+                    employee.getFirstName(), employee.getLastName(), assignment.getProject().getClient().getName(),
+                    assignment.getProject().getName(), rate, hours, ptoHours, total);
         }
     }
 }
