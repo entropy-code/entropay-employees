@@ -39,15 +39,17 @@ public class BillingService {
     private static final int SATURDAY = 6;
     private final AssignmentRepository assignmentRepository;
     private final PtoRepository ptoRepository;
+    private final PtoService ptoService;
     private final HolidayRepository holidayRepository;
     private final CountryRepository countryRepository;
     private final ReactAdminSqlMapper sqlMapper;
 
 
-    public BillingService(AssignmentRepository assignmentRepository, PtoRepository ptoRepository,
+    public BillingService(AssignmentRepository assignmentRepository, PtoRepository ptoRepository, PtoService ptoService,
             HolidayRepository holidayRepository, CountryRepository countryRepository, ReactAdminSqlMapper sqlMapper) {
         this.assignmentRepository = assignmentRepository;
         this.ptoRepository = ptoRepository;
+        this.ptoService = ptoService;
         this.holidayRepository = holidayRepository;
         this.countryRepository = countryRepository;
         this.sqlMapper = sqlMapper;
@@ -133,7 +135,10 @@ public class BillingService {
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Entry::getKey,
-                        entry -> entry.getValue().stream().map(Pto::getDays).reduce(0.0, Double::sum) * 8,
+                        entry -> entry.getValue()
+                                .stream()
+                                .map(pto -> ptoService.getPtoHours(pto, startDate, endDate))
+                                .reduce(0.0, Double::sum),
                         (a, b) -> b));
     }
 
@@ -150,7 +155,7 @@ public class BillingService {
             List<BillingEntry> billingList) {
         Range<Integer> range = params.getRangeInterval();
         int minimum = range.getMinimum();
-        int maximum = billingList.size() < range.getMaximum() ? billingList.size() : range.getMaximum() + 1;
+        int maximum = billingList.size() < range.getMaximum() ? billingList.size() : range.getMaximum();
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)

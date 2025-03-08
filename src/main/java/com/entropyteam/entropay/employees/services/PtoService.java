@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
+import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.LeaveType;
@@ -78,7 +80,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         LOGGER.info("Started update of pto of type: {}, update to type: {}, amount of days: {} ",
                 oldEntity.getLeaveType().getName(), entityToUpdate.getLeaveType().getName(), entityToUpdate.getDays());
         if (isVacationType(oldEntity) && isVacationType(entityToUpdate)
-                && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
+            && oldEntity.getDays().compareTo(entityToUpdate.getDays()) != 0) {
             vacationService.discountVacationDebit(oldEntity.getEmployee(), oldEntity.getDaysAsInteger());
             vacationService.addVacationDebit(entityToUpdate.getEmployee(), entityToUpdate.getDaysAsInteger());
         } else if (isVacationType(oldEntity) && !isVacationType(entityToUpdate)) {
@@ -169,8 +171,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             while (!currentDate.isAfter(endDate)) {
                 LocalDate finalCurrentDate = currentDate;
                 if (currentDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
-                        currentDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
-                        holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalCurrentDate))) {
+                    currentDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
+                    holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalCurrentDate))) {
                     labourDays++;
                 }
 
@@ -213,5 +215,32 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     @Override
     public List<String> getDateColumnsForSearch() {
         return List.of("startDate", "endDate");
+    }
+
+    /**
+     * Calculates the number of PTO (Paid Time Off) hours for an employee within a specified date range.
+     *
+     * @param pto the PTO object containing details like the PTO period and associated employee
+     * @param startDate the start date of the period to calculate PTO hours for
+     * @param endDate the end date of the period to calculate PTO hours for
+     * @return the total number of PTO hours within the specified date range, excluding weekends and holidays
+     */
+    public Double getPtoHours(Pto pto, LocalDate startDate, LocalDate endDate) {
+        if (startDate.isEqual(endDate)) {
+            return pto.getDays() * 8;
+        }
+
+        LocalDate from = startDate.isBefore(pto.getStartDate()) ? pto.getStartDate() : startDate;
+        LocalDate to = endDate.isAfter(pto.getEndDate()) ? pto.getEndDate() : endDate;
+        Country country = pto.getEmployee().getCountry();
+        Set<LocalDate> holidayDates = holidayRepository.findHolidaysByCountryAndPeriod(country.getId(), startDate, endDate)
+                .stream()
+                .map(Holiday::getDate)
+                .collect(Collectors.toSet());
+
+        return (double) from.datesUntil(to.plusDays(1))
+                .filter(date -> date.getDayOfWeek().getValue() < 6) // Include only weekdays
+                .filter(date -> !holidayDates.contains(date)) // Exclude holidays
+                .count() * 8.0;
     }
 }
