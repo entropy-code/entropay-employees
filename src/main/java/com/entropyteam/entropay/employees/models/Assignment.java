@@ -126,7 +126,7 @@ public class Assignment extends BaseEntity {
     }
 
     public BigDecimal getBillableRate() {
-        return billableRate;
+        return billableRate != null ? billableRate : BigDecimal.ZERO;
     }
 
     public void setBillableRate(BigDecimal billableRate) {

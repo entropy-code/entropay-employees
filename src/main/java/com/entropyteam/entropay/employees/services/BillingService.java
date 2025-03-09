@@ -11,8 +11,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,7 +19,6 @@ import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
-import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
@@ -34,23 +31,26 @@ public class BillingService {
     private static final int SATURDAY = 6;
     private final PtoService ptoService;
     private final HolidayService holidayService;
+    private final OvertimeService overtimeService;
     private final AssignmentRepository assignmentRepository;
     private final CountryRepository countryRepository;
     private final ReactAdminSqlMapper sqlMapper;
 
 
     public BillingService(AssignmentRepository assignmentRepository, PtoService ptoService,
-            HolidayService holidayService, CountryRepository countryRepository, ReactAdminSqlMapper sqlMapper) {
+            HolidayService holidayService, OvertimeService overtimeService, CountryRepository countryRepository,
+            ReactAdminSqlMapper sqlMapper) {
         this.assignmentRepository = assignmentRepository;
         this.ptoService = ptoService;
         this.holidayService = holidayService;
+        this.overtimeService = overtimeService;
         this.countryRepository = countryRepository;
         this.sqlMapper = sqlMapper;
     }
 
     public record BillingDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
                              String clientName, String projectName, BigDecimal rate, double hours, double ptoHours,
-                             BigDecimal total) {
+                             BigDecimal total, String notes) {
 
     }
 
@@ -73,7 +73,6 @@ public class BillingService {
         Map<Country, Set<LocalDate>> workingDaysByCountry = calculateWorkingDays(startDate, endDate);
         Map<Employee, Double> ptoHoursByEmployee = ptoService.retrieveEmployeePtoHours(startDate, endDate);
 
-        // calculate billable days
         List<BillingEntry> billingList = new ArrayList<>();
         assignmentRepository.findAllBetweenPeriod(startDate, endDate).forEach(assignment -> {
             Set<LocalDate> workingDays = new HashSet<>(workingDaysByCountry.get(assignment.getEmployee().getCountry()));
@@ -85,8 +84,12 @@ public class BillingService {
                 workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
             }
 
-            billingList.add(new BillingEntry(assignment, workingDays, ptoHoursByEmployee));
+            billingList.add(new BillingEntry(assignment, workingDays.size() * 8,
+                    ptoHoursByEmployee.getOrDefault(assignment.getEmployee(), 0.0)));
         });
+
+        overtimeService.findByDateBetween(startDate, endDate)
+                .forEach(overtime -> billingList.add(new BillingEntry(overtime)));
 
         return getPaginatedBillingEntries(params, billingList);
     }
@@ -130,7 +133,7 @@ public class BillingService {
             List<BillingEntry> billingList) {
         Range<Integer> range = params.getRangeInterval();
         int minimum = range.getMinimum();
-        int maximum = billingList.size() < range.getMaximum() ? billingList.size() : range.getMaximum();
+        int maximum = Math.min(range.getMaximum() + 1, billingList.size());
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
@@ -139,34 +142,5 @@ public class BillingService {
                 .subList(minimum, maximum);
 
         return new ReportDto<>(data, billingList.size());
-    }
-
-    private record BillingEntry(Assignment assignment, Set<LocalDate> days, Map<Employee, Double> ptoHoursByEmployee) {
-
-        @Override
-        public String toString() {
-            Employee employee = assignment.getEmployee();
-            BigDecimal rate = assignment.getBillableRate() != null ? assignment.getBillableRate() : BigDecimal.ZERO;
-
-            return new ToStringBuilder(this, ToStringStyle.JSON_STYLE).append("internalId", employee.getInternalId())
-                    .append("first name", employee.getFirstName()).append("last name", employee.getLastName())
-                    .append("client", assignment.getProject().getClient().getName())
-                    .append("project", assignment.getProject().getName()).append("rate", rate)
-                    .append("hours", days.size() * 8)
-                    .append("ptoHours", ptoHoursByEmployee.getOrDefault(employee, 0.0))
-                    .append("total", rate.multiply(BigDecimal.valueOf(days.size() * 8L))).toString();
-        }
-
-        public BillingDto toDto() {
-            Employee employee = assignment.getEmployee();
-            BigDecimal rate = assignment.getBillableRate() != null ? assignment.getBillableRate() : BigDecimal.ZERO;
-            double ptoHours = ptoHoursByEmployee.getOrDefault(employee, 0.0);
-            double hours = days.size() * 8 - ptoHours;
-            BigDecimal total = rate.multiply(BigDecimal.valueOf(hours));
-
-            return new BillingDto(assignment.getId(), employee.getId(), employee.getInternalId(),
-                    employee.getFirstName(), employee.getLastName(), assignment.getProject().getClient().getName(),
-                    assignment.getProject().getName(), rate, hours, ptoHours, total);
-        }
     }
 }

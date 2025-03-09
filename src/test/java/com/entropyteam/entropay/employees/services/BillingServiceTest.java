@@ -65,6 +65,8 @@ class BillingServiceTest {
     private VacationService vacationRepository;
     @Mock
     private CalendarService calendarService;
+    @Mock
+    private OvertimeService overtimeService;
     private BillingService billingService;
 
     @BeforeEach
@@ -84,7 +86,7 @@ class BillingServiceTest {
                 new PtoService(mapper, ptoRepository, employeeRepository, leaveTypeRepository, holidayRepository,
                         holidayService, vacationRepository, calendarService);
 
-        billingService = new BillingService(assignmentRepository, ptoService, holidayService,
+        billingService = new BillingService(assignmentRepository, ptoService, holidayService, overtimeService,
                 countryRepository, REACT_ADMIN_SQL_MAPPER);
     }
 

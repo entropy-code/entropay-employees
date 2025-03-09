@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -92,4 +93,7 @@ public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
         return relatedColumns;
     }
 
+    public List<Overtime> findByDateBetween(LocalDate startDate, LocalDate endDate) {
+        return overtimeRepository.findByDateBetween(startDate, endDate);
+    }
 }
