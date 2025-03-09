@@ -74,16 +74,17 @@ class BillingServiceTest {
 
         when(countryRepository.findAllByDeletedIsFalse()).thenReturn(List.of(ARG));
         when(holidayRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSampleHolidays());
-        when(holidayRepository.findHolidaysByCountryAndPeriod(ARG_COUNTRY_ID, startDate, endDate)).thenReturn(
-                createSampleHolidays());
         when(ptoRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSamplePto());
         when(assignmentRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSampleAssignments());
 
+        HolidayService holidayService =
+                new HolidayService(holidayRepository, countryRepository, mapper, calendarService);
+
         PtoService ptoService =
                 new PtoService(mapper, ptoRepository, employeeRepository, leaveTypeRepository, holidayRepository,
-                        vacationRepository, calendarService);
+                        holidayService, vacationRepository, calendarService);
 
-        billingService = new BillingService(assignmentRepository, ptoRepository, ptoService, holidayRepository,
+        billingService = new BillingService(assignmentRepository, ptoService, holidayService,
                 countryRepository, REACT_ADMIN_SQL_MAPPER);
     }
 

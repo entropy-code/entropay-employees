@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.calendar.CalendarEventDto;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.HolidayDto;
 import com.entropyteam.entropay.employees.models.Country;
@@ -105,17 +105,11 @@ public class HolidayService extends BaseService<Holiday, HolidayDto, UUID> {
         return toDTO(holiday);
     }
 
-    public CalendarEventDto formatEventData(UUID holidayId, LocalDate date, String description, String country) {
-        int currentYear = date.getYear();
-        LocalDate endDate = date.plusDays(1);
-        String eventId = currentYear + holidayId.toString();
-        String eventName;
-        if (country.equals("ALL")) {
-            eventName = description;
-        } else {
-            eventName = country + " - " + description;
-        }
-
-        return new CalendarEventDto(eventId, eventName, date, endDate);
+    @Transactional(readOnly = true)
+    public Map<Country, Set<LocalDate>> getHolidaysByCountry(LocalDate startDate, LocalDate endDate) {
+        return holidayRepository.findAllBetweenPeriod(startDate, endDate)
+                .stream()
+                .collect(Collectors.groupingBy(Holiday::getCountry,
+                        Collectors.mapping(Holiday::getDate, Collectors.toSet())));
     }
 }

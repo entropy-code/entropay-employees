@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,32 +24,26 @@ import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Holiday;
-import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
-import com.entropyteam.entropay.employees.repositories.HolidayRepository;
-import com.entropyteam.entropay.employees.repositories.PtoRepository;
 
 @Service
 public class BillingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingService.class);
     private static final int SATURDAY = 6;
-    private final AssignmentRepository assignmentRepository;
-    private final PtoRepository ptoRepository;
     private final PtoService ptoService;
-    private final HolidayRepository holidayRepository;
+    private final HolidayService holidayService;
+    private final AssignmentRepository assignmentRepository;
     private final CountryRepository countryRepository;
     private final ReactAdminSqlMapper sqlMapper;
 
 
-    public BillingService(AssignmentRepository assignmentRepository, PtoRepository ptoRepository, PtoService ptoService,
-            HolidayRepository holidayRepository, CountryRepository countryRepository, ReactAdminSqlMapper sqlMapper) {
+    public BillingService(AssignmentRepository assignmentRepository, PtoService ptoService,
+            HolidayService holidayService, CountryRepository countryRepository, ReactAdminSqlMapper sqlMapper) {
         this.assignmentRepository = assignmentRepository;
-        this.ptoRepository = ptoRepository;
         this.ptoService = ptoService;
-        this.holidayRepository = holidayRepository;
+        this.holidayService = holidayService;
         this.countryRepository = countryRepository;
         this.sqlMapper = sqlMapper;
     }
@@ -78,7 +71,7 @@ public class BillingService {
         LOGGER.info("Generating billing for period {} - {}", startDate, endDate);
 
         Map<Country, Set<LocalDate>> workingDaysByCountry = calculateWorkingDays(startDate, endDate);
-        Map<Employee, Double> ptoHoursByEmployee = retrieveEmployeePtoHours(startDate, endDate);
+        Map<Employee, Double> ptoHoursByEmployee = ptoService.retrieveEmployeePtoHours(startDate, endDate);
 
         // calculate billable days
         List<BillingEntry> billingList = new ArrayList<>();
@@ -108,10 +101,7 @@ public class BillingService {
     private Map<Country, Set<LocalDate>> calculateWorkingDays(LocalDate startDate, LocalDate endDate) {
         var activeCountries = countryRepository.findAllByDeletedIsFalse();
 
-        Map<Country, Set<LocalDate>> holidaysByCountry = holidayRepository.findAllBetweenPeriod(startDate, endDate)
-                .stream()
-                .collect(Collectors.groupingBy(Holiday::getCountry,
-                        Collectors.mapping(Holiday::getDate, Collectors.toSet())));
+        Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
 
         Set<LocalDate> weekdays = startDate.datesUntil(endDate.plusDays(1))
                 .filter(date -> date.getDayOfWeek().getValue() < SATURDAY)
@@ -125,21 +115,6 @@ public class BillingService {
         });
 
         return billableDays;
-    }
-
-    private Map<Employee, Double> retrieveEmployeePtoHours(LocalDate startDate, LocalDate endDate) {
-
-        return ptoRepository.findAllBetweenPeriod(startDate, endDate)
-                .stream()
-                .collect(Collectors.groupingBy(Pto::getEmployee, Collectors.toSet()))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Entry::getKey,
-                        entry -> entry.getValue()
-                                .stream()
-                                .map(pto -> ptoService.getPtoHours(pto, startDate, endDate))
-                                .reduce(0.0, Double::sum),
-                        (a, b) -> b));
     }
 
 
