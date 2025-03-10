@@ -58,7 +58,8 @@ public class BillingService {
         LOGGER.info("Generating billing for period {} - {}", startDate, endDate);
         List<BillingEntry> billingList = new ArrayList<>();
         billingList.addAll(getBillingEntries(startDate, endDate));
-        billingList.addAll(getOvertimes(startDate, endDate));
+        // Business rule: we paid PTO with a 10 days buffer
+        billingList.addAll(getOvertimes(startDate.minusDays(10), endDate.minusDays(10)));
 
         return getPaginatedBillingEntries(params, billingList);
     }
