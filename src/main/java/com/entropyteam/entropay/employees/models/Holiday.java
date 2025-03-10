@@ -22,12 +22,17 @@ public class Holiday extends BaseEntity {
     private Country country;
 
     public Holiday(){
-
     }
 
     public Holiday(HolidayDto holidayDto){
         this.date = holidayDto.date();
         this.description = holidayDto.description();
+    }
+
+    public Holiday(LocalDate date, String description, Country country) {
+        this.date = date;
+        this.description = description;
+        this.country = country;
     }
 
     public LocalDate getDate() {

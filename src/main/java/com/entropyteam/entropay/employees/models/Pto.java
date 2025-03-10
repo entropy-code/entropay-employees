@@ -1,8 +1,6 @@
 package com.entropyteam.entropay.employees.models;
 
 import java.time.LocalDate;
-import java.util.Set;
-import java.util.stream.Collectors;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 
@@ -18,6 +16,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "pto")
 public class Pto extends BaseEntity {
+
     @Column
     private LocalDate startDate;
 
@@ -123,7 +122,4 @@ public class Pto extends BaseEntity {
         return days.intValue();
     }
 
-    public Set<LocalDate> getPtoDays() {
-        return startDate.datesUntil(endDate.plusDays(1)).collect(Collectors.toSet());
-    }
 }
