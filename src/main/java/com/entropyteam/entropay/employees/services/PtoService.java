@@ -229,7 +229,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
      * @return a map where the keys are employees and the values are the total PTO hours
      *         they have taken within the specified date range, taking into account holidays and weekends
      */
-    public Map<Employee, Double> retrieveEmployeePtoHours(LocalDate startDate, LocalDate endDate) {
+    public Map<Employee, Double> getEmployeePtoHours(LocalDate startDate, LocalDate endDate) {
 
         Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
 

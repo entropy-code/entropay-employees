@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
@@ -31,7 +32,10 @@ import com.entropyteam.entropay.employees.repositories.CountryRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
+import com.entropyteam.entropay.employees.repositories.ProjectRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import com.entropyteam.entropay.employees.repositories.RoleRepository;
+import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
 import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -67,6 +71,14 @@ class BillingServiceTest {
     private CalendarService calendarService;
     @Mock
     private OvertimeService overtimeService;
+    @Mock
+    private RoleRepository roleRepository;
+    @Mock
+    private SeniorityRepository seniorityRepository;
+    @Mock
+    private ProjectRepository projectRepository;
+    @Mock
+    private SecureObjectService secureObjectService;
     private BillingService billingService;
 
     @BeforeEach
@@ -74,7 +86,6 @@ class BillingServiceTest {
         LocalDate startDate = LocalDate.of(2025, 2, 1);
         LocalDate endDate = LocalDate.of(2025, 2, 28);
 
-        when(countryRepository.findAllByDeletedIsFalse()).thenReturn(List.of(ARG));
         when(holidayRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSampleHolidays());
         when(ptoRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSamplePto());
         when(assignmentRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSampleAssignments());
@@ -86,8 +97,10 @@ class BillingServiceTest {
                 new PtoService(mapper, ptoRepository, employeeRepository, leaveTypeRepository, holidayRepository,
                         holidayService, vacationRepository, calendarService);
 
-        billingService = new BillingService(assignmentRepository, ptoService, holidayService, overtimeService,
-                countryRepository, REACT_ADMIN_SQL_MAPPER);
+        AssignmentService assignmentService = new AssignmentService(assignmentRepository, employeeRepository,
+                roleRepository, seniorityRepository, projectRepository, secureObjectService, mapper, holidayService);
+
+        billingService = new BillingService(assignmentService, ptoService, overtimeService, REACT_ADMIN_SQL_MAPPER);
     }
 
     @Test

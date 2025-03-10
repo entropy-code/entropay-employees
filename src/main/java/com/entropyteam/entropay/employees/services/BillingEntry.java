@@ -22,7 +22,7 @@ public class BillingEntry {
         this.assignment = assignment;
         this.rate = assignment.getBillableRate();
         this.ptoHours = ptoHours;
-        this.workedHours = workingHours - ptoHours;
+        this.workedHours = assignment.getProject().isPaidPto() ? workingHours : workingHours - ptoHours;
         this.total = rate.multiply(BigDecimal.valueOf(this.workedHours));
         this.notes = "";
     }

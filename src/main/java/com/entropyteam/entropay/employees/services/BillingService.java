@@ -3,13 +3,9 @@ package com.entropyteam.entropay.employees.services;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,32 +15,23 @@ import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
-import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
-import com.entropyteam.entropay.employees.repositories.CountryRepository;
 
 @Service
 public class BillingService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BillingService.class);
-    private static final int SATURDAY = 6;
     private final PtoService ptoService;
-    private final HolidayService holidayService;
     private final OvertimeService overtimeService;
-    private final AssignmentRepository assignmentRepository;
-    private final CountryRepository countryRepository;
+    private final AssignmentService assignmentService;
     private final ReactAdminSqlMapper sqlMapper;
 
 
-    public BillingService(AssignmentRepository assignmentRepository, PtoService ptoService,
-            HolidayService holidayService, OvertimeService overtimeService, CountryRepository countryRepository,
-            ReactAdminSqlMapper sqlMapper) {
-        this.assignmentRepository = assignmentRepository;
+    public BillingService(AssignmentService assignmentService, PtoService ptoService,
+            OvertimeService overtimeService, ReactAdminSqlMapper sqlMapper) {
+        this.assignmentService = assignmentService;
         this.ptoService = ptoService;
-        this.holidayService = holidayService;
         this.overtimeService = overtimeService;
-        this.countryRepository = countryRepository;
         this.sqlMapper = sqlMapper;
     }
 
@@ -56,8 +43,8 @@ public class BillingService {
 
     /**
      * Generates a billing report based on the provided parameters. This method calculates
-     * billable days for assignments within a specified date range and adjusts for working days
-     * and employee PTO (Paid Time Off) days.
+     * billable days for assignments within a specified date range and adjusts for working days, employee PTO days,
+     * holidays and also takes into consideration project that have paid PTO
      *
      * @param params ReactAdminParams object containing pagination and filter parameters for the report.
      * @return A paginated report of billing entries encapsulated in ReportDto with BillingDto data.
@@ -69,57 +56,32 @@ public class BillingService {
         LocalDate endDate = dateRange.getEndDate();
 
         LOGGER.info("Generating billing for period {} - {}", startDate, endDate);
-
-        Map<Country, Set<LocalDate>> workingDaysByCountry = calculateWorkingDays(startDate, endDate);
-        Map<Employee, Double> ptoHoursByEmployee = ptoService.retrieveEmployeePtoHours(startDate, endDate);
-
         List<BillingEntry> billingList = new ArrayList<>();
-        assignmentRepository.findAllBetweenPeriod(startDate, endDate).forEach(assignment -> {
-            Set<LocalDate> workingDays = new HashSet<>(workingDaysByCountry.get(assignment.getEmployee().getCountry()));
-            // if the assignment started or finished during the middle of the month, adjust the billable days
-            if (assignment.getStartDate().isAfter(startDate)) {
-                workingDays.removeAll(startDate.datesUntil(assignment.getStartDate()).collect(Collectors.toSet()));
-            }
-            if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
-                workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
-            }
-
-            billingList.add(new BillingEntry(assignment, workingDays.size() * 8,
-                    ptoHoursByEmployee.getOrDefault(assignment.getEmployee(), 0.0)));
-        });
-
-        overtimeService.findByDateBetween(startDate, endDate)
-                .forEach(overtime -> billingList.add(new BillingEntry(overtime)));
+        billingList.addAll(getBillingEntries(startDate, endDate));
+        billingList.addAll(getOvertimes(startDate, endDate));
 
         return getPaginatedBillingEntries(params, billingList);
     }
 
-    /**
-     * Calculates the working days for each country between the given start and end dates.
-     *
-     * @param startDate the start date of the period
-     * @param endDate the end date of the period
-     * @return a map where the key is the country and the value is a set of working days
-     */
-    private Map<Country, Set<LocalDate>> calculateWorkingDays(LocalDate startDate, LocalDate endDate) {
-        var activeCountries = countryRepository.findAllByDeletedIsFalse();
+    private List<BillingEntry> getBillingEntries(LocalDate startDate, LocalDate endDate) {
+        Map<Employee, Double> ptoHoursByEmployee = ptoService.getEmployeePtoHours(startDate, endDate);
 
-        Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
-
-        Set<LocalDate> weekdays = startDate.datesUntil(endDate.plusDays(1))
-                .filter(date -> date.getDayOfWeek().getValue() < SATURDAY)
-                .collect(Collectors.toSet());
-
-        Map<Country, Set<LocalDate>> billableDays = new HashMap<>();
-        activeCountries.forEach(country -> {
-            Set<LocalDate> billable = new HashSet<>(weekdays);
-            billable.removeAll(holidaysByCountry.getOrDefault(country, Set.of()));
-            billableDays.put(country, billable);
-        });
-
-        return billableDays;
+        return assignmentService.calculateWorkingDaysForAssignments(startDate, endDate)
+                .entrySet()
+                .stream()
+                .map(entry -> {
+                    Double ptoHours = ptoHoursByEmployee.getOrDefault(entry.getKey().getEmployee(), 0.0);
+                    return new BillingEntry(entry.getKey(), entry.getValue().size() * 8, ptoHours);
+                })
+                .toList();
     }
 
+    private List<BillingEntry> getOvertimes(LocalDate startDate, LocalDate endDate) {
+        return overtimeService.findByDateBetween(startDate, endDate)
+                .stream()
+                .map(BillingEntry::new)
+                .toList();
+    }
 
     /**
      * Retrieves a paginated list of billing entries based on the specified parameters.

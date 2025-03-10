@@ -29,6 +29,8 @@ public class Project extends BaseEntity {
     private LocalDate endDate;
     @Column
     private String notes;
+    @Column
+    private boolean paidPto;
 
     public Project() {
     }
@@ -38,6 +40,7 @@ public class Project extends BaseEntity {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
         this.notes = entity.notes();
+        this.paidPto = entity.paidPto();
     }
 
     public String getName() {
@@ -86,5 +89,13 @@ public class Project extends BaseEntity {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public boolean isPaidPto() {
+        return paidPto;
+    }
+
+    public void setPaidPto(boolean paidPto) {
+        this.paidPto = paidPto;
     }
 }
