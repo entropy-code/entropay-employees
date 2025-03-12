@@ -122,10 +122,10 @@ jobs:
         with:
           ref: main
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'adopt'
 
       - name: Set next version
@@ -144,7 +144,7 @@ jobs:
           commit-message: Prepare next dev version
           committer: GitHub <noreply@github.com>
           branch: next-version-${{ steps.set-next-version.outputs.NEXT_VERSION }}
-          base: develop
+          base: main
           delete-branch: true
           title: 'Prepare next dev version'
           body: |

@@ -173,19 +173,6 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     }
 
     @Override
-    public Map<String, Object> getRestrictedFields(AppRole userRole) {
-        Map<String, Object> restrictedFields = new HashMap<>();
-        if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
-            List<Role> roles = roleRepository.findAllByDeletedIsFalseAndNameLikeIgnoreCase(HR_SEARCH_TERM);
-            if (CollectionUtils.isNotEmpty(roles)) {
-                restrictedFields.put("role", roles);
-            }
-        }
-
-        return restrictedFields;
-    }
-
-    @Override
     public Map<String, List<String>> getRelatedColumnsForSearch() {
         Map<String, List<String>> relatedColumns = new HashMap<>();
         relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
