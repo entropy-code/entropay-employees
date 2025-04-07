@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
 
 @Service
 public class BillingService {
@@ -58,7 +60,7 @@ public class BillingService {
         LOGGER.info("Generating billing for period {} - {}", startDate, endDate);
         List<BillingEntry> billingList = new ArrayList<>();
         billingList.addAll(getBillingEntries(startDate, endDate));
-        // Business rule: we paid PTO with a 10 days buffer
+        // Business rule: we paid Overtimes with a 10 days buffer
         billingList.addAll(getOvertimes(startDate.minusDays(10), endDate.minusDays(10)));
 
         return getPaginatedBillingEntries(params, billingList);
@@ -67,7 +69,9 @@ public class BillingService {
     private List<BillingEntry> getBillingEntries(LocalDate startDate, LocalDate endDate) {
         Map<Employee, Double> ptoHoursByEmployee = ptoService.getEmployeePtoHours(startDate, endDate);
 
-        return assignmentService.calculateWorkingDaysForAssignments(startDate, endDate)
+        return assignmentService.findActivityForAssignments(startDate, endDate)
+                .stream()
+                .collect(Collectors.groupingBy(AssignmentTimeEntry::getAssignment, Collectors.toList()))
                 .entrySet()
                 .stream()
                 .map(entry -> {

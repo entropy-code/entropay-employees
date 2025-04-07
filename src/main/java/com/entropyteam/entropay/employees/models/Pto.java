@@ -122,4 +122,7 @@ public class Pto extends BaseEntity {
         return days.intValue();
     }
 
+    public boolean isHalfDay() {
+        return startDate.isEqual(endDate);
+    }
 }

@@ -1,9 +1,18 @@
 package com.entropyteam.entropay.employees.models;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.employees.dtos.ContractDto;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
@@ -12,13 +21,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.dtos.ContractDto;
 
 
 @Entity(name = "Contract")
@@ -52,7 +57,7 @@ public class Contract extends BaseEntity {
     private ContractType contractType;
     @Column
     private boolean active;
-    @OneToMany(mappedBy="contract")
+    @OneToMany(mappedBy = "contract")
     private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "end_reason_id")
@@ -189,5 +194,31 @@ public class Contract extends BaseEntity {
         this.endReason = endReason;
     }
 
+    public Map<YearMonth, BigDecimal> getPaymentSettlementByMonth(LocalDate startDate, LocalDate endDate) {
+        BigDecimal salary = paymentsSettlement.stream()
+                .map(this::toMonthlySalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        return generatePeriod(startDate, endDate)
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), yearMonth -> salary, (a, b) -> b));
+    }
+
+    private BigDecimal toMonthlySalary(PaymentSettlement ps) {
+        if (Modality.MONTHLY.equals(ps.getModality()) && Currency.USD.equals(ps.getCurrency())) {
+            return ps.getSalary();
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private List<YearMonth> generatePeriod(LocalDate startDate, LocalDate endDate) {
+        YearMonth start =
+                startDate.isAfter(this.startDate) ? YearMonth.from(startDate) : YearMonth.from(this.startDate);
+
+        YearMonth end = this.endDate != null && this.endDate.isBefore(endDate) ? YearMonth.from(this.endDate)
+                : YearMonth.from(endDate);
+
+        return Stream.iterate(start, month -> !month.isAfter(end), month -> month.plusMonths(1))
+                .collect(Collectors.toList());
+    }
 }

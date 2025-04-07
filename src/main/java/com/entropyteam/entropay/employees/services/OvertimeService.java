@@ -1,13 +1,12 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.HashMap;
-import java.util.Arrays;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +29,8 @@ public class OvertimeService extends BaseService<Overtime, OvertimeDto, UUID> {
     private final AssignmentRepository assignmentRepository;
 
     @Autowired
-    public OvertimeService(OvertimeRepository overtimeRepository,
-            ReactAdminMapper reactAdminMapper, EmployeeRepository employeeRepository,
-            AssignmentRepository assignmentRepository) {
+    public OvertimeService(OvertimeRepository overtimeRepository, ReactAdminMapper reactAdminMapper,
+            EmployeeRepository employeeRepository, AssignmentRepository assignmentRepository) {
         super(Overtime.class, reactAdminMapper);
         this.overtimeRepository = Objects.requireNonNull(overtimeRepository);
         this.employeeRepository = employeeRepository;

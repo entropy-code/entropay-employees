@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.services;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
+import com.entropyteam.entropay.employees.timetracking.PtoTimeEntry;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Country;
@@ -68,8 +70,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         pto.setDeleted(true);
         if (isVacationType(pto)) {
             vacationService.discountVacationDebit(pto.getEmployee(), pto.getDaysAsInteger());
-            LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}",
-                    pto.getEmployee().getId(), pto.getDays());
+            LOGGER.info("Pto of type vacation deleted, employeeId: {}, amount of days: {}", pto.getEmployee().getId(),
+                    pto.getDays());
         }
         calendarService.deleteLeaveEvent(id.toString());
         return toDTO(pto);
@@ -122,8 +124,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         }
 
         Pto savedEntity = getRepository().save(entityToCreate);
-        LOGGER.info("PTO of type {} created employeeId: {}, amount of days: {}",
-                savedEntity.getLeaveType().getName(), savedEntity.getEmployee().getId(), savedEntity.getDays());
+        LOGGER.info("PTO of type {} created employeeId: {}, amount of days: {}", savedEntity.getLeaveType().getName(),
+                savedEntity.getEmployee().getId(), savedEntity.getDays());
 
         calendarService.createLeaveEvent(savedEntity.getId().toString(), savedEntity.getLeaveType().getName(),
                 savedEntity.getEmployee().getFirstName(), savedEntity.getEmployee().getLastName(),
@@ -169,13 +171,12 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
             Double labourDays = 0.0;
             LocalDate currentDate = entity.getStartDate();
             LocalDate endDate = entity.getEndDate();
-            List<Holiday> holidaysInPeriod = holidayRepository.
-                    findHolidaysByCountryAndPeriod(employeesCountryId, currentDate, endDate);
+            List<Holiday> holidaysInPeriod =
+                    holidayRepository.findHolidaysByCountryAndPeriod(employeesCountryId, currentDate, endDate);
             while (!currentDate.isAfter(endDate)) {
                 LocalDate finalCurrentDate = currentDate;
-                if (currentDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
-                    currentDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
-                    holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalCurrentDate))) {
+                if (currentDate.getDayOfWeek() != DayOfWeek.SATURDAY && currentDate.getDayOfWeek() != DayOfWeek.SUNDAY
+                    && holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalCurrentDate))) {
                     labourDays++;
                 }
 
@@ -205,14 +206,12 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
     public List<Map<String, Integer>> getPtosYears() {
         List<Integer> years = ptoRepository.getPtosYears();
 
-        return years.stream()
-                .map(year -> {
-                    Map<String, Integer> yearMap = new HashMap<>();
-                    yearMap.put("id", year);
-                    yearMap.put("year", year);
-                    return yearMap;
-                })
-                .collect(Collectors.toList());
+        return years.stream().map(year -> {
+            Map<String, Integer> yearMap = new HashMap<>();
+            yearMap.put("id", year);
+            yearMap.put("year", year);
+            return yearMap;
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -233,17 +232,11 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
         Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
 
-        return ptoRepository.findAllBetweenPeriod(startDate, endDate)
-                .stream()
-                .collect(Collectors.groupingBy(Pto::getEmployee, Collectors.toSet()))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Entry::getKey,
-                        entry -> entry.getValue()
-                                .stream()
+        return ptoRepository.findAllBetweenPeriod(startDate, endDate).stream()
+                .collect(Collectors.groupingBy(Pto::getEmployee, Collectors.toSet())).entrySet().stream().collect(
+                        Collectors.toMap(Entry::getKey, entry -> entry.getValue().stream()
                                 .map(pto -> getPtoHours(pto, startDate, endDate, holidaysByCountry))
-                                .reduce(0.0, Double::sum),
-                        (a, b) -> b));
+                                .reduce(0.0, Double::sum), (a, b) -> b));
     }
 
     /**
@@ -270,5 +263,21 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
                 .filter(date -> date.getDayOfWeek().getValue() < 6) // Include only weekdays
                 .filter(date -> !holidayDates.contains(date)) // Exclude holidays
                 .count() * 8.0;
+    }
+
+    public List<PtoTimeEntry> findPtoActivities(LocalDate startDate, LocalDate endDate) {
+        Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
+
+        List<PtoTimeEntry> ptoActivities = new ArrayList<>();
+
+        ptoRepository.findAllBetweenPeriod(startDate, endDate).forEach(
+                pto -> pto.getStartDate().datesUntil(pto.getEndDate().plusDays(1))
+                        .filter(date -> date.getDayOfWeek().getValue() < 6) // Include only weekdays
+                        .filter(date -> !holidaysByCountry.getOrDefault(pto.getEmployee().getCountry(), Set.of())
+                                .contains(date)) // Exclude holidays
+                        .forEach(date -> ptoActivities.add(
+                                new PtoTimeEntry(pto.getEmployee(), date, pto.isHalfDay() ? 4.0 : 8.0))));
+
+        return ptoActivities;
     }
 }
