@@ -272,7 +272,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
 
         ptoRepository.findAllBetweenPeriod(startDate, endDate).forEach(
                 pto -> pto.getStartDate().datesUntil(pto.getEndDate().plusDays(1))
-                        .filter(date -> date.getDayOfWeek().getValue() < 6) // Include only weekdays
+                        .filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue()) // Include only weekdays
                         .filter(date -> !holidaysByCountry.getOrDefault(pto.getEmployee().getCountry(), Set.of())
                                 .contains(date)) // Exclude holidays
                         .forEach(date -> ptoActivities.add(

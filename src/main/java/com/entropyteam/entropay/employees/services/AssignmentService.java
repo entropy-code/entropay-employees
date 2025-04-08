@@ -162,7 +162,8 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     }
 
     private Set<LocalDate> getWeekdays(LocalDate startDate, LocalDate endDate) {
-        return startDate.datesUntil(endDate.plusDays(1)).filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue())
+        return startDate.datesUntil(endDate.plusDays(1))
+                .filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue())
                 .collect(Collectors.toSet());
     }
 }
