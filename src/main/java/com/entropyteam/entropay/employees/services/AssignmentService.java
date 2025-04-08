@@ -2,6 +2,7 @@ package com.entropyteam.entropay.employees.services;
 
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,6 @@ import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
 @Service
 public class AssignmentService extends BaseService<Assignment, AssignmentDto, UUID> {
 
-    private static final int SATURDAY = 6;
     private final AssignmentRepository assignmentRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
@@ -162,7 +162,7 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     }
 
     private Set<LocalDate> getWeekdays(LocalDate startDate, LocalDate endDate) {
-        return startDate.datesUntil(endDate.plusDays(1)).filter(date -> date.getDayOfWeek().getValue() < SATURDAY)
+        return startDate.datesUntil(endDate.plusDays(1)).filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue())
                 .collect(Collectors.toSet());
     }
 }

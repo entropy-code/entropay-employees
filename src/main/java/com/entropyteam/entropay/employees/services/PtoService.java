@@ -260,7 +260,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
         LocalDate to = endDate.isAfter(pto.getEndDate()) ? pto.getEndDate() : endDate;
 
         return (double) from.datesUntil(to.plusDays(1))
-                .filter(date -> date.getDayOfWeek().getValue() < 6) // Include only weekdays
+                .filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue()) // Include only weekdays
                 .filter(date -> !holidayDates.contains(date)) // Exclude holidays
                 .count() * 8.0;
     }
