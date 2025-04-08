@@ -116,7 +116,6 @@ class BillingServiceTest {
 
         Assertions.assertEquals(1, data.size());
         BillingDto billingDto = data.getFirst();
-        System.out.println(billingDto);
         // In February, he is on PTO until 10/02/2025. 6 Weekdays
         Assertions.assertEquals(6 * 8, billingDto.ptoHours());
         // February has 20 week-days, minus 6 PTO, so this employee worked 14 days

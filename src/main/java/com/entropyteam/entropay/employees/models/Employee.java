@@ -3,6 +3,8 @@ package com.entropyteam.entropay.employees.models;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
@@ -300,5 +302,14 @@ public class Employee extends BaseEntity {
 
     public void setChildren(Set<Children> children) {
         this.children = children;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
+                .append("internalId", internalId)
+                .append("firstName", firstName)
+                .append("lastName", lastName)
+                .toString();
     }
 }

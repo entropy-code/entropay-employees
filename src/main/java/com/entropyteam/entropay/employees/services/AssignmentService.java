@@ -2,7 +2,9 @@ package com.entropyteam.entropay.employees.services;
 
 import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,11 +33,11 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.ProjectRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
+import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
 
 @Service
 public class AssignmentService extends BaseService<Assignment, AssignmentDto, UUID> {
 
-    private static final int SATURDAY = 6;
     private final AssignmentRepository assignmentRepository;
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
@@ -47,9 +49,8 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
-            RoleRepository roleRepository, SeniorityRepository seniorityRepository,
-            ProjectRepository projectRepository, SecureObjectService secureObjectService,
-            ReactAdminMapper reactAdminMapper, HolidayService holidayService) {
+            RoleRepository roleRepository, SeniorityRepository seniorityRepository, ProjectRepository projectRepository,
+            SecureObjectService secureObjectService, ReactAdminMapper reactAdminMapper, HolidayService holidayService) {
         super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
@@ -133,36 +134,36 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     }
 
     @Transactional(readOnly = true)
-    public Map<Assignment, Set<LocalDate>> calculateWorkingDaysForAssignments(LocalDate startDate, LocalDate endDate) {
+    public List<AssignmentTimeEntry> findActivityForAssignments(LocalDate startDate, LocalDate endDate) {
         Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
 
         Set<LocalDate> weekdays = getWeekdays(startDate, endDate);
-        Map<Assignment, Set<LocalDate>> workingDaysByAssignment = new HashMap<>();
-        // if the assignment started or finished during the middle of the month, adjust the working days
-        assignmentRepository.findAllBetweenPeriod(startDate, endDate)
-                .forEach(assignment -> {
-                    Set<LocalDate> workingDays = new HashSet<>(weekdays);
-                    if (assignment.getStartDate().isAfter(startDate)) {
-                        workingDays.removeAll(
-                                startDate.datesUntil(assignment.getStartDate()).collect(Collectors.toSet()));
-                    }
-                    if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
-                        workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
-                    }
-                    if (!assignment.getProject().isPaidPto()) {
-                        Country country = assignment.getEmployee().getCountry();
-                        Set<LocalDate> holidays = holidaysByCountry.getOrDefault(country, Set.of());
-                        workingDays.removeAll(holidays);
-                    }
-                    workingDaysByAssignment.put(assignment, workingDays);
-                });
+        List<AssignmentTimeEntry> assignmentActivities = new ArrayList<>();
 
-        return workingDaysByAssignment;
+        // if the assignment started or finished during the middle of the month, adjust the working days
+        assignmentRepository.findAllBetweenPeriod(startDate, endDate).forEach(assignment -> {
+            Set<LocalDate> workingDays = new HashSet<>(weekdays);
+            if (assignment.getStartDate().isAfter(startDate)) {
+                workingDays.removeAll(startDate.datesUntil(assignment.getStartDate()).collect(Collectors.toSet()));
+            }
+            if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
+                workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
+            }
+            if (!assignment.getProject().isPaidPto()) {
+                Country country = assignment.getEmployee().getCountry();
+                Set<LocalDate> holidays = holidaysByCountry.getOrDefault(country, Set.of());
+                workingDays.removeAll(holidays);
+            }
+
+            workingDays.forEach(date -> assignmentActivities.add(new AssignmentTimeEntry(assignment, date, 8.0)));
+        });
+
+        return assignmentActivities;
     }
 
     private Set<LocalDate> getWeekdays(LocalDate startDate, LocalDate endDate) {
         return startDate.datesUntil(endDate.plusDays(1))
-                .filter(date -> date.getDayOfWeek().getValue() < SATURDAY)
+                .filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue())
                 .collect(Collectors.toSet());
     }
 }

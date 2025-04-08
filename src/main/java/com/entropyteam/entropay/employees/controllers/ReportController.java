@@ -25,6 +25,8 @@ import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.SalariesReportDto;
 import com.entropyteam.entropay.employees.services.BillingService;
 import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
+import com.entropyteam.entropay.employees.services.MarginService;
+import com.entropyteam.entropay.employees.services.MarginService.MarginDto;
 import com.entropyteam.entropay.employees.services.ReportService;
 
 
@@ -35,10 +37,12 @@ public class ReportController {
 
     private final ReportService reportService;
     private final BillingService billingService;
+    private final MarginService marginService;
 
-    public ReportController(ReportService reportService, BillingService billingService) {
+    public ReportController(ReportService reportService, BillingService billingService, MarginService marginService) {
         this.reportService = reportService;
         this.billingService = billingService;
+        this.marginService = marginService;
     }
 
     @GetMapping("/employees")
@@ -104,9 +108,19 @@ public class ReportController {
 
     @GetMapping("/billing")
     @Secured({ROLE_ADMIN})
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<List<BillingDto>> getBillingReport(ReactAdminParams params) {
         ReportDto<BillingDto> report = billingService.generateBillingReport(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(report.size()))
+                .body(report.data());
+    }
+
+    @GetMapping("/margin")
+    @Secured({ROLE_ADMIN})
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<MarginDto>> getMarginList(ReactAdminParams params) {
+        ReportDto<MarginDto> report = marginService.generateMarginReport(params);
         return ResponseEntity.ok()
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(report.size()))
                 .body(report.data());
