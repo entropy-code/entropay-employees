@@ -1,5 +1,7 @@
 package com.entropyteam.entropay.employees.services;
 
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -10,15 +12,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.auth.SecureObjectService;
-import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -37,8 +36,6 @@ import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
-
-import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 
 @Service
 public class ContractService extends BaseService<Contract, ContractDto, UUID> {
@@ -173,22 +170,13 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     }
 
     @Override
-    public Map<String, Object> getRestrictedFields(AppRole userRole) {
-        Map<String, Object> restrictedFields = new HashMap<>();
-        if (AppRole.ROLE_MANAGER_HR.equals(userRole)) {
-            List<Role> roles = roleRepository.findAllByDeletedIsFalseAndNameLikeIgnoreCase(HR_SEARCH_TERM);
-            if (CollectionUtils.isNotEmpty(roles)) {
-                restrictedFields.put("role", roles);
-            }
-        }
-
-        return restrictedFields;
-    }
-
-    @Override
     public Map<String, List<String>> getRelatedColumnsForSearch() {
         Map<String, List<String>> relatedColumns = new HashMap<>();
         relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
         return relatedColumns;
+    }
+
+    public List<Contract> findByDateBetween(LocalDate startDate, LocalDate endDate) {
+        return contractRepository.findAllBetweenPeriod(startDate, endDate);
     }
 }

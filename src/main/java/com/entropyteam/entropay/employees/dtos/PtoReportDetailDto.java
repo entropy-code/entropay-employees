@@ -1,11 +1,10 @@
 package com.entropyteam.entropay.employees.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.LocalDate;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-public class PtoReportDetailDto extends ReportDto {
+public class PtoReportDetailDto {
     private UUID id;
     private UUID employeeId;
     private String internalId;

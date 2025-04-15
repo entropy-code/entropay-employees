@@ -132,7 +132,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             return CollectionUtils.emptyCollection();
         }
         Collection<Predicate> predicates =
-                filter.getGetByFieldsFilter().entrySet().stream().filter(f -> f.getKey() != SEARCH_TERM_KEY)
+                filter.getGetByFieldsFilter().entrySet().stream().filter(f -> !SEARCH_TERM_KEY.equals(f.getKey()))
                         .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
 
         if (filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()

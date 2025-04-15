@@ -1,33 +1,39 @@
 package com.entropyteam.entropay.employees.services;
 
+import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-
-import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.Project;
-import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Seniority;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
+import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.Project;
+import com.entropyteam.entropay.employees.models.Role;
+import com.entropyteam.entropay.employees.models.Seniority;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.ProjectRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
-import org.springframework.transaction.annotation.Transactional;
-
-import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
+import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
 
 @Service
 public class AssignmentService extends BaseService<Assignment, AssignmentDto, UUID> {
@@ -38,13 +44,13 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     private final SeniorityRepository seniorityRepository;
     private final ProjectRepository projectRepository;
     private final SecureObjectService secureObjectService;
+    private final HolidayService holidayService;
 
 
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
-            RoleRepository roleRepository, SeniorityRepository seniorityRepository,
-            ProjectRepository projectRepository, SecureObjectService secureObjectService,
-            ReactAdminMapper reactAdminMapper) {
+            RoleRepository roleRepository, SeniorityRepository seniorityRepository, ProjectRepository projectRepository,
+            SecureObjectService secureObjectService, ReactAdminMapper reactAdminMapper, HolidayService holidayService) {
         super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
@@ -52,6 +58,7 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         this.seniorityRepository = seniorityRepository;
         this.projectRepository = projectRepository;
         this.secureObjectService = secureObjectService;
+        this.holidayService = holidayService;
     }
 
     @Override
@@ -124,5 +131,39 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         Map<String, List<String>> relatedColumns = new HashMap<>();
         relatedColumns.put("employee", Arrays.asList("firstName", "lastName"));
         return relatedColumns;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssignmentTimeEntry> findActivityForAssignments(LocalDate startDate, LocalDate endDate) {
+        Map<Country, Set<LocalDate>> holidaysByCountry = holidayService.getHolidaysByCountry(startDate, endDate);
+
+        Set<LocalDate> weekdays = getWeekdays(startDate, endDate);
+        List<AssignmentTimeEntry> assignmentActivities = new ArrayList<>();
+
+        // if the assignment started or finished during the middle of the month, adjust the working days
+        assignmentRepository.findAllBetweenPeriod(startDate, endDate).forEach(assignment -> {
+            Set<LocalDate> workingDays = new HashSet<>(weekdays);
+            if (assignment.getStartDate().isAfter(startDate)) {
+                workingDays.removeAll(startDate.datesUntil(assignment.getStartDate()).collect(Collectors.toSet()));
+            }
+            if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
+                workingDays.removeAll(assignment.getEndDate().datesUntil(endDate).collect(Collectors.toSet()));
+            }
+            if (!assignment.getProject().isPaidPto()) {
+                Country country = assignment.getEmployee().getCountry();
+                Set<LocalDate> holidays = holidaysByCountry.getOrDefault(country, Set.of());
+                workingDays.removeAll(holidays);
+            }
+
+            workingDays.forEach(date -> assignmentActivities.add(new AssignmentTimeEntry(assignment, date, 8.0)));
+        });
+
+        return assignmentActivities;
+    }
+
+    private Set<LocalDate> getWeekdays(LocalDate startDate, LocalDate endDate) {
+        return startDate.datesUntil(endDate.plusDays(1))
+                .filter(date -> date.getDayOfWeek().getValue() < DayOfWeek.SATURDAY.getValue())
+                .collect(Collectors.toSet());
     }
 }

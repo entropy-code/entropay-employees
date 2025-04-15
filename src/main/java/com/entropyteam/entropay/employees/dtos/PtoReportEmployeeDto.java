@@ -2,7 +2,7 @@ package com.entropyteam.entropay.employees.dtos;
 
 import java.util.UUID;
 
-public class PtoReportEmployeeDto extends ReportDto {
+public class PtoReportEmployeeDto {
     private UUID id;
     private String internalId;
     private String firstName;

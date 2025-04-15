@@ -2,12 +2,13 @@ package com.entropyteam.entropay.common;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
+import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,16 +57,18 @@ public class ReactAdminMapper {
                         List<String> ids = (List<String>) filter.getValue();
                         getByIdsFilter.put(filter.getKey(),
                                 ids.stream().map(UUID::fromString).collect(Collectors.toList()));
-                    } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(filter.getKey(), SEARCH_TERM_KEY)) {
+                    } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(
+                            filter.getKey(), SEARCH_TERM_KEY)) {
                         // getList filter
                         getByFieldsFilter.put(filter.getKey(), filter.getValue());
                     } else if (StringUtils.equalsIgnoreCase(filter.getKey(), YEAR_SEARCH_TERM_KEY)) {
                         String year = filter.getValue().toString();
-                        LocalDate dateFrom = LocalDate.parse(year+"-01-01");
-                        LocalDate dateTo = LocalDate.parse(year+"-12-31");
-                        getByDateFieldsFilter.put("dateFrom",dateFrom);
-                        getByDateFieldsFilter.put("dateTo",dateTo);
-                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY) || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY) ) {
+                        LocalDate dateFrom = LocalDate.parse(year + "-01-01");
+                        LocalDate dateTo = LocalDate.parse(year + "-12-31");
+                        getByDateFieldsFilter.put("dateFrom", dateFrom);
+                        getByDateFieldsFilter.put("dateTo", dateTo);
+                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY)
+                            || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY)) {
                         LocalDate date = LocalDate.parse(filter.getValue().toString());
                         getByDateFieldsFilter.put(filter.getKey(), date);
                     } else {
@@ -125,13 +128,47 @@ public class ReactAdminMapper {
                 }
             }
             return new Filter(getByFieldsFilter);
-        }
-        catch (JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on filters", e);
         }
     }
 
     private boolean isEntityField(Class entityClass, String field) {
         return Arrays.stream(entityClass.getDeclaredFields()).anyMatch(f -> StringUtils.equals(f.getName(), field));
+    }
+
+    static <T> Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
+
+        return (object1, object2) -> {
+            try {
+                List<String> sortList = MAPPER.readValue(params.getSort(), List.class);
+                String sort = sortList.get(0);
+                String order = sortList.get(1);
+
+                var field = clazz.getDeclaredField(sort);
+                field.setAccessible(true);
+                var fieldValue1 = field.get(object1);
+                var fieldValue2 = field.get(object2);
+                if (fieldValue1 instanceof Comparable && fieldValue2 instanceof Comparable) {
+                    int comparison = ((Comparable) fieldValue1).compareTo(fieldValue2);
+                    return "desc".equalsIgnoreCase(order) ? -comparison : comparison;
+                }
+                return 0;
+            } catch (NoSuchFieldException | IllegalAccessException | JsonProcessingException e) {
+                throw new RuntimeException("Error sorting billing report by field: " + params.getSort(), e);
+            }
+        };
+    }
+
+    static Range<Integer> getRange(ReactAdminParams params) {
+        try {
+            List<Integer> rangeList = MAPPER.readValue(params.getRange(), List.class);
+            Integer start = rangeList.get(0);
+            Integer end = rangeList.get(1);
+            return Range.of(start, end);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error parsing range: " + params.getRange(), e);
+        }
+
     }
 }

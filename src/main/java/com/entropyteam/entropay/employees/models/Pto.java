@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "pto")
 public class Pto extends BaseEntity {
+
     @Column
     private LocalDate startDate;
 
@@ -119,5 +120,9 @@ public class Pto extends BaseEntity {
 
     public Integer getDaysAsInteger() {
         return days.intValue();
+    }
+
+    public boolean isHalfDay() {
+        return startDate.isEqual(endDate);
     }
 }

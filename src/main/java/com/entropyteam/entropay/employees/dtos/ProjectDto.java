@@ -17,14 +17,16 @@ public record ProjectDto(UUID id,
                         @JsonFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                         @JsonFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
                         String notes,
+                        boolean paidPto,
                         boolean deleted,
                         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime createdAt,
-                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt) {
+                        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime modifiedAt
+) {
 
     public ProjectDto(Project project) {
         this(project.getId(), project.getClient().getId(), project.getName(),
                 project.getProjectType() != null ? project.getProjectType().getId() : null,
-                project.getStartDate(), project.getEndDate(), project.getNotes(),
+                project.getStartDate(), project.getEndDate(), project.getNotes(), project.isPaidPto(),
                 project.isDeleted(), project.getCreatedAt(), project.getModifiedAt());
     }
 }

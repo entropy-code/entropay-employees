@@ -5,13 +5,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.2</version>
+        <version>3.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.entropyteam.entropay</groupId>
     <artifactId>entropay-employees</artifactId>
-    <version>1.1.38-SNAPSHOT</version>
+    <version>1.2.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>entropay-employees</name>
     <description>Entropay Employees API</description>
@@ -19,12 +19,12 @@
     <properties>
         <apache-commons.version>3.17.0</apache-commons.version>
         <apache-commons-collections.version>4.4</apache-commons-collections.version>
-        <google-auth.version>1.32.1</google-auth.version>
+        <google-auth.version>1.33.1</google-auth.version>
         <google-services-calendar.version>v3-rev20250115-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.5</postgresql.version>
-        <software-amazon-sdk.version>2.30.21</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.31.21</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
