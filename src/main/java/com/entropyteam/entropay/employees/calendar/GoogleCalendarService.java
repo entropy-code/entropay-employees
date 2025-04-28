@@ -77,7 +77,7 @@ public class GoogleCalendarService implements CalendarService {
         } else {
             // If a birthday is on a working day, try to delete the additional event if it exists
             try {
-                String mondayEventId = getMondayBirthdayEventId(employeeId);
+                String mondayEventId = getReminderBirthdayEventId(employeeId);
                 deleteGoogleCalendarEvent(mondayEventId);
                 LOGGER.info("Deleted additional event as birthday is on a working day");
             } catch (Exception e) {
@@ -95,7 +95,7 @@ public class GoogleCalendarService implements CalendarService {
 
         // Also try to delete the additional event for the next working day if it exists
         try {
-            String additionalEventId = getMondayBirthdayEventId(employeeId);
+            String additionalEventId = getReminderBirthdayEventId(employeeId);
             deleteGoogleCalendarEvent(additionalEventId);
             LOGGER.info("Deleted additional working day birthday event for employee {}", employeeId);
         } catch (Exception e) {
@@ -156,8 +156,7 @@ public class GoogleCalendarService implements CalendarService {
         return "%d%s".formatted(LocalDate.now().getYear(), employeeId.replace("-", ""));
     }
 
-    private static String getMondayBirthdayEventId(String employeeId) {
-        // Keeping the same ID format for backward compatibility, even though it's now for any working day
+    private static String getReminderBirthdayEventId(String employeeId) {
         return "%d%s-monday".formatted(LocalDate.now().getYear(), employeeId.replace("-", ""));
     }
 
