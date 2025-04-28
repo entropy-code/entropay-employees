@@ -13,7 +13,7 @@ public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
     List<Holiday> findAllByDateBetweenAndDeletedFalseOrderByDateAsc(LocalDate startDate, LocalDate endDate);
 
     @Query(value = "SELECT DISTINCT extract('Year' FROM date) AS year FROM holiday_calendar WHERE deleted=false "
-            + " ORDER BY year ASC", nativeQuery = true)
+                   + " ORDER BY year ASC", nativeQuery = true)
     List<Integer> getHolidaysYears();
 
     @Query(value = """
@@ -28,6 +28,19 @@ public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
 
+    @Query(value = """
+              SELECT h
+              FROM Holiday h
+              JOIN FETCH h.country c
+              WHERE
+                c.name = :countryName
+                AND h.date between :startDate and :endDate
+                AND h.deleted = false
+                AND c.deleted = false""")
+    List<Holiday> findHolidaysByCountryAndPeriod(@Param("countryName") String countryName,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     @Query("""
             SELECT h
             FROM Holiday h
@@ -36,5 +49,4 @@ public interface HolidayRepository extends BaseRepository<Holiday, UUID> {
               h.date between :startDate and :endDate
               AND h.deleted = false""")
     List<Holiday> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
-
 }
