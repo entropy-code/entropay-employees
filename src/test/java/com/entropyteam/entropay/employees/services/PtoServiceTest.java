@@ -80,7 +80,7 @@ public class PtoServiceTest {
         Country country = new Country();
         country.setId(UUID.randomUUID());
 
-        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(UUID.class), Mockito.any(), Mockito.any()))
                 .thenReturn(Collections.emptyList());
 
         // Run
@@ -102,7 +102,7 @@ public class PtoServiceTest {
         Country country = new Country();
         country.setId(UUID.randomUUID());
 
-        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(holidayRepository.findHolidaysByCountryAndPeriod(Mockito.any(UUID.class), Mockito.any(), Mockito.any()))
                 .thenReturn(Collections.emptyList());
 
         // Run
