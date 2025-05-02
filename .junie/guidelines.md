@@ -1,11 +1,11 @@
-# Entropay Employees Project Guidelines
+# Entroteam Employees Project Guidelines
 
 ## Project Overview
-Entropay Employees is a Spring Boot application that manages employee data, integrates with external services, and provides reporting capabilities.
+Entroteam Employees is a Spring Boot application that manages employee data, integrates with external services, and provides reporting capabilities.
 
 ## Tech Stack
 - **Java 21** with virtual threads support
-- **Spring Boot 3.4.4** (Web, Data JPA, Security, OAuth2)
+- **Spring Boot 3.4.5** (Web, Data JPA, Security, OAuth2)
 - **PostgreSQL** database
 - **Flyway** for database migrations
 - **Maven** for build management
@@ -13,7 +13,6 @@ Entropay Employees is a Spring Boot application that manages employee data, inte
 - **JUnit 5** and **Mockito** for testing
 - **AWS S3** for file storage
 - **Google Calendar API** for calendar integration
-- **New Relic** for monitoring
 
 ## Project Structure
 ```
@@ -21,18 +20,19 @@ entropay-employees/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/entropyteam/entropay/
-│   │   │   ├── auth/           # Authentication components
-│   │   │   ├── common/         # Shared utilities and exceptions
-│   │   │   ├── config/         # Application configuration
-│   │   │   ├── employees/      # Core employee functionality
-│   │   │   │   ├── calendar/   # Calendar integration
-│   │   │   │   ├── controllers/# REST endpoints
-│   │   │   │   ├── dtos/       # Data transfer objects
-│   │   │   │   ├── jobs/       # Scheduled jobs
-│   │   │   │   ├── models/     # Entity models
-│   │   │   │   ├── repositories/# Data access
-│   │   │   │   └── services/   # Business logic
-│   │   │   └── notifications/  # Notification services
+│   │   │   ├── auth/             # Authentication components
+│   │   │   ├── common/           # Shared utilities and exceptions
+│   │   │   ├── config/           # Application configuration
+│   │   │   ├── employees/        # Core employee functionality
+│   │   │   │   ├── calendar/     # Calendar integration
+│   │   │   │   ├── controllers/  # REST endpoints
+│   │   │   │   ├── dtos/         # Data transfer objects
+│   │   │   │   ├── jobs/         # Scheduled jobs
+│   │   │   │   ├── models/       # Entity models
+│   │   │   │   ├── repositories/ # Data access
+│   │   │   │   ├── services/     # Business logic
+│   │   │   │   └── timetracking/ # Time tracking specific logic    
+│   │   │   └── notifications/    # Notification services
 │   │   └── resources/
 │   │       ├── application.properties # Application configuration
 │   │       └── db/migration/   # Flyway database migrations
@@ -82,17 +82,19 @@ docker build -t entropay-employees .
 1. **Code Organization**
    - Follow the package structure for new components
    - Keep controllers thin, business logic in services
-   - Use DTOs for API requests/responses
+   - Use DTOs for API requests/responses 
 
 2. **Testing**
    - Write unit tests for all new functionality
    - Follow the Given-When-Then pattern
    - Use Mockito for mocking dependencies
+   - Annotate the classes with `@ExtendWith(MockitoExtension.class)`
 
 3. **Database**
    - Create Flyway migrations for schema changes
    - Use JPA repositories for data access
    - Avoid N+1 query problems with proper fetch strategies
+   - Use HQL in preference of SQL
 
 4. **Security**
    - Don't hardcode credentials in source code

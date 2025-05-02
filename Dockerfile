@@ -10,8 +10,5 @@ RUN mvn package
 FROM amazoncorretto:21
 WORKDIR /app
 COPY --from=build-env /app/target/entropay-employees.jar ./entropay-employees.jar
-# Add New Relic
-RUN mkdir -p /usr/local/newrelic
-COPY newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
-COPY newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
-CMD ["java", "-javaagent:/usr/local/newrelic/newrelic.jar", "-jar", "/app/entropay-employees.jar", "-Xmx256m"]
+
+CMD ["java", "-jar", "/app/entropay-employees.jar", "-Xmx256m"]
