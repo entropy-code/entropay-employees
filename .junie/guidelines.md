@@ -73,6 +73,19 @@ entropay-employees/
 docker build -t entropay-employees .
 ```
 
+### Running with Docker Compose
+To run the entire application stack including the database and pgweb:
+
+```bash
+docker-compose up --build
+```
+
+To run only the database and pgweb:
+
+```bash
+docker-compose up postgres pgweb
+```
+
 ### Database Migrations
 - Migrations are managed with Flyway
 - Migration files are located in `src/main/resources/db/migration/`
@@ -108,3 +121,24 @@ docker build -t entropay-employees .
 
 ## Deployment
 The application is containerized using Docker and can be deployed to any container orchestration platform.
+
+## Configuration
+The application can be configured using environment variables or by modifying the `application.properties` file. Key configuration properties include:
+
+- `server.port`: The port on which the application runs (default: 8100)
+- `spring.datasource.url`: The JDBC URL for the database connection
+- `spring.datasource.username`: The database username
+- `spring.datasource.password`: The database password
+- `spring.security.oauth2.resourceserver.jwt.issuer-uri`: The JWT issuer URI for OAuth2 authentication
+
+For local development, these properties are set in the `local.env` file and the `docker-compose.yml` file.
+
+## Documentation Guidelines
+When making meaningful changes to the project, please ensure that both this file (.junie/guidelines.md) and the README.md file are kept in sync and up-to-date. This includes:
+
+1. Adding new sections or information about new features
+2. Updating existing sections to reflect changes in the codebase
+3. Removing outdated information
+4. Ensuring that technical details (versions, configurations, etc.) are accurate
+
+This helps maintain consistent documentation and ensures that all team members have access to the most current information about the project.
