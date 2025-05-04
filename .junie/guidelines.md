@@ -119,6 +119,55 @@ docker-compose up postgres pgweb
    - Document APIs with clear request/response examples
    - Implement proper error handling and validation
 
+## Generic CRUD Architecture
+The application uses a three-tier architecture with base classes that provide generic CRUD (Create, Read, Update, Delete) functionality:
+
+1. **BaseController**
+   - Located in `com.entropyteam.entropay.common.BaseController`
+   - Abstract class that implements `ReactAdminController` interface
+   - Provides standard REST endpoints for CRUD operations:
+     - `GET /` - List all entities with filtering, pagination, and sorting
+     - `GET /{id}` - Get a single entity by ID
+     - `POST /` - Create a new entity
+     - `PUT /{id}` - Update an existing entity
+     - `DELETE /{id}` - Delete (soft delete) an entity
+   - Includes security annotations for role-based access control
+   - Delegates operations to a `CrudService` implementation
+   - Example: `EmployeeController extends BaseController<EmployeeDto, UUID>`
+
+2. **BaseService**
+   - Located in `com.entropyteam.entropay.common.BaseService`
+   - Abstract class that implements `CrudService` interface
+   - Provides generic implementations for CRUD operations
+   - Uses JPA Criteria API for dynamic querying with filtering, pagination, and sorting
+   - Supports soft deletion (sets `deleted = true` instead of removing records)
+   - Requires concrete implementations to provide:
+     - `getRepository()` - Returns the repository for the entity
+     - `toDTO(Entity)` - Converts entity to DTO
+     - `toEntity(DTO)` - Converts DTO to entity
+   - Example: `EmployeeService extends BaseService<Employee, EmployeeDto, UUID>`
+
+3. **BaseRepository**
+   - Located in `com.entropyteam.entropay.common.BaseRepository`
+   - Interface that extends Spring Data JPA's `JpaRepository`
+   - Provides standard repository methods for CRUD operations
+   - Adds custom method `findAllByDeletedIsFalse()` for soft deletion support
+   - Annotated with `@NoRepositoryBean` to prevent Spring from creating instances
+   - Example: `EmployeeRepository extends BaseRepository<Employee, UUID>`
+
+4. **BaseEntity**
+   - Common base class for all entity models
+   - Includes common fields like `id`, `deleted`, `createdAt`, etc.
+   - Supports soft deletion through the `deleted` flag
+
+This architecture allows for rapid development of new features by providing a consistent pattern for CRUD operations across the application. When creating a new entity, developers only need to:
+1. Create the entity model extending `BaseEntity`
+2. Create a repository interface extending `BaseRepository`
+3. Create a service class extending `BaseService`
+4. Create a controller class extending `BaseController`
+
+Each layer can be extended with custom functionality while maintaining the core CRUD operations.
+
 ## Deployment
 The application is containerized using Docker and can be deployed to any container orchestration platform.
 

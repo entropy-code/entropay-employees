@@ -42,7 +42,7 @@ public class AuthorizationService {
                 .body(Identity.class);
 
         stopWatch.stop();
-        LOGGER.info("Finish getting identity for user: {}, took: {}ms", identity.email(),
+        LOGGER.debug("Finish getting identity for user: {}, took: {}ms", identity.email(),
                 stopWatch.getTotalTimeMillis());
 
         return identity;
