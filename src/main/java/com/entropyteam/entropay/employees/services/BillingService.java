@@ -101,8 +101,8 @@ public class BillingService {
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
-                .sorted(params.getComparator(BillingDto.class))
                 .filter(params.getFilter(BillingDto.class))
+                .sorted(params.getComparator(BillingDto.class))
                 .toList();
 
         Range<Integer> range = params.getRangeInterval();

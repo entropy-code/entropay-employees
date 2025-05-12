@@ -147,8 +147,8 @@ public class MarginService {
             List<MarginDto> marginDtos) {
 
         List<MarginDto> data = marginDtos.stream()
-                .sorted(params.getComparator(MarginDto.class))
                 .filter(params.getFilter(MarginDto.class))
+                .sorted(params.getComparator(MarginDto.class))
                 .toList();
 
         Range<Integer> range = params.getRangeInterval();
