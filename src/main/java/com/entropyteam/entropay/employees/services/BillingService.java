@@ -98,16 +98,17 @@ public class BillingService {
      */
     private static ReportDto<BillingDto> getPaginatedBillingEntries(ReactAdminParams params,
             List<BillingEntry> billingList) {
-        Range<Integer> range = params.getRangeInterval();
-        int minimum = range.getMinimum();
-        int maximum = Math.min(range.getMaximum() + 1, billingList.size());
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
                 .sorted(params.getComparator(BillingDto.class))
-                .toList()
-                .subList(minimum, maximum);
+                .filter(params.getFilter(BillingDto.class))
+                .toList();
 
-        return new ReportDto<>(data, billingList.size());
+        Range<Integer> range = params.getRangeInterval();
+        int minimum = range.getMinimum();
+        int maximum = Math.min(range.getMaximum() + 1, data.size());
+
+        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
 }

@@ -7,9 +7,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -19,12 +22,13 @@ import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersExcept
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Doc https://marmelab.com/react-admin/DataProviders.html#admin-dataprovider
+ */
 @Service
 public class ReactAdminMapper {
 
-    /**
-     * Doc https://marmelab.com/react-admin/DataProviders.html#admin-dataprovider
-     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReactAdminMapper.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     public final static String ID_FIELD = "id";
@@ -68,7 +72,7 @@ public class ReactAdminMapper {
                         getByDateFieldsFilter.put("dateFrom", dateFrom);
                         getByDateFieldsFilter.put("dateTo", dateTo);
                     } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY)
-                            || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY)) {
+                               || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY)) {
                         LocalDate date = LocalDate.parse(filter.getValue().toString());
                         getByDateFieldsFilter.put(filter.getKey(), date);
                     } else {
@@ -159,6 +163,118 @@ public class ReactAdminMapper {
             }
         };
     }
+
+    /**
+     * Creates a predicate that filters objects based on attribute values.
+     * Uses reflection to access fields via getter methods.
+     * Special handling is implemented for:
+     * - Date range fields (startDate, endDate) - excluded from filtering
+     * - Search field (q) - searches across firstName and lastName
+     *
+     * @param <T> The type of object to filter
+     * @param params ReactAdminParams containing filter information
+     * @param clazz The class of the object being filtered, needed for reflection
+     * @return A predicate that tests if an object matches all filter criteria
+     */
+
+    public static <T> Predicate<T> getFilter(ReactAdminParams params, Class<T> clazz) {
+        Map<String, String> filters = parseFilters(params);
+
+        return dto -> {
+            // If no filters are provided, return true (include all items)
+            if (filters == null || filters.isEmpty()) {
+                return true;
+            }
+
+            // Check if all filter conditions are satisfied
+            return filters.entrySet()
+                    .stream()
+                    .filter(entry -> !isDateRangeField(entry.getKey())) // Filter out startDate and endDate
+                    .allMatch(entry -> {
+                        String fieldName = entry.getKey();
+                        String filterValue = entry.getValue();
+
+                        // Skip empty filter values
+                        if (StringUtils.isEmpty(filterValue)) {
+                            return true;
+                        }
+
+                        // Special handling for 'q' (search) parameter
+                        if (SEARCH_TERM_KEY.equals(fieldName)) {
+                            return handleSearchQuery(dto, filterValue, clazz);
+                        }
+
+                        try {
+                            // Get the method that corresponds to the field name
+                            java.lang.reflect.Method method = clazz.getMethod(fieldName);
+                            Object fieldValue = method.invoke(dto);
+
+                            // Handle null values
+                            if (fieldValue == null) {
+                                return false;
+                            }
+
+                            String stringValue = fieldValue.toString();
+                            return StringUtils.containsIgnoreCase(stringValue, filterValue);
+                        } catch (NoSuchMethodException | IllegalAccessException |
+                                 java.lang.reflect.InvocationTargetException e) {
+                            // If the field doesn't exist or can't be accessed, ignore this filter
+                            LOGGER.warn("Error filtering by field {}: {}", fieldName, e.getMessage());
+                            return true;
+                        }
+                    });
+        };
+    }
+
+    private static Map<String, String> parseFilters(ReactAdminParams params) {
+        Map<String, String> filters;
+        try {
+            filters = MAPPER.readValue(params.getFilter(), Map.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return filters;
+    }
+
+    /**
+     * Determines if a field is a special date range field that should be filtered differently.
+     *
+     * @param fieldName the name of the field
+     * @return true if the field is a date range field, false otherwise
+     */
+    private static boolean isDateRangeField(String fieldName) {
+        return "startDate".equals(fieldName) || "endDate".equals(fieldName);
+    }
+
+    /**
+     * Handles the special case of searching by 'q' parameter across firstName and lastName fields
+     *
+     * @param <T> The type of object to filter
+     * @param dto The object to check
+     * @param searchValue The search value to look for
+     * @param clazz The class of the object being filtered
+     * @return true if either firstName or lastName contains the search value, false otherwise
+     */
+    private static <T> boolean handleSearchQuery(T dto, String searchValue, Class<T> clazz) {
+        try {
+            // Check firstName
+            java.lang.reflect.Method firstNameMethod = clazz.getMethod("firstName");
+            Object firstNameValue = firstNameMethod.invoke(dto);
+
+            // Check lastName
+            java.lang.reflect.Method lastNameMethod = clazz.getMethod("lastName");
+            Object lastNameValue = lastNameMethod.invoke(dto);
+
+            // If either field contains the search value, return true
+            return (firstNameValue != null && StringUtils.containsIgnoreCase(firstNameValue.toString(), searchValue)) ||
+                   (lastNameValue != null && StringUtils.containsIgnoreCase(lastNameValue.toString(), searchValue));
+
+        } catch (NoSuchMethodException | IllegalAccessException | java.lang.reflect.InvocationTargetException e) {
+            LOGGER.warn("Error searching firstName/lastName with query 'q': {}", e.getMessage());
+            return false;
+        }
+    }
+
 
     static Range<Integer> getRange(ReactAdminParams params) {
         try {
