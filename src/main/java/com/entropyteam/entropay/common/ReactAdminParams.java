@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.common;
 
 import java.util.Comparator;
+import java.util.function.Predicate;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -46,6 +47,10 @@ public class ReactAdminParams {
 
     public <T> Comparator<T> getComparator(Class<T> clazz) {
         return ReactAdminMapper.getComparator(this, clazz);
+    }
+
+    public <T> Predicate<T> getFilter(Class<T> clazz) {
+        return ReactAdminMapper.getFilter(this, clazz);
     }
 
     public Range<Integer> getRangeInterval() {

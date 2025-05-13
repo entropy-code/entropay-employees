@@ -145,17 +145,17 @@ public class MarginService {
 
     private static ReportDto<MarginDto> getPaginatedEntries(ReactAdminParams params,
             List<MarginDto> marginDtos) {
-        Range<Integer> range = params.getRangeInterval();
-        int minimum = range.getMinimum();
-        int maximum = Math.min(range.getMaximum() + 1, marginDtos.size());
 
         List<MarginDto> data = marginDtos.stream()
+                .filter(params.getFilter(MarginDto.class))
                 .sorted(params.getComparator(MarginDto.class))
-                .toList()
-                .subList(minimum, maximum);
+                .toList();
 
-        return new ReportDto<>(data, marginDtos.size());
+        Range<Integer> range = params.getRangeInterval();
+        int minimum = range.getMinimum();
+        int maximum = Math.min(range.getMaximum() + 1, data.size());
+
+        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
-
 
 }
