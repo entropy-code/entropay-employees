@@ -221,4 +221,9 @@ public class Contract extends BaseEntity {
         return Stream.iterate(start, month -> !month.isAfter(end), month -> month.plusMonths(1))
                 .collect(Collectors.toList());
     }
+
+    public void addPaymentSettlement(PaymentSettlement paymentSettlement) {
+        paymentSettlement.setContract(this);
+        this.paymentsSettlement.add(paymentSettlement);
+    }
 }
