@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssignment;
 
 public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
@@ -54,4 +55,41 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                 AND a.deleted = FALSE
                 AND e.active = TRUE""")
     List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
+
+    @Query(value = """
+            WITH project_periods AS (SELECT min(a.start_date) as start_date,
+                                            CASE
+                                                WHEN COUNT(*) FILTER (WHERE a.end_date IS NULL) > 0
+                                                    THEN NOW()
+                                                ELSE MAX(a.end_date)
+                                                END           as end_date,
+                                            a.employee_id     as employee_id,
+                                            a.project_id      as project_id
+                                     FROM assignment a
+                                              JOIN employee e ON e.id = a.employee_id
+                                              JOIN project p ON p.id = a.project_id
+                                     where a.deleted is false
+                                       and e.deleted is false
+                                       and p.deleted is false
+                                     GROUP BY a.employee_id, a.project_id)
+            SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
+                   pp.employee_id,
+                   e.internal_id,
+                   e.first_name,
+                   e.last_name,
+                   p.id                             as project_id,
+                   p.name                           as project_name,
+                   c.id                             as client_id,
+                   c.name                           as client_name
+            FROM project_periods pp
+                     inner join project p on p.id = pp.project_id
+                     inner join client c on p.client_id = c.id
+                     inner join employee e on e.id = pp.employee_id
+                     CROSS JOIN generate_series(
+                    DATE_TRUNC('month', pp.start_date),
+                    DATE_TRUNC('month', pp.end_date),
+                    INTERVAL '1 month'
+                                ) AS month_series
+            """, nativeQuery = true)
+    List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(LocalDate startDate, LocalDate endDate);
 }

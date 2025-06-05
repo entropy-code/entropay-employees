@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportEmployeeDto;
@@ -28,6 +29,7 @@ import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
 import com.entropyteam.entropay.employees.services.MarginService;
 import com.entropyteam.entropay.employees.services.MarginService.MarginDto;
 import com.entropyteam.entropay.employees.services.ReportService;
+import com.entropyteam.entropay.employees.services.TurnoverService;
 
 
 @RestController
@@ -38,11 +40,13 @@ public class ReportController {
     private final ReportService reportService;
     private final BillingService billingService;
     private final MarginService marginService;
+    private final TurnoverService turnoverService;
 
-    public ReportController(ReportService reportService, BillingService billingService, MarginService marginService) {
+    public ReportController(ReportService reportService, BillingService billingService, MarginService marginService, TurnoverService turnoverService) {
         this.reportService = reportService;
         this.billingService = billingService;
         this.marginService = marginService;
+        this.turnoverService = turnoverService;
     }
 
     @GetMapping("/employees")
@@ -124,5 +128,13 @@ public class ReportController {
         return ResponseEntity.ok()
                 .header(BaseController.X_TOTAL_COUNT, String.valueOf(report.size()))
                 .body(report.data());
+    }
+
+    @GetMapping("/turnover")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Transactional(readOnly = true)
+    public ResponseEntity<TurnoverReportDto> getTurnoverReport(ReactAdminParams params) {
+        TurnoverReportDto report = turnoverService.generateHierarchicalTurnoverReport(params);
+        return ResponseEntity.ok(report);
     }
 }
