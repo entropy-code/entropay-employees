@@ -151,15 +151,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
             List<Assignment> employeeAssignments =
                     assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
-            employeeContracts.forEach(contract -> {
-                contract.setActive(false);
-                contract.setEndDate(LocalDate.now());
-            });
+            employeeContracts.forEach(contract -> contract.setActive(false));
             contractRepository.saveAll(employeeContracts);
-            employeeAssignments.forEach(assignment -> {
-                assignment.setActive(false);
-                assignment.setEndDate(LocalDate.now());
-            });
+            employeeAssignments.forEach(assignment -> assignment.setActive(false));
             assignmentRepository.saveAll(employeeAssignments);
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
@@ -188,13 +182,11 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         employeeContracts.forEach(contract -> {
             contract.setDeleted(true);
             contract.setActive(false);
-            contract.setEndDate(LocalDate.now());
         });
         contractRepository.saveAll(employeeContracts);
         employeeAssignment.forEach(assignment -> {
             assignment.setDeleted(true);
             assignment.setActive(false);
-            assignment.setEndDate(LocalDate.now());
         });
         assignmentRepository.saveAll(employeeAssignment);
         calendarService.deleteBirthdayEvent(employeeId.toString());
@@ -259,16 +251,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private boolean shouldDeactivateEmployee(UUID employeeId, Employee entityToUpdate) {
         Employee existingEmployee = getRepository().getById(employeeId);
         return existingEmployee.isActive() && !entityToUpdate.isActive();
-    }
-
-    public CalendarEventDto formatEventData(UUID employeeId, LocalDate birthDate, String firstName, String lastName) {
-        int currentYear = LocalDate.now().getYear();
-        LocalDate startDate = birthDate.withYear(currentYear);
-        LocalDate endDate = startDate.plusDays(1);
-        String eventId = currentYear + employeeId.toString();
-        String eventName = "BirthDay " + firstName + " " + lastName;
-
-        return new CalendarEventDto(eventId, eventName, startDate, endDate);
     }
 
     public String getEmployeesTimeSinceStart(Contract firstContract, Contract latestContract) {
