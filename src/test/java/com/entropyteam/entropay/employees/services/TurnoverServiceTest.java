@@ -12,9 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,6 +35,9 @@ import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssign
 @ExtendWith(MockitoExtension.class)
 public class TurnoverServiceTest {
 
+    private static final LocalDate TEST_START_DATE = LocalDate.of(2023, 1, 1);
+    private static final LocalDate TEST_END_DATE = LocalDate.of(2023, 3, 31);
+
     @Mock
     private AssignmentRepository assignmentRepository;
 
@@ -40,35 +47,184 @@ public class TurnoverServiceTest {
     @InjectMocks
     private TurnoverService turnoverService;
 
+    private TurnoverReportDto report;
+
     @BeforeEach
     void setUp() {
-        LocalDate startDate = LocalDate.of(2023, 1, 1);
-        LocalDate endDate = LocalDate.of(2023, 3, 31);
+        setupMocks();
+        report = turnoverService.generateHierarchicalTurnoverReport(new ReactAdminParams());
+    }
 
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("startDate", startDate.toString());
-        queryParams.put("endDate", endDate.toString());
-
-        // Create ReactAdminSqlParams with the necessary fields
+    private void setupMocks() {
+        Map<String, String> queryParams = createQueryParams();
         ReactAdminSqlParams sqlParams = new ReactAdminSqlParams(queryParams, 10, 0, "id", "ASC");
 
-        // Initialize test data
         List<Client> clients = createTestClients();
         List<Project> projects = createTestProjects(clients);
         List<Employee> employees = createTestEmployees();
-
-        // Create monthly assignments for testing
         List<MonthlyAssignment> monthlyAssignments = createTestMonthlyAssignments(clients, projects, employees);
 
-        // Mock the sqlMapper to return the sqlParams
         when(sqlMapper.map(any())).thenReturn(sqlParams);
-
-        // Mock the assignmentRepository to return the monthly assignments
         when(assignmentRepository.findMonthlyAssignmentBetweenPeriod(any(), any()))
                 .thenReturn(monthlyAssignments);
     }
 
-    // Helper methods to create test data
+    private Map<String, String> createQueryParams() {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("startDate", TEST_START_DATE.toString());
+        queryParams.put("endDate", TEST_END_DATE.toString());
+        return queryParams;
+    }
+
+    @Test
+    void testGenerateHierarchicalTurnoverReport_BasicStructure() {
+        assertNotNull(report);
+        assertNotNull(report.yearMonths());
+        assertEquals(3, report.yearMonths().size());
+        assertNotNull(report.clients());
+        assertEquals(2, report.clients().size());
+    }
+
+    @Test
+    void testOverallTurnoverMetrics() {
+        // Overall: 5 employees at start, 2 left (Employee 2 and 4), 4 at end including Employee 6 who joined in Feb
+        TurnoverReportDto.TurnoverMetrics overall = report.overall();
+        assertTurnoverMetrics(overall, 5, 2, 4, new BigDecimal("44.44"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideMonthlyMetricsTestData")
+    void testMonthlyTurnoverMetrics(String month, int expectedStart, int expectedLeft, int expectedEnd,
+            BigDecimal expectedRate) {
+        TurnoverReportDto.TurnoverMetrics monthlyMetrics = report.yearMonths().get(month);
+        assertNotNull(monthlyMetrics, "Monthly metrics for " + month + " should not be null");
+        assertTurnoverMetrics(monthlyMetrics, expectedStart, expectedLeft, expectedEnd, expectedRate);
+    }
+
+    private static Stream<Arguments> provideMonthlyMetricsTestData() {
+        return Stream.of(
+                Arguments.of("2023-01", 5, 1, 4, new BigDecimal("22.22")), // January: Employee 4 left
+                Arguments.of("2023-02", 5, 1, 4, new BigDecimal("22.22")),
+                // February: Employee 2 left, Employee 6 joined
+                Arguments.of("2023-03", 4, 0, 4, BigDecimal.ZERO)          // March: No departures
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClientMetricsTestData")
+    void testClientTurnoverMetrics(String clientName, int expectedStart, int expectedLeft, int expectedEnd,
+            BigDecimal expectedRate) {
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+        assertNotNull(client, "Client " + clientName + " should exist");
+        assertTurnoverMetrics(client.overall(), expectedStart, expectedLeft, expectedEnd, expectedRate);
+    }
+
+    private static Stream<Arguments> provideClientMetricsTestData() {
+        return Stream.of(
+                Arguments.of("Client 1", 3, 1, 2, new BigDecimal("40.00")), // Employee 2 left
+                Arguments.of("Client 2", 2, 1, 2, new BigDecimal("50.00"))  // Employee 4 left, Employee 6 joined
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideProjectMetricsTestData")
+    void testProjectTurnoverMetrics(String clientName, String projectName, int expectedStart, int expectedLeft,
+            int expectedEnd, BigDecimal expectedRate) {
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+        TurnoverReportDto.ProjectTurnoverDto project = findProjectByName(client, projectName);
+        assertNotNull(project, "Project " + projectName + " should exist");
+        assertTurnoverMetrics(project.overall(), expectedStart, expectedLeft, expectedEnd, expectedRate);
+    }
+
+    private static Stream<Arguments> provideProjectMetricsTestData() {
+        return Stream.of(
+                Arguments.of("Client 1", "Project 1", 2, 1, 1, new BigDecimal("66.67")), // Employee 2 left
+                Arguments.of("Client 1", "Project 2", 1, 0, 1, BigDecimal.ZERO),         // No departures
+                Arguments.of("Client 2", "Project 3", 2, 1, 2, new BigDecimal("50.00"))
+                // Employee 4 left, Employee 6 joined
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideClientMonthlyMetricsTestData")
+    void testClientMonthlyMetrics(String clientName, String month, int expectedStart, int expectedLeft, int expectedEnd,
+            BigDecimal expectedRate) {
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+        TurnoverReportDto.TurnoverMetrics monthlyMetrics = client.yearMonths().get(month);
+        assertNotNull(monthlyMetrics, "Monthly metrics for " + clientName + " in " + month + " should not be null");
+        assertTurnoverMetrics(monthlyMetrics, expectedStart, expectedLeft, expectedEnd, expectedRate);
+    }
+
+    private static Stream<Arguments> provideClientMonthlyMetricsTestData() {
+        return Stream.of(
+                // Client 1 monthly metrics
+                Arguments.of("Client 1", "2023-01", 3, 0, 3, BigDecimal.ZERO),
+                Arguments.of("Client 1", "2023-02", 3, 1, 2, new BigDecimal("40.00")), // Employee 2 left
+                Arguments.of("Client 1", "2023-03", 2, 0, 2, BigDecimal.ZERO),
+
+                // Client 2 monthly metrics
+                Arguments.of("Client 2", "2023-01", 2, 1, 1, new BigDecimal("66.67")), // Employee 4 left
+                Arguments.of("Client 2", "2023-02", 2, 0, 2, BigDecimal.ZERO),         // Employee 6 joined
+                Arguments.of("Client 2", "2023-03", 2, 0, 2, BigDecimal.ZERO)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideProjectMonthlyMetricsTestData")
+    void testProjectMonthlyMetrics(String clientName, String projectName, String month, int expectedStart,
+            int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+        TurnoverReportDto.ProjectTurnoverDto project = findProjectByName(client, projectName);
+        TurnoverReportDto.TurnoverMetrics monthlyMetrics = project.yearMonths().get(month);
+        assertNotNull(monthlyMetrics, "Monthly metrics for " + projectName + " in " + month + " should not be null");
+        assertTurnoverMetrics(monthlyMetrics, expectedStart, expectedLeft, expectedEnd, expectedRate);
+    }
+
+    private static Stream<Arguments> provideProjectMonthlyMetricsTestData() {
+        return Stream.of(
+                // Project 1 monthly metrics
+                Arguments.of("Client 1", "Project 1", "2023-01", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 1", "2023-02", 2, 1, 1, new BigDecimal("66.67")), // Employee 2 left
+                Arguments.of("Client 1", "Project 1", "2023-03", 1, 0, 1, BigDecimal.ZERO),
+
+                // Project 2 monthly metrics
+                Arguments.of("Client 1", "Project 2", "2023-01", 1, 0, 1, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 2", "2023-02", 1, 0, 1, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 2", "2023-03", 1, 0, 1, BigDecimal.ZERO),
+
+                // Project 3 monthly metrics
+                Arguments.of("Client 2", "Project 3", "2023-01", 2, 1, 1, new BigDecimal("66.67")), // Employee 4 left
+                Arguments.of("Client 2", "Project 3", "2023-02", 2, 0, 2, BigDecimal.ZERO),         // Employee 6 joined
+                Arguments.of("Client 2", "Project 3", "2023-03", 2, 0, 2, BigDecimal.ZERO)
+        );
+    }
+
+    // Helper methods
+
+    private void assertTurnoverMetrics(TurnoverReportDto.TurnoverMetrics metrics, int expectedStart, int expectedLeft,
+            int expectedEnd, BigDecimal expectedRate) {
+        assertEquals(expectedStart, metrics.employeesAtStart(), "Employees at start mismatch");
+        assertEquals(expectedLeft, metrics.employeesLeft(), "Employees left mismatch");
+        assertEquals(expectedEnd, metrics.employeesAtEnd(), "Employees at end mismatch");
+        assertEquals(0, expectedRate.compareTo(metrics.turnoverRate()), "Turnover rate mismatch");
+    }
+
+    private TurnoverReportDto.ClientTurnoverDto findClientByName(String clientName) {
+        return report.clients().stream()
+                .filter(c -> c.name().equals(clientName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private TurnoverReportDto.ProjectTurnoverDto findProjectByName(TurnoverReportDto.ClientTurnoverDto client,
+            String projectName) {
+        return client.projects().stream()
+                .filter(p -> p.name().equals(projectName))
+                .findFirst()
+                .orElse(null);
+    }
+
+    // Test data creation methods (unchanged for brevity)
 
     private List<Client> createTestClients() {
         List<Client> clients = new ArrayList<>();
@@ -231,258 +387,5 @@ public class TurnoverServiceTest {
                 project3Id, project3Name, client2Id, client2Name));
 
         return monthlyAssignments;
-    }
-
-    @Test
-    void testGenerateHierarchicalTurnoverReport() {
-        // Call the method under test
-        TurnoverReportDto report = turnoverService.generateHierarchicalTurnoverReport(new ReactAdminParams());
-
-        // Verify the report is not null
-        assertNotNull(report);
-
-        // Verify overall metrics
-        // 5 employees at start (Jan), 2 left (Employee 2 and 4), 4 at end (Mar) including Employee 6 who joined in Feb
-        assertEquals(5, report.overall().employeesAtStart());
-        assertEquals(2, report.overall().employeesLeft());
-        assertEquals(4, report.overall().employeesAtEnd());
-        assertEquals(new BigDecimal("44.44"), report.overall().turnoverRate());
-
-        // Verify monthly metrics
-        Map<String, TurnoverReportDto.TurnoverMetrics> monthlyMetrics = report.yearMonths();
-        assertNotNull(monthlyMetrics);
-        assertEquals(3, monthlyMetrics.size());
-
-        // January: 5 employees, 1 left (Employee 4), 4 at end
-        TurnoverReportDto.TurnoverMetrics janMetrics = monthlyMetrics.get("2023-01");
-        assertNotNull(janMetrics);
-        assertEquals(5, janMetrics.employeesAtStart());
-        assertEquals(1, janMetrics.employeesLeft());
-        assertEquals(4, janMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("22.22"), janMetrics.turnoverRate());
-
-        // February: 5 employees (4 + Employee 6), 1 left (Employee 2), 4 at end
-        TurnoverReportDto.TurnoverMetrics febMetrics = monthlyMetrics.get("2023-02");
-        assertNotNull(febMetrics);
-        assertEquals(5, febMetrics.employeesAtStart());
-        assertEquals(1, febMetrics.employeesLeft());
-        assertEquals(4, febMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("22.22"), febMetrics.turnoverRate());
-
-        // March: 4 employees, 0 left, 4 at end
-        TurnoverReportDto.TurnoverMetrics marMetrics = monthlyMetrics.get("2023-03");
-        assertNotNull(marMetrics);
-        assertEquals(4, marMetrics.employeesAtStart());
-        assertEquals(0, marMetrics.employeesLeft());
-        assertEquals(4, marMetrics.employeesAtEnd());
-        assertEquals(BigDecimal.ZERO, marMetrics.turnoverRate());
-
-        // Verify client metrics
-        List<TurnoverReportDto.ClientTurnoverDto> clients = report.clients();
-        assertNotNull(clients);
-        assertEquals(2, clients.size());
-
-        // Client 1: 3 employees at start, 1 left (Employee 2), 2 at end
-        TurnoverReportDto.ClientTurnoverDto client1 = clients.stream()
-                .filter(c -> c.name().equals("Client 1"))
-                .findFirst()
-                .orElse(null);
-        assertNotNull(client1);
-        assertEquals(3, client1.overall().employeesAtStart());
-        assertEquals(1, client1.overall().employeesLeft());
-        assertEquals(2, client1.overall().employeesAtEnd());
-        assertEquals(new BigDecimal("40.00"), client1.overall().turnoverRate());
-
-        // Client 2: 2 employees at start, 1 left (Employee 4), 2 at end (including Employee 6 who joined in Feb)
-        TurnoverReportDto.ClientTurnoverDto client2 = clients.stream()
-                .filter(c -> c.name().equals("Client 2"))
-                .findFirst()
-                .orElse(null);
-        assertNotNull(client2);
-        assertEquals(2, client2.overall().employeesAtStart());
-        assertEquals(1, client2.overall().employeesLeft());
-        assertEquals(2, client2.overall().employeesAtEnd());
-        assertEquals(new BigDecimal("50.00"), client2.overall().turnoverRate());
-
-        // Verify project metrics
-        // Project 1: 2 employees at start, 1 left (Employee 2), 1 at end
-        TurnoverReportDto.ProjectTurnoverDto project1 = client1.projects().stream()
-                .filter(p -> p.name().equals("Project 1"))
-                .findFirst()
-                .orElse(null);
-        assertNotNull(project1);
-        assertEquals(2, project1.overall().employeesAtStart());
-        assertEquals(1, project1.overall().employeesLeft());
-        assertEquals(1, project1.overall().employeesAtEnd());
-        assertEquals(new BigDecimal("66.67"), project1.overall().turnoverRate());
-
-        // Project 2: 1 employee at start, 0 left, 1 at end
-        TurnoverReportDto.ProjectTurnoverDto project2 = client1.projects().stream()
-                .filter(p -> p.name().equals("Project 2"))
-                .findFirst()
-                .orElse(null);
-        assertNotNull(project2);
-        assertEquals(1, project2.overall().employeesAtStart());
-        assertEquals(0, project2.overall().employeesLeft());
-        assertEquals(1, project2.overall().employeesAtEnd());
-        assertEquals(0, project2.overall().turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // Project 3: 2 employees at start, 1 left (Employee 4), 2 at end (including Employee 6 who joined in Feb)
-        TurnoverReportDto.ProjectTurnoverDto project3 = client2.projects().stream()
-                .filter(p -> p.name().equals("Project 3"))
-                .findFirst()
-                .orElse(null);
-        assertNotNull(project3);
-        assertEquals(2, project3.overall().employeesAtStart());
-        assertEquals(1, project3.overall().employeesLeft());
-        assertEquals(2, project3.overall().employeesAtEnd());
-        assertEquals(new BigDecimal("50.00"), project3.overall().turnoverRate());
-
-        // Verify client yearMonths metrics
-        // Client 1
-        Map<String, TurnoverReportDto.TurnoverMetrics> client1MonthlyMetrics = client1.yearMonths();
-        assertNotNull(client1MonthlyMetrics);
-        assertEquals(3, client1MonthlyMetrics.size());
-
-        // January: 3 employees, 0 left, 3 at end
-        TurnoverReportDto.TurnoverMetrics client1JanMetrics = client1MonthlyMetrics.get("2023-01");
-        assertNotNull(client1JanMetrics);
-        assertEquals(3, client1JanMetrics.employeesAtStart());
-        assertEquals(0, client1JanMetrics.employeesLeft());
-        assertEquals(3, client1JanMetrics.employeesAtEnd());
-        assertEquals(0, client1JanMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // February: 3 employees, 1 left (Employee 2), 2 at end
-        TurnoverReportDto.TurnoverMetrics client1FebMetrics = client1MonthlyMetrics.get("2023-02");
-        assertNotNull(client1FebMetrics);
-        assertEquals(3, client1FebMetrics.employeesAtStart());
-        assertEquals(1, client1FebMetrics.employeesLeft());
-        assertEquals(2, client1FebMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("40.00"), client1FebMetrics.turnoverRate());
-
-        // March: 2 employees, 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics client1MarMetrics = client1MonthlyMetrics.get("2023-03");
-        assertNotNull(client1MarMetrics);
-        assertEquals(2, client1MarMetrics.employeesAtStart());
-        assertEquals(0, client1MarMetrics.employeesLeft());
-        assertEquals(2, client1MarMetrics.employeesAtEnd());
-        assertEquals(0, client1MarMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // Client 2
-        Map<String, TurnoverReportDto.TurnoverMetrics> client2MonthlyMetrics = client2.yearMonths();
-        assertNotNull(client2MonthlyMetrics);
-        assertEquals(3, client2MonthlyMetrics.size());
-
-        // January: 2 employees, 1 left (Employee 4), 1 at end
-        TurnoverReportDto.TurnoverMetrics client2JanMetrics = client2MonthlyMetrics.get("2023-01");
-        assertNotNull(client2JanMetrics);
-        assertEquals(2, client2JanMetrics.employeesAtStart());
-        assertEquals(1, client2JanMetrics.employeesLeft());
-        assertEquals(1, client2JanMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("66.67"), client2JanMetrics.turnoverRate());
-
-        // February: 2 employees (1 + Employee 6), 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics client2FebMetrics = client2MonthlyMetrics.get("2023-02");
-        assertNotNull(client2FebMetrics);
-        assertEquals(2, client2FebMetrics.employeesAtStart());
-        assertEquals(0, client2FebMetrics.employeesLeft());
-        assertEquals(2, client2FebMetrics.employeesAtEnd());
-        assertEquals(0, client2FebMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // March: 2 employees, 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics client2MarMetrics = client2MonthlyMetrics.get("2023-03");
-        assertNotNull(client2MarMetrics);
-        assertEquals(2, client2MarMetrics.employeesAtStart());
-        assertEquals(0, client2MarMetrics.employeesLeft());
-        assertEquals(2, client2MarMetrics.employeesAtEnd());
-        assertEquals(0, client2MarMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // Verify project yearMonths metrics
-        // Project 1
-        Map<String, TurnoverReportDto.TurnoverMetrics> project1MonthlyMetrics = project1.yearMonths();
-        assertNotNull(project1MonthlyMetrics);
-        assertEquals(3, project1MonthlyMetrics.size());
-
-        // January: 2 employees, 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics project1JanMetrics = project1MonthlyMetrics.get("2023-01");
-        assertNotNull(project1JanMetrics);
-        assertEquals(2, project1JanMetrics.employeesAtStart());
-        assertEquals(0, project1JanMetrics.employeesLeft());
-        assertEquals(2, project1JanMetrics.employeesAtEnd());
-        assertEquals(0, project1JanMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // February: 2 employees, 1 left (Employee 2), 1 at end
-        TurnoverReportDto.TurnoverMetrics project1FebMetrics = project1MonthlyMetrics.get("2023-02");
-        assertNotNull(project1FebMetrics);
-        assertEquals(2, project1FebMetrics.employeesAtStart());
-        assertEquals(1, project1FebMetrics.employeesLeft());
-        assertEquals(1, project1FebMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("66.67"), project1FebMetrics.turnoverRate());
-
-        // March: 1 employee, 0 left, 1 at end
-        TurnoverReportDto.TurnoverMetrics project1MarMetrics = project1MonthlyMetrics.get("2023-03");
-        assertNotNull(project1MarMetrics);
-        assertEquals(1, project1MarMetrics.employeesAtStart());
-        assertEquals(0, project1MarMetrics.employeesLeft());
-        assertEquals(1, project1MarMetrics.employeesAtEnd());
-        assertEquals(0, project1MarMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // Project 2
-        Map<String, TurnoverReportDto.TurnoverMetrics> project2MonthlyMetrics = project2.yearMonths();
-        assertNotNull(project2MonthlyMetrics);
-        assertEquals(3, project2MonthlyMetrics.size());
-
-        // January: 1 employee, 0 left, 1 at end
-        TurnoverReportDto.TurnoverMetrics project2JanMetrics = project2MonthlyMetrics.get("2023-01");
-        assertNotNull(project2JanMetrics);
-        assertEquals(1, project2JanMetrics.employeesAtStart());
-        assertEquals(0, project2JanMetrics.employeesLeft());
-        assertEquals(1, project2JanMetrics.employeesAtEnd());
-        assertEquals(0, project2JanMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // February: 1 employee, 0 left, 1 at end
-        TurnoverReportDto.TurnoverMetrics project2FebMetrics = project2MonthlyMetrics.get("2023-02");
-        assertNotNull(project2FebMetrics);
-        assertEquals(1, project2FebMetrics.employeesAtStart());
-        assertEquals(0, project2FebMetrics.employeesLeft());
-        assertEquals(1, project2FebMetrics.employeesAtEnd());
-        assertEquals(0, project2FebMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // March: 1 employee, 0 left, 1 at end
-        TurnoverReportDto.TurnoverMetrics project2MarMetrics = project2MonthlyMetrics.get("2023-03");
-        assertNotNull(project2MarMetrics);
-        assertEquals(1, project2MarMetrics.employeesAtStart());
-        assertEquals(0, project2MarMetrics.employeesLeft());
-        assertEquals(1, project2MarMetrics.employeesAtEnd());
-        assertEquals(0, project2MarMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // Project 3
-        Map<String, TurnoverReportDto.TurnoverMetrics> project3MonthlyMetrics = project3.yearMonths();
-        assertNotNull(project3MonthlyMetrics);
-        assertEquals(3, project3MonthlyMetrics.size());
-
-        // January: 2 employees, 1 left (Employee 4), 1 at end
-        TurnoverReportDto.TurnoverMetrics project3JanMetrics = project3MonthlyMetrics.get("2023-01");
-        assertNotNull(project3JanMetrics);
-        assertEquals(2, project3JanMetrics.employeesAtStart());
-        assertEquals(1, project3JanMetrics.employeesLeft());
-        assertEquals(1, project3JanMetrics.employeesAtEnd());
-        assertEquals(new BigDecimal("66.67"), project3JanMetrics.turnoverRate());
-
-        // February: 2 employees (1 + Employee 6), 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics project3FebMetrics = project3MonthlyMetrics.get("2023-02");
-        assertNotNull(project3FebMetrics);
-        assertEquals(2, project3FebMetrics.employeesAtStart());
-        assertEquals(0, project3FebMetrics.employeesLeft());
-        assertEquals(2, project3FebMetrics.employeesAtEnd());
-        assertEquals(0, project3FebMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
-
-        // March: 2 employees, 0 left, 2 at end
-        TurnoverReportDto.TurnoverMetrics project3MarMetrics = project3MonthlyMetrics.get("2023-03");
-        assertNotNull(project3MarMetrics);
-        assertEquals(2, project3MarMetrics.employeesAtStart());
-        assertEquals(0, project3MarMetrics.employeesLeft());
-        assertEquals(2, project3MarMetrics.employeesAtEnd());
-        assertEquals(0, project3MarMetrics.turnoverRate().compareTo(BigDecimal.ZERO));
     }
 }
