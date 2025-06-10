@@ -3,7 +3,14 @@ package com.entropyteam.entropay.employees.services;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -55,7 +62,198 @@ public class TurnoverService {
     }
 
     private TurnoverReportDto calculateTurnover(List<MonthlyAssignment> assignments) {
-        return null;
+        if (assignments.isEmpty()) {
+            return new TurnoverReportDto(
+                    LocalDate.now(),
+                    LocalDate.now(),
+                    new TurnoverReportDto.TurnoverMetrics(0, 0, 0, BigDecimal.ZERO),
+                    Map.of(),
+                    List.of()
+            );
+        }
+
+        // Extract start and end dates from the first assignment's yearMonth
+        String firstYearMonth = assignments.getFirst().yearMonth();
+        String lastYearMonth = assignments.getLast().yearMonth();
+        LocalDate startDate = LocalDate.parse(firstYearMonth + "-01");
+        LocalDate endDate = LocalDate.parse(lastYearMonth + "-01").plusMonths(1).minusDays(1);
+
+        // Group assignments by yearMonth
+        Map<String, List<MonthlyAssignment>> assignmentsByMonth = assignments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(MonthlyAssignment::yearMonth));
+
+        // Group assignments by client
+        Map<UUID, List<MonthlyAssignment>> assignmentsByClient = assignments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(MonthlyAssignment::clientId));
+
+        // Calculate overall company metrics
+        int overallEmployeesAtStart = countUniqueEmployees(assignmentsByMonth.get(firstYearMonth));
+        int overallEmployeesAtEnd = countUniqueEmployees(assignmentsByMonth.get(lastYearMonth));
+        int overallEmployeesLeft = calculateEmployeesLeft(assignmentsByMonth, firstYearMonth, lastYearMonth);
+        BigDecimal overallTurnoverRate = calculateTurnoverRate(
+                overallEmployeesLeft, overallEmployeesAtStart, overallEmployeesAtEnd);
+
+        TurnoverReportDto.TurnoverMetrics overallMetrics = new TurnoverReportDto.TurnoverMetrics(
+                overallEmployeesAtStart, overallEmployeesLeft, overallEmployeesAtEnd, overallTurnoverRate);
+
+        // Calculate monthly company metrics
+        Map<String, TurnoverReportDto.TurnoverMetrics> monthlyMetrics = calculateMonthlyMetrics(assignmentsByMonth);
+
+        // Calculate client metrics
+        List<TurnoverReportDto.ClientTurnoverDto> clientDtos = new ArrayList<>();
+        for (Map.Entry<UUID, List<MonthlyAssignment>> clientEntry : assignmentsByClient.entrySet()) {
+            UUID clientId = clientEntry.getKey();
+            List<MonthlyAssignment> clientAssignments = clientEntry.getValue();
+            String clientName = clientAssignments.getFirst().clientName();
+
+            // Group client assignments by month
+            Map<String, List<MonthlyAssignment>> clientAssignmentsByMonth = clientAssignments.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(MonthlyAssignment::yearMonth));
+
+            // Calculate overall client metrics
+            int clientEmployeesAtStart = countUniqueEmployees(
+                    clientAssignmentsByMonth.getOrDefault(firstYearMonth, List.of()));
+            int clientEmployeesAtEnd = countUniqueEmployees(
+                    clientAssignmentsByMonth.getOrDefault(lastYearMonth, List.of()));
+            int clientEmployeesLeft = calculateEmployeesLeft(
+                    clientAssignmentsByMonth, firstYearMonth, lastYearMonth);
+            BigDecimal clientTurnoverRate = calculateTurnoverRate(
+                    clientEmployeesLeft, clientEmployeesAtStart, clientEmployeesAtEnd);
+
+            TurnoverReportDto.TurnoverMetrics clientOverallMetrics = new TurnoverReportDto.TurnoverMetrics(
+                    clientEmployeesAtStart, clientEmployeesLeft, clientEmployeesAtEnd, clientTurnoverRate);
+
+            // Calculate monthly client metrics
+            Map<String, TurnoverReportDto.TurnoverMetrics> clientMonthlyMetrics =
+                    calculateMonthlyMetrics(clientAssignmentsByMonth);
+
+            // Group client assignments by project
+            Map<UUID, List<MonthlyAssignment>> assignmentsByProject = clientAssignments.stream()
+                    .collect(java.util.stream.Collectors.groupingBy(MonthlyAssignment::projectId));
+
+            // Calculate project metrics
+            List<TurnoverReportDto.ProjectTurnoverDto> projectDtos = new ArrayList<>();
+            for (Map.Entry<UUID, List<MonthlyAssignment>> projectEntry : assignmentsByProject.entrySet()) {
+                UUID projectId = projectEntry.getKey();
+                List<MonthlyAssignment> projectAssignments = projectEntry.getValue();
+                String projectName = projectAssignments.getFirst().projectName();
+
+                // Group project assignments by month
+                Map<String, List<MonthlyAssignment>> projectAssignmentsByMonth = projectAssignments.stream()
+                        .collect(java.util.stream.Collectors.groupingBy(MonthlyAssignment::yearMonth));
+
+                // Calculate overall project metrics
+                int projectEmployeesAtStart = countUniqueEmployees(
+                        projectAssignmentsByMonth.getOrDefault(firstYearMonth, List.of()));
+                int projectEmployeesAtEnd = countUniqueEmployees(
+                        projectAssignmentsByMonth.getOrDefault(lastYearMonth, List.of()));
+                int projectEmployeesLeft = calculateEmployeesLeft(
+                        projectAssignmentsByMonth, firstYearMonth, lastYearMonth);
+                BigDecimal projectTurnoverRate = calculateTurnoverRate(
+                        projectEmployeesLeft, projectEmployeesAtStart, projectEmployeesAtEnd);
+
+                TurnoverReportDto.TurnoverMetrics projectOverallMetrics = new TurnoverReportDto.TurnoverMetrics(
+                        projectEmployeesAtStart, projectEmployeesLeft, projectEmployeesAtEnd, projectTurnoverRate);
+
+                // Calculate monthly project metrics
+                Map<String, TurnoverReportDto.TurnoverMetrics> projectMonthlyMetrics =
+                        calculateMonthlyMetrics(projectAssignmentsByMonth);
+
+                // Create project DTO
+                TurnoverReportDto.ProjectTurnoverDto projectDto = new TurnoverReportDto.ProjectTurnoverDto(
+                        projectId, projectName, clientId, projectOverallMetrics, projectMonthlyMetrics);
+                projectDtos.add(projectDto);
+            }
+
+            // Create client DTO
+            TurnoverReportDto.ClientTurnoverDto clientDto = new TurnoverReportDto.ClientTurnoverDto(
+                    clientId, clientName, clientOverallMetrics, clientMonthlyMetrics, projectDtos);
+            clientDtos.add(clientDto);
+        }
+
+        // Create and return the final report
+        return new TurnoverReportDto(startDate, endDate, overallMetrics, monthlyMetrics, clientDtos);
+    }
+
+    private int countUniqueEmployees(List<MonthlyAssignment> assignments) {
+        if (assignments == null || assignments.isEmpty()) {
+            return 0;
+        }
+        return (int) assignments.stream()
+                .map(MonthlyAssignment::employeeId)
+                .distinct()
+                .count();
+    }
+
+    private int calculateEmployeesLeft(
+            Map<String, List<MonthlyAssignment>> assignmentsByMonth,
+            String firstMonth,
+            String lastMonth) {
+
+        // Get employees at the start
+        Set<UUID> employeesAtStart = assignmentsByMonth.getOrDefault(firstMonth, List.of()).stream()
+                .map(MonthlyAssignment::employeeId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Get employees at the end
+        Set<UUID> employeesAtEnd = assignmentsByMonth.getOrDefault(lastMonth, List.of()).stream()
+                .map(MonthlyAssignment::employeeId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        // Employees who were present at the start but not at the end have left
+        employeesAtStart.removeAll(employeesAtEnd);
+        return employeesAtStart.size();
+    }
+
+    private Map<String, TurnoverReportDto.TurnoverMetrics> calculateMonthlyMetrics(
+            Map<String, List<MonthlyAssignment>> assignmentsByMonth) {
+
+        Map<String, TurnoverReportDto.TurnoverMetrics> monthlyMetrics = new LinkedHashMap<>();
+
+        // Sort months chronologically
+        List<String> sortedMonths = new ArrayList<>(assignmentsByMonth.keySet());
+        Collections.sort(sortedMonths);
+
+        for (int i = 0; i < sortedMonths.size(); i++) {
+            String currentMonth = sortedMonths.get(i);
+            List<MonthlyAssignment> currentMonthAssignments = assignmentsByMonth.get(currentMonth);
+
+            int employeesAtStart = countUniqueEmployees(currentMonthAssignments);
+
+            // For the last month, there are no employees who left
+            if (i == sortedMonths.size() - 1) {
+                monthlyMetrics.put(currentMonth, new TurnoverReportDto.TurnoverMetrics(
+                        employeesAtStart, 0, employeesAtStart, BigDecimal.ZERO));
+                continue;
+            }
+
+            // For other months, calculate employees who left
+            String nextMonth = sortedMonths.get(i + 1);
+            List<MonthlyAssignment> nextMonthAssignments = assignmentsByMonth.get(nextMonth);
+
+            Set<UUID> currentEmployees = currentMonthAssignments.stream()
+                    .map(MonthlyAssignment::employeeId)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            Set<UUID> nextEmployees = nextMonthAssignments.stream()
+                    .map(MonthlyAssignment::employeeId)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            // Employees in current month but not in next month have left
+            Set<UUID> leftEmployees = new HashSet<>(currentEmployees);
+            leftEmployees.removeAll(nextEmployees);
+
+            int employeesLeft = leftEmployees.size();
+            int employeesAtEnd = employeesAtStart - employeesLeft;
+
+            BigDecimal turnoverRate = calculateTurnoverRate(
+                    employeesLeft, employeesAtStart, employeesAtEnd);
+
+            monthlyMetrics.put(currentMonth, new TurnoverReportDto.TurnoverMetrics(
+                    employeesAtStart, employeesLeft, employeesAtEnd, turnoverRate));
+        }
+
+        return monthlyMetrics;
     }
 
     /**

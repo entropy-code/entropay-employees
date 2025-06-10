@@ -32,14 +32,14 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = "
-                    + ":clientId AND a.deleted = false "
-                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+            + ":clientId AND a.deleted = false "
+            + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
 
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id IN "
-                    + ":clientIds AND a.deleted = false "
-                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+            + ":clientIds AND a.deleted = false "
+            + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
@@ -57,7 +57,7 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
     List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
 
     @Query(value = """
-            WITH project_periods AS (SELECT min(a.start_date) as start_date,
+            WITH project_periods AS (SELECT MIN(a.start_date) as start_date,
                                             CASE
                                                 WHEN COUNT(*) FILTER (WHERE a.end_date IS NULL) > 0
                                                     THEN NOW()
@@ -71,8 +71,8 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                                      where a.deleted is false
                                        and e.deleted is false
                                        and p.deleted is false
-                                     GROUP BY a.employee_id, a.project_id)
-            SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
+                                     GROUP BY a.employee_id, a.project_id),
+            data as (SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
                    pp.employee_id,
                    e.internal_id,
                    e.first_name,
@@ -89,7 +89,13 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                     DATE_TRUNC('month', pp.start_date),
                     DATE_TRUNC('month', pp.end_date),
                     INTERVAL '1 month'
-                                ) AS month_series
+                                ) AS month_series)
+            select *
+            from data
+            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')                                                                       
+              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')                                                                     
+            order by "year-month", client_id, project_id, employee_id
             """, nativeQuery = true)
-    List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(LocalDate startDate, LocalDate endDate);
+    List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(@Param("start_date") LocalDate startDate,
+            @Param("end_date") LocalDate endDate);
 }
