@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.common.ReactAdminSqlParams;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -215,6 +218,155 @@ public class TurnoverServiceTest {
         assertEquals(expectedLeft, metrics.employeesLeft(), "Employees left mismatch");
         assertEquals(expectedEnd, metrics.employeesAtEnd(), "Employees at end mismatch");
         assertEquals(0, expectedRate.compareTo(metrics.turnoverRate()), "Turnover rate mismatch");
+    }
+
+    // Flat Turnover Report Tests
+
+    @Test
+    void testGenerateFlatTurnoverReport_BasicStructure() {
+        // When
+        ReportDto<TurnoverEntryDto> flatReport = turnoverService.generateFlatTurnoverReport(params);
+
+        // Then
+        assertNotNull(flatReport);
+        assertNotNull(flatReport.data());
+        assertFalse(flatReport.data().isEmpty());
+        assertEquals(flatReport.data().size(), flatReport.size());
+    }
+
+    @Test
+    void testFlatTurnoverReport_CompanyEntries() {
+        // When
+        ReportDto<TurnoverEntryDto> flatReport = turnoverService.generateFlatTurnoverReport(params);
+
+        // Then
+        // Find company overall entry
+        TurnoverEntryDto companyOverall = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(companyOverall, "Company overall entry should exist");
+        assertEquals("Company", companyOverall.name());
+        assertEquals(7, companyOverall.employeesAtStart());
+        assertEquals(2, companyOverall.employeesLeft());
+        assertEquals(6, companyOverall.employeesAtEnd());
+        assertEquals(0, new BigDecimal("30.77").compareTo(companyOverall.turnoverRate()));
+
+        // Find company monthly entries
+        List<TurnoverEntryDto> companyMonthly = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY)
+                .toList();
+
+        assertEquals(3, companyMonthly.size(), "Should have 3 monthly entries for company");
+
+        // Check January metrics
+        TurnoverEntryDto januaryEntry = companyMonthly.stream()
+                .filter(entry -> "2023-01".equals(entry.yearMonth()))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(januaryEntry, "January entry should exist");
+        assertEquals(7, januaryEntry.employeesAtStart());
+        assertEquals(1, januaryEntry.employeesLeft());
+        assertEquals(6, januaryEntry.employeesAtEnd());
+        assertEquals(0, new BigDecimal("15.38").compareTo(januaryEntry.turnoverRate()));
+    }
+
+    @Test
+    void testFlatTurnoverReport_ClientEntries() {
+        // When
+        ReportDto<TurnoverEntryDto> flatReport = turnoverService.generateFlatTurnoverReport(params);
+
+        // Then
+        // Find client entries
+        List<TurnoverEntryDto> clientOverallEntries = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .toList();
+
+        assertEquals(2, clientOverallEntries.size(), "Should have 2 client overall entries");
+
+        // Check Client 1 overall metrics
+        TurnoverEntryDto client1Overall = clientOverallEntries.stream()
+                .filter(entry -> "Client 1".equals(entry.name()))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(client1Overall, "Client 1 overall entry should exist");
+        assertEquals(5, client1Overall.employeesAtStart());
+        assertEquals(2, client1Overall.employeesLeft());
+        assertEquals(3, client1Overall.employeesAtEnd());
+        assertEquals(0, new BigDecimal("50.00").compareTo(client1Overall.turnoverRate()));
+
+        // Check Client 1 February metrics
+        List<TurnoverEntryDto> client1Monthly = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
+                        && "Client 1".equals(entry.name()))
+                .toList();
+
+        assertEquals(3, client1Monthly.size(), "Should have 3 monthly entries for Client 1");
+
+        TurnoverEntryDto client1February = client1Monthly.stream()
+                .filter(entry -> "2023-02".equals(entry.yearMonth()))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(client1February, "Client 1 February entry should exist");
+        assertEquals(5, client1February.employeesAtStart());
+        assertEquals(2, client1February.employeesLeft());
+        assertEquals(3, client1February.employeesAtEnd());
+        assertEquals(0, new BigDecimal("50.00").compareTo(client1February.turnoverRate()));
+    }
+
+    @Test
+    void testFlatTurnoverReport_ProjectEntries() {
+        // When
+        ReportDto<TurnoverEntryDto> flatReport = turnoverService.generateFlatTurnoverReport(params);
+
+        // Then
+        // Find project entries
+        List<TurnoverEntryDto> projectOverallEntries = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .toList();
+
+        assertEquals(3, projectOverallEntries.size(), "Should have 3 project overall entries");
+
+        // Check Project 1 overall metrics
+        TurnoverEntryDto project1Overall = projectOverallEntries.stream()
+                .filter(entry -> "Project 1".equals(entry.name()))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(project1Overall, "Project 1 overall entry should exist");
+        assertEquals(3, project1Overall.employeesAtStart());
+        assertEquals(2, project1Overall.employeesLeft());
+        assertEquals(1, project1Overall.employeesAtEnd());
+        assertEquals(0, new BigDecimal("100.00").compareTo(project1Overall.turnoverRate()));
+
+        // Check Project 1 February metrics
+        List<TurnoverEntryDto> project1Monthly = flatReport.data().stream()
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT 
+                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
+                        && "Project 1".equals(entry.name()))
+                .toList();
+
+        assertEquals(3, project1Monthly.size(), "Should have 3 monthly entries for Project 1");
+
+        TurnoverEntryDto project1February = project1Monthly.stream()
+                .filter(entry -> "2023-02".equals(entry.yearMonth()))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull(project1February, "Project 1 February entry should exist");
+        assertEquals(3, project1February.employeesAtStart());
+        assertEquals(2, project1February.employeesLeft());
+        assertEquals(1, project1February.employeesAtEnd());
+        assertEquals(0, new BigDecimal("100.00").compareTo(project1February.turnoverRate()));
     }
 
     private TurnoverReportDto.ClientTurnoverDto findClientByName(String clientName) {
