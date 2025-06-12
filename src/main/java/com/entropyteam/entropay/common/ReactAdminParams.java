@@ -1,10 +1,14 @@
 package com.entropyteam.entropay.common;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.function.Predicate;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public class ReactAdminParams {
 
@@ -19,6 +23,26 @@ public class ReactAdminParams {
         this.filter = filter;
         this.range = range;
         this.sort = sort;
+    }
+
+    @VisibleForTesting
+    public static ReactAdminParams createTestInstance(Map<String, String> filter, int min, int max,
+            Map<String, String> sort) {
+
+        JsonObject filterJson = new JsonObject();
+        filter.forEach(filterJson::addProperty);
+
+        JsonArray rangeJson = new JsonArray();
+        rangeJson.add(min);
+        rangeJson.add(max);
+
+        JsonArray sortJson = new JsonArray();
+        sort.forEach((key, value) -> {
+            sortJson.add(key);
+            sortJson.add(value);
+        });
+
+        return new ReactAdminParams(filterJson.toString(), rangeJson.toString(), sortJson.toString());
     }
 
     public String getFilter() {

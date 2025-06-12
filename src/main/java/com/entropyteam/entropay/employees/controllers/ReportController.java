@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
-import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
@@ -149,8 +149,11 @@ public class ReportController {
     @GetMapping("/turnover/flat")
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     @Transactional(readOnly = true)
-    public ResponseEntity<FlatTurnoverReportDto> getFlatTurnoverReport(ReactAdminParams params) {
-        FlatTurnoverReportDto report = turnoverService.generateFlatTurnoverReport(params);
-        return ResponseEntity.ok(report);
+    public ResponseEntity<List<TurnoverEntryDto>> getFlatTurnoverReport(ReactAdminParams params) {
+        ReportDto<TurnoverEntryDto> report = turnoverService.generateFlatTurnoverReport(params);
+        return ResponseEntity.ok()
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(report.size()))
+                .body(report.data());
+
     }
 }

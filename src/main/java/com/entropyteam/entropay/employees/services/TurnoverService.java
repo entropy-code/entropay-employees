@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
-import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssignment;
@@ -291,32 +293,35 @@ public class TurnoverService {
      * @return A flat report containing turnover data
      */
     @Transactional(readOnly = true)
-    public FlatTurnoverReportDto generateFlatTurnoverReport(ReactAdminParams params) {
+    public ReportDto<TurnoverEntryDto> generateFlatTurnoverReport(ReactAdminParams params) {
         LOGGER.info("Generating flat turnover report");
 
         // Get the hierarchical report
         TurnoverReportDto hierarchicalReport = generateHierarchicalTurnoverReport(params);
 
         // Transform it to a flat report
-        return transformToFlatReport(hierarchicalReport);
+        List<TurnoverEntryDto> entries = transformToFlatReport(hierarchicalReport);
+
+        // Apply pagination and return
+        return getPaginatedEntries(params, entries);
     }
 
     /**
      * Transforms a hierarchical turnover report into a flat report.
      *
      * @param hierarchicalReport The hierarchical report to transform
-     * @return A flat report containing the same data
+     * @return A list of turnover entries
      */
-    private FlatTurnoverReportDto transformToFlatReport(TurnoverReportDto hierarchicalReport) {
-        List<FlatTurnoverReportDto.TurnoverEntryDto> entries = new ArrayList<>();
+    private List<TurnoverEntryDto> transformToFlatReport(TurnoverReportDto hierarchicalReport) {
+        List<TurnoverEntryDto> entries = new ArrayList<>();
 
         // Add company overall metrics
-        entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                FlatTurnoverReportDto.LevelType.COMPANY,
-                null, // No ID for company
+        entries.add(new TurnoverEntryDto(
+                TurnoverEntryDto.LevelType.COMPANY,
+                "Company", // No ID for company
                 "Company", // Generic name for company
                 null, // No parent for company
-                FlatTurnoverReportDto.PeriodType.OVERALL,
+                TurnoverEntryDto.PeriodType.OVERALL,
                 null, // No year-month for overall
                 hierarchicalReport.overall().employeesAtStart(),
                 hierarchicalReport.overall().employeesLeft(),
@@ -329,12 +334,12 @@ public class TurnoverService {
             String yearMonth = entry.getKey();
             TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
 
-            entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                    FlatTurnoverReportDto.LevelType.COMPANY,
-                    null, // No ID for company
+            entries.add(new TurnoverEntryDto(
+                    TurnoverEntryDto.LevelType.COMPANY,
+                    "Company-" + yearMonth,
                     "Company", // Generic name for company
                     null, // No parent for company
-                    FlatTurnoverReportDto.PeriodType.MONTHLY,
+                    TurnoverEntryDto.PeriodType.MONTHLY,
                     yearMonth,
                     metrics.employeesAtStart(),
                     metrics.employeesLeft(),
@@ -346,12 +351,12 @@ public class TurnoverService {
         // Add client metrics
         for (TurnoverReportDto.ClientTurnoverDto client : hierarchicalReport.clients()) {
             // Add client overall metrics
-            entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                    FlatTurnoverReportDto.LevelType.CLIENT,
-                    client.id(),
+            entries.add(new TurnoverEntryDto(
+                    TurnoverEntryDto.LevelType.CLIENT,
+                    "Client-" + client.name(),
                     client.name(),
                     null, // No parent for client
-                    FlatTurnoverReportDto.PeriodType.OVERALL,
+                    TurnoverEntryDto.PeriodType.OVERALL,
                     null, // No year-month for overall
                     client.overall().employeesAtStart(),
                     client.overall().employeesLeft(),
@@ -364,12 +369,12 @@ public class TurnoverService {
                 String yearMonth = entry.getKey();
                 TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
 
-                entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                        FlatTurnoverReportDto.LevelType.CLIENT,
-                        client.id(),
+                entries.add(new TurnoverEntryDto(
+                        TurnoverEntryDto.LevelType.CLIENT,
+                        "Client-" + client.name() + "-" + yearMonth,
                         client.name(),
                         null, // No parent for client
-                        FlatTurnoverReportDto.PeriodType.MONTHLY,
+                        TurnoverEntryDto.PeriodType.MONTHLY,
                         yearMonth,
                         metrics.employeesAtStart(),
                         metrics.employeesLeft(),
@@ -381,12 +386,12 @@ public class TurnoverService {
             // Add project metrics
             for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
                 // Add project overall metrics
-                entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                        FlatTurnoverReportDto.LevelType.PROJECT,
-                        project.id(),
+                entries.add(new TurnoverEntryDto(
+                        TurnoverEntryDto.LevelType.PROJECT,
+                        "Client-" + client.name() + "-Project-" + project.name(),
                         project.name(),
                         client.id(), // Client is the parent of project
-                        FlatTurnoverReportDto.PeriodType.OVERALL,
+                        TurnoverEntryDto.PeriodType.OVERALL,
                         null, // No year-month for overall
                         project.overall().employeesAtStart(),
                         project.overall().employeesLeft(),
@@ -399,12 +404,12 @@ public class TurnoverService {
                     String yearMonth = entry.getKey();
                     TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
 
-                    entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
-                            FlatTurnoverReportDto.LevelType.PROJECT,
-                            project.id(),
+                    entries.add(new TurnoverEntryDto(
+                            TurnoverEntryDto.LevelType.PROJECT,
+                            "Client-" + client.name() + "-Project-" + project.name() + "-" + yearMonth,
                             project.name(),
                             client.id(), // Client is the parent of project
-                            FlatTurnoverReportDto.PeriodType.MONTHLY,
+                            TurnoverEntryDto.PeriodType.MONTHLY,
                             yearMonth,
                             metrics.employeesAtStart(),
                             metrics.employeesLeft(),
@@ -415,6 +420,28 @@ public class TurnoverService {
             }
         }
 
-        return new FlatTurnoverReportDto(entries);
+        return entries;
+    }
+
+    /**
+     * Returns a paginated list of turnover entries based on the provided parameters.
+     *
+     * @param params The parameters for filtering and pagination
+     * @param entries The list of turnover entries to paginate
+     * @return A paginated list of turnover entries
+     */
+    private static ReportDto<TurnoverEntryDto> getPaginatedEntries(ReactAdminParams params,
+            List<TurnoverEntryDto> entries) {
+
+        List<TurnoverEntryDto> data = entries.stream()
+                .filter(params.getFilter(TurnoverEntryDto.class))
+                .sorted(params.getComparator(TurnoverEntryDto.class))
+                .toList();
+
+        Range<Integer> range = params.getRangeInterval();
+        int minimum = range.getMinimum();
+        int maximum = Math.min(range.getMaximum() + 1, data.size());
+
+        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
 }

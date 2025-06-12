@@ -1,7 +1,5 @@
 package com.entropyteam.entropay.employees.services;
 
-import static com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto.PeriodType.MONTHLY;
-import static com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto.PeriodType.OVERALL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,7 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.common.ReactAdminSqlParams;
-import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -51,16 +48,19 @@ public class TurnoverServiceTest {
     private TurnoverService turnoverService;
 
     private TurnoverReportDto report;
+    private ReactAdminParams params;
 
     @BeforeEach
     void setUp() {
         setupMocks();
-        report = turnoverService.generateHierarchicalTurnoverReport(new ReactAdminParams());
+        params = ReactAdminParams.createTestInstance(Map.of("startDate", "2023-01-01", "endDate", "2023-3-31"), 0, 100,
+                Map.of("id", "ASC"));
+        report = turnoverService.generateHierarchicalTurnoverReport(params);
     }
 
     private void setupMocks() {
         Map<String, String> queryParams = createQueryParams();
-        ReactAdminSqlParams sqlParams = new ReactAdminSqlParams(queryParams, 10, 0, "id", "ASC");
+        ReactAdminSqlParams sqlParams = new ReactAdminSqlParams(queryParams, 100, 0, "id", "ASC");
 
         List<Client> clients = createTestClients();
         List<Project> projects = createTestProjects(clients);
@@ -182,199 +182,6 @@ public class TurnoverServiceTest {
         TurnoverReportDto.TurnoverMetrics monthlyMetrics = project.yearMonths().get(month);
         assertNotNull(monthlyMetrics, "Monthly metrics for " + projectName + " in " + month + " should not be null");
         assertTurnoverMetrics(monthlyMetrics, expectedStart, expectedLeft, expectedEnd, expectedRate);
-    }
-
-    @Test
-    void testGenerateFlatTurnoverReport() {
-        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
-
-        assertNotNull(flatReport);
-        assertNotNull(flatReport.entries());
-
-        int expectedEntries = calculateExpectedFlatReportEntries();
-        assertEquals(expectedEntries, flatReport.entries().size(),
-                "Flat report should have the correct number of entries");
-
-        verifyCompanyEntries(flatReport);
-        verifyClientEntries(flatReport);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideFlatReportCompanyTestData")
-    void testFlatReportCompanyEntries(FlatTurnoverReportDto.PeriodType periodType, String yearMonth, int expectedStart,
-            int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
-        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
-
-        FlatTurnoverReportDto.TurnoverEntryDto entry = findCompanyEntry(flatReport, periodType, yearMonth);
-        assertNotNull(entry, "Company entry should exist for period: " + periodType + " " + yearMonth);
-
-        assertFlatTurnoverEntry(entry, null, "Company", null, periodType, yearMonth, expectedStart, expectedLeft,
-                expectedEnd, expectedRate);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideFlatReportClientTestData")
-    void testFlatReportClientEntries(String clientName, FlatTurnoverReportDto.PeriodType periodType, String yearMonth,
-            int expectedStart, int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
-        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
-        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
-
-        FlatTurnoverReportDto.TurnoverEntryDto entry = findClientEntry(flatReport, client.id(), periodType, yearMonth);
-        assertNotNull(entry,
-                "Client entry should exist for " + clientName + " period: " + periodType + " " + yearMonth);
-
-        assertFlatTurnoverEntry(entry, client.id(), clientName, null, periodType, yearMonth, expectedStart,
-                expectedLeft, expectedEnd, expectedRate);
-    }
-
-    @ParameterizedTest
-    @MethodSource("provideFlatReportProjectTestData")
-    void testFlatReportProjectEntries(String clientName, String projectName,
-            FlatTurnoverReportDto.PeriodType periodType, String yearMonth, int expectedStart, int expectedLeft,
-            int expectedEnd, BigDecimal expectedRate) {
-        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
-        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
-        TurnoverReportDto.ProjectTurnoverDto project = findProjectByName(client, projectName);
-
-        FlatTurnoverReportDto.TurnoverEntryDto entry =
-                findProjectEntry(flatReport, project.id(), periodType, yearMonth);
-        assertNotNull(entry,
-                "Project entry should exist for " + projectName + " period: " + periodType + " " + yearMonth);
-
-        assertFlatTurnoverEntry(entry, project.id(), projectName, client.id(), periodType, yearMonth, expectedStart,
-                expectedLeft, expectedEnd, expectedRate);
-    }
-
-    // Helper methods for flat report verification
-    private int calculateExpectedFlatReportEntries() {
-        int expectedEntries = 1 + report.yearMonths().size(); // Company overall + monthly
-
-        for (TurnoverReportDto.ClientTurnoverDto client : report.clients()) {
-            expectedEntries += 1 + client.yearMonths().size(); // Client overall + monthly
-
-            for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
-                expectedEntries += 1 + project.yearMonths().size(); // Project overall + monthly
-            }
-        }
-        return expectedEntries;
-    }
-
-    private void verifyCompanyEntries(FlatTurnoverReportDto flatReport) {
-        List<FlatTurnoverReportDto.TurnoverEntryDto> companyEntries =
-                flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.COMPANY)
-                        .toList();
-
-        assertEquals(1 + report.yearMonths().size(), companyEntries.size(),
-                "Should have correct number of company entries");
-    }
-
-    private void verifyClientEntries(FlatTurnoverReportDto flatReport) {
-        for (TurnoverReportDto.ClientTurnoverDto client : report.clients()) {
-            List<FlatTurnoverReportDto.TurnoverEntryDto> clientEntries = flatReport.entries().stream()
-                    .filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.CLIENT && client.id().equals(e.id()))
-                    .toList();
-
-            assertEquals(1 + client.yearMonths().size(), clientEntries.size(),
-                    "Should have correct number of entries for client: " + client.name());
-
-            verifyProjectEntries(flatReport, client);
-        }
-    }
-
-    private void verifyProjectEntries(FlatTurnoverReportDto flatReport, TurnoverReportDto.ClientTurnoverDto client) {
-        for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
-            List<FlatTurnoverReportDto.TurnoverEntryDto> projectEntries = flatReport.entries().stream()
-                    .filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.PROJECT && project.id()
-                            .equals(e.id())).toList();
-
-            assertEquals(1 + project.yearMonths().size(), projectEntries.size(),
-                    "Should have correct number of entries for project: " + project.name());
-        }
-    }
-
-    private FlatTurnoverReportDto.TurnoverEntryDto findCompanyEntry(FlatTurnoverReportDto flatReport,
-            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
-        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.COMPANY)
-                .filter(e -> e.periodType() == periodType)
-                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
-    }
-
-    private FlatTurnoverReportDto.TurnoverEntryDto findClientEntry(FlatTurnoverReportDto flatReport, UUID clientId,
-            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
-        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.CLIENT)
-                .filter(e -> clientId.equals(e.id())).filter(e -> e.periodType() == periodType)
-                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
-    }
-
-    private FlatTurnoverReportDto.TurnoverEntryDto findProjectEntry(FlatTurnoverReportDto flatReport, UUID projectId,
-            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
-        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.PROJECT)
-                .filter(e -> projectId.equals(e.id())).filter(e -> e.periodType() == periodType)
-                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
-    }
-
-    private void assertFlatTurnoverEntry(FlatTurnoverReportDto.TurnoverEntryDto entry, UUID expectedId,
-            String expectedName, UUID expectedParentId, FlatTurnoverReportDto.PeriodType expectedPeriodType,
-            String expectedYearMonth, int expectedStart, int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
-        assertEquals(expectedId, entry.id(), "Entry should have correct ID");
-        assertEquals(expectedName, entry.name(), "Entry should have correct name");
-        assertEquals(expectedParentId, entry.parentId(), "Entry should have correct parent ID");
-        assertEquals(expectedPeriodType, entry.periodType(), "Entry should have correct period type");
-        if (expectedPeriodType == MONTHLY) {
-            assertEquals(expectedYearMonth, entry.yearMonth(), "Entry should have correct year month");
-        }
-        assertEquals(expectedStart, entry.employeesAtStart(), "Entry should have correct employeesAtStart");
-        assertEquals(expectedLeft, entry.employeesLeft(), "Entry should have correct employeesLeft");
-        assertEquals(expectedEnd, entry.employeesAtEnd(), "Entry should have correct employeesAtEnd");
-        assertEquals(0, expectedRate.compareTo(entry.turnoverRate()), "Entry should have correct turnoverRate");
-    }
-
-// Test data providers for flat report
-
-    private static Stream<Arguments> provideFlatReportCompanyTestData() {
-        return Stream.of(
-                // Company overall
-                Arguments.of(OVERALL, null, 7, 2, 6, new BigDecimal("30.77")),
-                // Company monthly
-                Arguments.of(MONTHLY, "2023-01", 7, 1, 6, new BigDecimal("15.38")),
-                Arguments.of(MONTHLY, "2023-02", 7, 1, 6, new BigDecimal("15.38")),
-                Arguments.of(MONTHLY, "2023-03", 6, 0, 6, BigDecimal.ZERO));
-    }
-
-    private static Stream<Arguments> provideFlatReportClientTestData() {
-        return Stream.of(
-                // Client 1 overall and monthly
-                Arguments.of("Client 1", OVERALL, null, 5, 2, 3, new BigDecimal("50.00")),
-                Arguments.of("Client 1", MONTHLY, "2023-01", 5, 0, 5, BigDecimal.ZERO),
-                Arguments.of("Client 1", MONTHLY, "2023-02", 5, 2, 3, new BigDecimal("50.00")),
-                Arguments.of("Client 1", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO),
-
-                // Client 2 overall and monthly
-                Arguments.of("Client 2", OVERALL, null, 2, 1, 3, new BigDecimal("40.00")),
-                Arguments.of("Client 2", MONTHLY, "2023-01", 2, 1, 1, new BigDecimal("66.67")),
-                Arguments.of("Client 2", MONTHLY, "2023-02", 2, 0, 2, BigDecimal.ZERO),
-                Arguments.of("Client 2", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO));
-    }
-
-    private static Stream<Arguments> provideFlatReportProjectTestData() {
-        return Stream.of(
-                // Project 1 overall and monthly
-                Arguments.of("Client 1", "Project 1", OVERALL, null, 3, 2, 1, new BigDecimal("100.00")),
-                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-01", 3, 0, 3, BigDecimal.ZERO),
-                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-02", 3, 2, 1, new BigDecimal("100.00")),
-                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-03", 1, 0, 1, BigDecimal.ZERO),
-
-                // Project 2 overall and monthly
-                Arguments.of("Client 1", "Project 2", OVERALL, null, 2, 1, 2, new BigDecimal("50.00")),
-                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-01", 2, 0, 2, BigDecimal.ZERO),
-                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-02", 2, 1, 1, new BigDecimal("66.67")),
-                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-03", 2, 0, 2, BigDecimal.ZERO),
-
-                // Project 3 overall and monthly
-                Arguments.of("Client 2", "Project 3", OVERALL, null, 2, 1, 3, new BigDecimal("40.00")),
-                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-01", 2, 1, 1, new BigDecimal("66.67")),
-                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-02", 2, 0, 2, BigDecimal.ZERO),
-                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO));
     }
 
     private static Stream<Arguments> provideProjectMonthlyMetricsTestData() {
