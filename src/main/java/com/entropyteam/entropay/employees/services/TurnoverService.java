@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
+import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssignment;
@@ -282,5 +283,138 @@ public class TurnoverService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Generates a flat turnover report for clients and projects based on the provided parameters.
+     * This method uses the hierarchical report and flattens it into a list of entries.
+     *
+     * @param params The parameters for filtering and pagination
+     * @return A flat report containing turnover data
+     */
+    @Transactional(readOnly = true)
+    public FlatTurnoverReportDto generateFlatTurnoverReport(ReactAdminParams params) {
+        LOGGER.info("Generating flat turnover report");
 
+        // Get the hierarchical report
+        TurnoverReportDto hierarchicalReport = generateHierarchicalTurnoverReport(params);
+
+        // Transform it to a flat report
+        return transformToFlatReport(hierarchicalReport);
+    }
+
+    /**
+     * Transforms a hierarchical turnover report into a flat report.
+     *
+     * @param hierarchicalReport The hierarchical report to transform
+     * @return A flat report containing the same data
+     */
+    private FlatTurnoverReportDto transformToFlatReport(TurnoverReportDto hierarchicalReport) {
+        List<FlatTurnoverReportDto.TurnoverEntryDto> entries = new ArrayList<>();
+
+        // Add company overall metrics
+        entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                FlatTurnoverReportDto.LevelType.COMPANY,
+                null, // No ID for company
+                "Company", // Generic name for company
+                null, // No parent for company
+                FlatTurnoverReportDto.PeriodType.OVERALL,
+                null, // No year-month for overall
+                hierarchicalReport.overall().employeesAtStart(),
+                hierarchicalReport.overall().employeesLeft(),
+                hierarchicalReport.overall().employeesAtEnd(),
+                hierarchicalReport.overall().turnoverRate()
+        ));
+
+        // Add company monthly metrics
+        for (Map.Entry<String, TurnoverReportDto.TurnoverMetrics> entry : hierarchicalReport.yearMonths().entrySet()) {
+            String yearMonth = entry.getKey();
+            TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
+
+            entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                    FlatTurnoverReportDto.LevelType.COMPANY,
+                    null, // No ID for company
+                    "Company", // Generic name for company
+                    null, // No parent for company
+                    FlatTurnoverReportDto.PeriodType.MONTHLY,
+                    yearMonth,
+                    metrics.employeesAtStart(),
+                    metrics.employeesLeft(),
+                    metrics.employeesAtEnd(),
+                    metrics.turnoverRate()
+            ));
+        }
+
+        // Add client metrics
+        for (TurnoverReportDto.ClientTurnoverDto client : hierarchicalReport.clients()) {
+            // Add client overall metrics
+            entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                    FlatTurnoverReportDto.LevelType.CLIENT,
+                    client.id(),
+                    client.name(),
+                    null, // No parent for client
+                    FlatTurnoverReportDto.PeriodType.OVERALL,
+                    null, // No year-month for overall
+                    client.overall().employeesAtStart(),
+                    client.overall().employeesLeft(),
+                    client.overall().employeesAtEnd(),
+                    client.overall().turnoverRate()
+            ));
+
+            // Add client monthly metrics
+            for (Map.Entry<String, TurnoverReportDto.TurnoverMetrics> entry : client.yearMonths().entrySet()) {
+                String yearMonth = entry.getKey();
+                TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
+
+                entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                        FlatTurnoverReportDto.LevelType.CLIENT,
+                        client.id(),
+                        client.name(),
+                        null, // No parent for client
+                        FlatTurnoverReportDto.PeriodType.MONTHLY,
+                        yearMonth,
+                        metrics.employeesAtStart(),
+                        metrics.employeesLeft(),
+                        metrics.employeesAtEnd(),
+                        metrics.turnoverRate()
+                ));
+            }
+
+            // Add project metrics
+            for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
+                // Add project overall metrics
+                entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                        FlatTurnoverReportDto.LevelType.PROJECT,
+                        project.id(),
+                        project.name(),
+                        client.id(), // Client is the parent of project
+                        FlatTurnoverReportDto.PeriodType.OVERALL,
+                        null, // No year-month for overall
+                        project.overall().employeesAtStart(),
+                        project.overall().employeesLeft(),
+                        project.overall().employeesAtEnd(),
+                        project.overall().turnoverRate()
+                ));
+
+                // Add project monthly metrics
+                for (Map.Entry<String, TurnoverReportDto.TurnoverMetrics> entry : project.yearMonths().entrySet()) {
+                    String yearMonth = entry.getKey();
+                    TurnoverReportDto.TurnoverMetrics metrics = entry.getValue();
+
+                    entries.add(new FlatTurnoverReportDto.TurnoverEntryDto(
+                            FlatTurnoverReportDto.LevelType.PROJECT,
+                            project.id(),
+                            project.name(),
+                            client.id(), // Client is the parent of project
+                            FlatTurnoverReportDto.PeriodType.MONTHLY,
+                            yearMonth,
+                            metrics.employeesAtStart(),
+                            metrics.employeesLeft(),
+                            metrics.employeesAtEnd(),
+                            metrics.turnoverRate()
+                    ));
+                }
+            }
+        }
+
+        return new FlatTurnoverReportDto(entries);
+    }
 }

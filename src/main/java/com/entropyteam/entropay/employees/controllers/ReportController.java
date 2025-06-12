@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
+import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
@@ -135,6 +136,21 @@ public class ReportController {
     @Transactional(readOnly = true)
     public ResponseEntity<TurnoverReportDto> getTurnoverReport(ReactAdminParams params) {
         TurnoverReportDto report = turnoverService.generateHierarchicalTurnoverReport(params);
+        return ResponseEntity.ok(report);
+    }
+
+    /**
+     * Returns a flat turnover report for clients and projects.
+     * This endpoint flattens the hierarchical structure of the turnover report into a list of entries.
+     *
+     * @param params The parameters for filtering and pagination
+     * @return A flat turnover report
+     */
+    @GetMapping("/turnover/flat")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
+    @Transactional(readOnly = true)
+    public ResponseEntity<FlatTurnoverReportDto> getFlatTurnoverReport(ReactAdminParams params) {
+        FlatTurnoverReportDto report = turnoverService.generateFlatTurnoverReport(params);
         return ResponseEntity.ok(report);
     }
 }

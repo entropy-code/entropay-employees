@@ -1,5 +1,7 @@
 package com.entropyteam.entropay.employees.services;
 
+import static com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto.PeriodType.MONTHLY;
+import static com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto.PeriodType.OVERALL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.common.ReactAdminSqlParams;
+import com.entropyteam.entropay.employees.dtos.FlatTurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -65,8 +68,7 @@ public class TurnoverServiceTest {
         List<MonthlyAssignment> monthlyAssignments = createTestMonthlyAssignments(clients, projects, employees);
 
         when(sqlMapper.map(any())).thenReturn(sqlParams);
-        when(assignmentRepository.findMonthlyAssignmentBetweenPeriod(any(), any()))
-                .thenReturn(monthlyAssignments);
+        when(assignmentRepository.findMonthlyAssignmentBetweenPeriod(any(), any())).thenReturn(monthlyAssignments);
     }
 
     private Map<String, String> createQueryParams() {
@@ -87,9 +89,9 @@ public class TurnoverServiceTest {
 
     @Test
     void testOverallTurnoverMetrics() {
-        // Overall: 5 employees at start, 2 left (Employee 2 and 4), 4 at end including Employee 6 who joined in Feb
+        // Overall: 7 employees at start, 2 left (Employee 2 and 4), 6 at end including Employee 6 who joined in Feb
         TurnoverReportDto.TurnoverMetrics overall = report.overall();
-        assertTurnoverMetrics(overall, 5, 2, 4, new BigDecimal("44.44"));
+        assertTurnoverMetrics(overall, 7, 2, 6, new BigDecimal("30.77"));
     }
 
     @ParameterizedTest
@@ -102,11 +104,10 @@ public class TurnoverServiceTest {
     }
 
     private static Stream<Arguments> provideMonthlyMetricsTestData() {
-        return Stream.of(
-                Arguments.of("2023-01", 5, 1, 4, new BigDecimal("22.22")), // January: Employee 4 left
-                Arguments.of("2023-02", 5, 1, 4, new BigDecimal("22.22")),
+        return Stream.of(Arguments.of("2023-01", 7, 1, 6, new BigDecimal("15.38")), // January: Employee 4 left
+                Arguments.of("2023-02", 7, 1, 6, new BigDecimal("15.38")),
                 // February: Employee 2 left, Employee 6 joined
-                Arguments.of("2023-03", 4, 0, 4, BigDecimal.ZERO)          // March: No departures
+                Arguments.of("2023-03", 6, 0, 6, BigDecimal.ZERO)          // March: No departures
         );
     }
 
@@ -120,9 +121,10 @@ public class TurnoverServiceTest {
     }
 
     private static Stream<Arguments> provideClientMetricsTestData() {
-        return Stream.of(
-                Arguments.of("Client 1", 3, 1, 2, new BigDecimal("40.00")), // Employee 2 left
-                Arguments.of("Client 2", 2, 1, 2, new BigDecimal("50.00"))  // Employee 4 left, Employee 6 joined
+        return Stream.of(Arguments.of("Client 1", 5, 2, 3, new BigDecimal("50.00")),
+                // Employee 2 left, Employee 7 moved to Client 2
+                Arguments.of("Client 2", 2, 1, 3, new BigDecimal("40.00"))
+                // Employee 4 left, Employee 6 joined, Employee 7 moved in
         );
     }
 
@@ -137,11 +139,12 @@ public class TurnoverServiceTest {
     }
 
     private static Stream<Arguments> provideProjectMetricsTestData() {
-        return Stream.of(
-                Arguments.of("Client 1", "Project 1", 2, 1, 1, new BigDecimal("66.67")), // Employee 2 left
-                Arguments.of("Client 1", "Project 2", 1, 0, 1, BigDecimal.ZERO),         // No departures
-                Arguments.of("Client 2", "Project 3", 2, 1, 2, new BigDecimal("50.00"))
-                // Employee 4 left, Employee 6 joined
+        return Stream.of(Arguments.of("Client 1", "Project 1", 3, 2, 1, new BigDecimal("100.00")),
+                // Employee 2 left, Employee 8 moved to Project 2
+                Arguments.of("Client 1", "Project 2", 2, 1, 2, new BigDecimal("50.00")),
+                // Employee 7 moved to Client 2, Employee 8 moved in
+                Arguments.of("Client 2", "Project 3", 2, 1, 3, new BigDecimal("40.00"))
+                // Employee 4 left, Employee 6 joined, Employee 7 moved in
         );
     }
 
@@ -158,14 +161,15 @@ public class TurnoverServiceTest {
     private static Stream<Arguments> provideClientMonthlyMetricsTestData() {
         return Stream.of(
                 // Client 1 monthly metrics
-                Arguments.of("Client 1", "2023-01", 3, 0, 3, BigDecimal.ZERO),
-                Arguments.of("Client 1", "2023-02", 3, 1, 2, new BigDecimal("40.00")), // Employee 2 left
-                Arguments.of("Client 1", "2023-03", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 1", "2023-01", 5, 0, 5, BigDecimal.ZERO),
+                Arguments.of("Client 1", "2023-02", 5, 2, 3, new BigDecimal("50.00")),
+                // Employee 2 left, Employee 7 moved to Client 2
+                Arguments.of("Client 1", "2023-03", 3, 0, 3, BigDecimal.ZERO),
 
                 // Client 2 monthly metrics
                 Arguments.of("Client 2", "2023-01", 2, 1, 1, new BigDecimal("66.67")), // Employee 4 left
                 Arguments.of("Client 2", "2023-02", 2, 0, 2, BigDecimal.ZERO),         // Employee 6 joined
-                Arguments.of("Client 2", "2023-03", 2, 0, 2, BigDecimal.ZERO)
+                Arguments.of("Client 2", "2023-03", 3, 0, 3, BigDecimal.ZERO)          // Employee 7 moved in
         );
     }
 
@@ -180,22 +184,219 @@ public class TurnoverServiceTest {
         assertTurnoverMetrics(monthlyMetrics, expectedStart, expectedLeft, expectedEnd, expectedRate);
     }
 
+    @Test
+    void testGenerateFlatTurnoverReport() {
+        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
+
+        assertNotNull(flatReport);
+        assertNotNull(flatReport.entries());
+
+        int expectedEntries = calculateExpectedFlatReportEntries();
+        assertEquals(expectedEntries, flatReport.entries().size(),
+                "Flat report should have the correct number of entries");
+
+        verifyCompanyEntries(flatReport);
+        verifyClientEntries(flatReport);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideFlatReportCompanyTestData")
+    void testFlatReportCompanyEntries(FlatTurnoverReportDto.PeriodType periodType, String yearMonth, int expectedStart,
+            int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
+        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
+
+        FlatTurnoverReportDto.TurnoverEntryDto entry = findCompanyEntry(flatReport, periodType, yearMonth);
+        assertNotNull(entry, "Company entry should exist for period: " + periodType + " " + yearMonth);
+
+        assertFlatTurnoverEntry(entry, null, "Company", null, periodType, yearMonth, expectedStart, expectedLeft,
+                expectedEnd, expectedRate);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideFlatReportClientTestData")
+    void testFlatReportClientEntries(String clientName, FlatTurnoverReportDto.PeriodType periodType, String yearMonth,
+            int expectedStart, int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
+        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+
+        FlatTurnoverReportDto.TurnoverEntryDto entry = findClientEntry(flatReport, client.id(), periodType, yearMonth);
+        assertNotNull(entry,
+                "Client entry should exist for " + clientName + " period: " + periodType + " " + yearMonth);
+
+        assertFlatTurnoverEntry(entry, client.id(), clientName, null, periodType, yearMonth, expectedStart,
+                expectedLeft, expectedEnd, expectedRate);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideFlatReportProjectTestData")
+    void testFlatReportProjectEntries(String clientName, String projectName,
+            FlatTurnoverReportDto.PeriodType periodType, String yearMonth, int expectedStart, int expectedLeft,
+            int expectedEnd, BigDecimal expectedRate) {
+        FlatTurnoverReportDto flatReport = turnoverService.generateFlatTurnoverReport(new ReactAdminParams());
+        TurnoverReportDto.ClientTurnoverDto client = findClientByName(clientName);
+        TurnoverReportDto.ProjectTurnoverDto project = findProjectByName(client, projectName);
+
+        FlatTurnoverReportDto.TurnoverEntryDto entry =
+                findProjectEntry(flatReport, project.id(), periodType, yearMonth);
+        assertNotNull(entry,
+                "Project entry should exist for " + projectName + " period: " + periodType + " " + yearMonth);
+
+        assertFlatTurnoverEntry(entry, project.id(), projectName, client.id(), periodType, yearMonth, expectedStart,
+                expectedLeft, expectedEnd, expectedRate);
+    }
+
+    // Helper methods for flat report verification
+    private int calculateExpectedFlatReportEntries() {
+        int expectedEntries = 1 + report.yearMonths().size(); // Company overall + monthly
+
+        for (TurnoverReportDto.ClientTurnoverDto client : report.clients()) {
+            expectedEntries += 1 + client.yearMonths().size(); // Client overall + monthly
+
+            for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
+                expectedEntries += 1 + project.yearMonths().size(); // Project overall + monthly
+            }
+        }
+        return expectedEntries;
+    }
+
+    private void verifyCompanyEntries(FlatTurnoverReportDto flatReport) {
+        List<FlatTurnoverReportDto.TurnoverEntryDto> companyEntries =
+                flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.COMPANY)
+                        .toList();
+
+        assertEquals(1 + report.yearMonths().size(), companyEntries.size(),
+                "Should have correct number of company entries");
+    }
+
+    private void verifyClientEntries(FlatTurnoverReportDto flatReport) {
+        for (TurnoverReportDto.ClientTurnoverDto client : report.clients()) {
+            List<FlatTurnoverReportDto.TurnoverEntryDto> clientEntries = flatReport.entries().stream()
+                    .filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.CLIENT && client.id().equals(e.id()))
+                    .toList();
+
+            assertEquals(1 + client.yearMonths().size(), clientEntries.size(),
+                    "Should have correct number of entries for client: " + client.name());
+
+            verifyProjectEntries(flatReport, client);
+        }
+    }
+
+    private void verifyProjectEntries(FlatTurnoverReportDto flatReport, TurnoverReportDto.ClientTurnoverDto client) {
+        for (TurnoverReportDto.ProjectTurnoverDto project : client.projects()) {
+            List<FlatTurnoverReportDto.TurnoverEntryDto> projectEntries = flatReport.entries().stream()
+                    .filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.PROJECT && project.id()
+                            .equals(e.id())).toList();
+
+            assertEquals(1 + project.yearMonths().size(), projectEntries.size(),
+                    "Should have correct number of entries for project: " + project.name());
+        }
+    }
+
+    private FlatTurnoverReportDto.TurnoverEntryDto findCompanyEntry(FlatTurnoverReportDto flatReport,
+            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
+        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.COMPANY)
+                .filter(e -> e.periodType() == periodType)
+                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
+    }
+
+    private FlatTurnoverReportDto.TurnoverEntryDto findClientEntry(FlatTurnoverReportDto flatReport, UUID clientId,
+            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
+        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.CLIENT)
+                .filter(e -> clientId.equals(e.id())).filter(e -> e.periodType() == periodType)
+                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
+    }
+
+    private FlatTurnoverReportDto.TurnoverEntryDto findProjectEntry(FlatTurnoverReportDto flatReport, UUID projectId,
+            FlatTurnoverReportDto.PeriodType periodType, String yearMonth) {
+        return flatReport.entries().stream().filter(e -> e.levelType() == FlatTurnoverReportDto.LevelType.PROJECT)
+                .filter(e -> projectId.equals(e.id())).filter(e -> e.periodType() == periodType)
+                .filter(e -> periodType == OVERALL || yearMonth.equals(e.yearMonth())).findFirst().orElse(null);
+    }
+
+    private void assertFlatTurnoverEntry(FlatTurnoverReportDto.TurnoverEntryDto entry, UUID expectedId,
+            String expectedName, UUID expectedParentId, FlatTurnoverReportDto.PeriodType expectedPeriodType,
+            String expectedYearMonth, int expectedStart, int expectedLeft, int expectedEnd, BigDecimal expectedRate) {
+        assertEquals(expectedId, entry.id(), "Entry should have correct ID");
+        assertEquals(expectedName, entry.name(), "Entry should have correct name");
+        assertEquals(expectedParentId, entry.parentId(), "Entry should have correct parent ID");
+        assertEquals(expectedPeriodType, entry.periodType(), "Entry should have correct period type");
+        if (expectedPeriodType == MONTHLY) {
+            assertEquals(expectedYearMonth, entry.yearMonth(), "Entry should have correct year month");
+        }
+        assertEquals(expectedStart, entry.employeesAtStart(), "Entry should have correct employeesAtStart");
+        assertEquals(expectedLeft, entry.employeesLeft(), "Entry should have correct employeesLeft");
+        assertEquals(expectedEnd, entry.employeesAtEnd(), "Entry should have correct employeesAtEnd");
+        assertEquals(0, expectedRate.compareTo(entry.turnoverRate()), "Entry should have correct turnoverRate");
+    }
+
+// Test data providers for flat report
+
+    private static Stream<Arguments> provideFlatReportCompanyTestData() {
+        return Stream.of(
+                // Company overall
+                Arguments.of(OVERALL, null, 7, 2, 6, new BigDecimal("30.77")),
+                // Company monthly
+                Arguments.of(MONTHLY, "2023-01", 7, 1, 6, new BigDecimal("15.38")),
+                Arguments.of(MONTHLY, "2023-02", 7, 1, 6, new BigDecimal("15.38")),
+                Arguments.of(MONTHLY, "2023-03", 6, 0, 6, BigDecimal.ZERO));
+    }
+
+    private static Stream<Arguments> provideFlatReportClientTestData() {
+        return Stream.of(
+                // Client 1 overall and monthly
+                Arguments.of("Client 1", OVERALL, null, 5, 2, 3, new BigDecimal("50.00")),
+                Arguments.of("Client 1", MONTHLY, "2023-01", 5, 0, 5, BigDecimal.ZERO),
+                Arguments.of("Client 1", MONTHLY, "2023-02", 5, 2, 3, new BigDecimal("50.00")),
+                Arguments.of("Client 1", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO),
+
+                // Client 2 overall and monthly
+                Arguments.of("Client 2", OVERALL, null, 2, 1, 3, new BigDecimal("40.00")),
+                Arguments.of("Client 2", MONTHLY, "2023-01", 2, 1, 1, new BigDecimal("66.67")),
+                Arguments.of("Client 2", MONTHLY, "2023-02", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 2", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO));
+    }
+
+    private static Stream<Arguments> provideFlatReportProjectTestData() {
+        return Stream.of(
+                // Project 1 overall and monthly
+                Arguments.of("Client 1", "Project 1", OVERALL, null, 3, 2, 1, new BigDecimal("100.00")),
+                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-01", 3, 0, 3, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-02", 3, 2, 1, new BigDecimal("100.00")),
+                Arguments.of("Client 1", "Project 1", MONTHLY, "2023-03", 1, 0, 1, BigDecimal.ZERO),
+
+                // Project 2 overall and monthly
+                Arguments.of("Client 1", "Project 2", OVERALL, null, 2, 1, 2, new BigDecimal("50.00")),
+                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-01", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-02", 2, 1, 1, new BigDecimal("66.67")),
+                Arguments.of("Client 1", "Project 2", MONTHLY, "2023-03", 2, 0, 2, BigDecimal.ZERO),
+
+                // Project 3 overall and monthly
+                Arguments.of("Client 2", "Project 3", OVERALL, null, 2, 1, 3, new BigDecimal("40.00")),
+                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-01", 2, 1, 1, new BigDecimal("66.67")),
+                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-02", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 2", "Project 3", MONTHLY, "2023-03", 3, 0, 3, BigDecimal.ZERO));
+    }
+
     private static Stream<Arguments> provideProjectMonthlyMetricsTestData() {
         return Stream.of(
                 // Project 1 monthly metrics
-                Arguments.of("Client 1", "Project 1", "2023-01", 2, 0, 2, BigDecimal.ZERO),
-                Arguments.of("Client 1", "Project 1", "2023-02", 2, 1, 1, new BigDecimal("66.67")), // Employee 2 left
+                Arguments.of("Client 1", "Project 1", "2023-01", 3, 0, 3, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 1", "2023-02", 3, 2, 1, new BigDecimal("100.00")),
+                // Employee 2 left, Employee 8 moved to Project 2
                 Arguments.of("Client 1", "Project 1", "2023-03", 1, 0, 1, BigDecimal.ZERO),
 
                 // Project 2 monthly metrics
-                Arguments.of("Client 1", "Project 2", "2023-01", 1, 0, 1, BigDecimal.ZERO),
-                Arguments.of("Client 1", "Project 2", "2023-02", 1, 0, 1, BigDecimal.ZERO),
-                Arguments.of("Client 1", "Project 2", "2023-03", 1, 0, 1, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 2", "2023-01", 2, 0, 2, BigDecimal.ZERO),
+                Arguments.of("Client 1", "Project 2", "2023-02", 2, 1, 1, new BigDecimal("66.67")),
+                // Employee 7 moved to Client 2
+                Arguments.of("Client 1", "Project 2", "2023-03", 2, 0, 2, BigDecimal.ZERO),
+                // Employee 8 moved in
 
                 // Project 3 monthly metrics
                 Arguments.of("Client 2", "Project 3", "2023-01", 2, 1, 1, new BigDecimal("66.67")), // Employee 4 left
                 Arguments.of("Client 2", "Project 3", "2023-02", 2, 0, 2, BigDecimal.ZERO),         // Employee 6 joined
-                Arguments.of("Client 2", "Project 3", "2023-03", 2, 0, 2, BigDecimal.ZERO)
+                Arguments.of("Client 2", "Project 3", "2023-03", 3, 0, 3, BigDecimal.ZERO)
+                // Employee 7 moved in
         );
     }
 
@@ -210,18 +411,12 @@ public class TurnoverServiceTest {
     }
 
     private TurnoverReportDto.ClientTurnoverDto findClientByName(String clientName) {
-        return report.clients().stream()
-                .filter(c -> c.name().equals(clientName))
-                .findFirst()
-                .orElse(null);
+        return report.clients().stream().filter(c -> c.name().equals(clientName)).findFirst().orElse(null);
     }
 
     private TurnoverReportDto.ProjectTurnoverDto findProjectByName(TurnoverReportDto.ClientTurnoverDto client,
             String projectName) {
-        return client.projects().stream()
-                .filter(p -> p.name().equals(projectName))
-                .findFirst()
-                .orElse(null);
+        return client.projects().stream().filter(p -> p.name().equals(projectName)).findFirst().orElse(null);
     }
 
     // Test data creation methods (unchanged for brevity)
@@ -273,7 +468,7 @@ public class TurnoverServiceTest {
     private List<Employee> createTestEmployees() {
         List<Employee> employees = new ArrayList<>();
 
-        for (int i = 1; i <= 6; i++) {
+        for (int i = 1; i <= 8; i++) {
             Employee employee = new Employee();
             employee.setId(UUID.randomUUID());
             employee.setFirstName("Employee");
@@ -297,6 +492,10 @@ public class TurnoverServiceTest {
      * | Client 2 | Project 3| Employee4| Present  | Left     | Left     |
      * | Client 2 | Project 3| Employee5| Present  | Present  | Present  |
      * | Client 2 | Project 3| Employee6| -        | Present  | Present  |
+     * | Client 1 | Project 2| Employee7| Present  | Present  | Left     |
+     * | Client 2 | Project 3| Employee7| -        | -        | Present  |
+     * | Client 1 | Project 1| Employee8| Present  | Present  | Left     |
+     * | Client 1 | Project 2| Employee8| -        | -        | Present  |
      * </pre>
      *
      * @param clients List of test clients
@@ -316,24 +515,24 @@ public class TurnoverServiceTest {
 
         // Employee 1 - Present throughout the period (Jan, Feb, Mar)
         UUID employee1Id = employees.get(0).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-01", employee1Id, "EMP001", "Employee", "1",
-                project1Id, project1Name, client1Id, client1Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-02", employee1Id, "EMP001", "Employee", "1",
-                project1Id, project1Name, client1Id, client1Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-03", employee1Id, "EMP001", "Employee", "1",
-                project1Id, project1Name, client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee1Id, "EMP001", "Employee", "1", project1Id, project1Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee1Id, "EMP001", "Employee", "1", project1Id, project1Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee1Id, "EMP001", "Employee", "1", project1Id, project1Name,
+                        client1Id, client1Name));
 
         // Employee 2 - Left during February
         UUID employee2Id = employees.get(1).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-01", employee2Id, "EMP002", "Employee", "2",
-                project1Id, project1Name, client1Id, client1Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-02", employee2Id, "EMP002", "Employee", "2",
-                project1Id, project1Name, client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee2Id, "EMP002", "Employee", "2", project1Id, project1Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee2Id, "EMP002", "Employee", "2", project1Id, project1Name,
+                        client1Id, client1Name));
         // No March assignment for Employee 2 (left)
 
         // Client 1, Project 2
@@ -342,15 +541,15 @@ public class TurnoverServiceTest {
 
         // Employee 3 - Present throughout the period
         UUID employee3Id = employees.get(2).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-01", employee3Id, "EMP003", "Employee", "3",
-                project2Id, project2Name, client1Id, client1Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-02", employee3Id, "EMP003", "Employee", "3",
-                project2Id, project2Name, client1Id, client1Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-03", employee3Id, "EMP003", "Employee", "3",
-                project2Id, project2Name, client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee3Id, "EMP003", "Employee", "3", project2Id, project2Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee3Id, "EMP003", "Employee", "3", project2Id, project2Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee3Id, "EMP003", "Employee", "3", project2Id, project2Name,
+                        client1Id, client1Name));
 
         // Client 2, Project 3
         UUID client2Id = clients.get(1).getId();
@@ -360,31 +559,55 @@ public class TurnoverServiceTest {
 
         // Employee 4 - Left during January
         UUID employee4Id = employees.get(3).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-01", employee4Id, "EMP004", "Employee", "4",
-                project3Id, project3Name, client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee4Id, "EMP004", "Employee", "4", project3Id, project3Name,
+                        client2Id, client2Name));
         // No February or March assignment for Employee 4 (left)
 
         // Employee 5 - Joined during January
         UUID employee5Id = employees.get(4).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-01", employee5Id, "EMP005", "Employee", "5",
-                project3Id, project3Name, client2Id, client2Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-02", employee5Id, "EMP005", "Employee", "5",
-                project3Id, project3Name, client2Id, client2Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-03", employee5Id, "EMP005", "Employee", "5",
-                project3Id, project3Name, client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee5Id, "EMP005", "Employee", "5", project3Id, project3Name,
+                        client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee5Id, "EMP005", "Employee", "5", project3Id, project3Name,
+                        client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee5Id, "EMP005", "Employee", "5", project3Id, project3Name,
+                        client2Id, client2Name));
 
         // Employee 6 - Joined during February
         UUID employee6Id = employees.get(5).getId();
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-02", employee6Id, "EMP006", "Employee", "6",
-                project3Id, project3Name, client2Id, client2Name));
-        monthlyAssignments.add(new MonthlyAssignment(
-                "2023-03", employee6Id, "EMP006", "Employee", "6",
-                project3Id, project3Name, client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee6Id, "EMP006", "Employee", "6", project3Id, project3Name,
+                        client2Id, client2Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee6Id, "EMP006", "Employee", "6", project3Id, project3Name,
+                        client2Id, client2Name));
+
+        // Employee 7 - Moved from Client 1/Project 2 to Client 2/Project 3
+        UUID employee7Id = employees.get(6).getId();
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee7Id, "EMP007", "Employee", "7", project2Id, project2Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee7Id, "EMP007", "Employee", "7", project2Id, project2Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee7Id, "EMP007", "Employee", "7", project3Id, project3Name,
+                        client2Id, client2Name));
+
+        // Employee 8 - Moved from Client 1/Project 1 to Client 1/Project 2
+        UUID employee8Id = employees.get(7).getId();
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-01", employee8Id, "EMP008", "Employee", "8", project1Id, project1Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-02", employee8Id, "EMP008", "Employee", "8", project1Id, project1Name,
+                        client1Id, client1Name));
+        monthlyAssignments.add(
+                new MonthlyAssignment("2023-03", employee8Id, "EMP008", "Employee", "8", project2Id, project2Name,
+                        client1Id, client1Name));
 
         return monthlyAssignments;
     }
