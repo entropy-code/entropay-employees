@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssignment;
 
 public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
@@ -31,14 +32,14 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id = "
-                    + ":clientId AND a.deleted = false "
-                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+            + ":clientId AND a.deleted = false "
+            + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientId(@Param("clientId") UUID clientId);
 
     @Query(value =
             "SELECT a.* FROM assignment AS a INNER JOIN project AS p ON a.project_id = p.id WHERE p.client_id IN "
-                    + ":clientIds AND a.deleted = false "
-                    + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
+            + ":clientIds AND a.deleted = false "
+            + " AND p.deleted = FALSE AND a.active = true", nativeQuery = true)
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
@@ -54,4 +55,47 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                 AND a.deleted = FALSE
                 AND e.active = TRUE""")
     List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
+
+    @Query(value = """
+            WITH project_periods AS (SELECT MIN(a.start_date) as start_date,
+                                            CASE
+                                                WHEN COUNT(*) FILTER (WHERE a.end_date IS NULL) > 0
+                                                    THEN NOW()
+                                                ELSE MAX(a.end_date)
+                                                END           as end_date,
+                                            a.employee_id     as employee_id,
+                                            a.project_id      as project_id
+                                     FROM assignment a
+                                              JOIN employee e ON e.id = a.employee_id
+                                              JOIN project p ON p.id = a.project_id
+                                     where a.deleted is false
+                                       and e.deleted is false
+                                       and p.deleted is false
+                                     GROUP BY a.employee_id, a.project_id),
+            data as (SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
+                   pp.employee_id,
+                   e.internal_id,
+                   e.first_name,
+                   e.last_name,
+                   p.id                             as project_id,
+                   p.name                           as project_name,
+                   c.id                             as client_id,
+                   c.name                           as client_name
+            FROM project_periods pp
+                     inner join project p on p.id = pp.project_id
+                     inner join client c on p.client_id = c.id
+                     inner join employee e on e.id = pp.employee_id
+                     CROSS JOIN generate_series(
+                    DATE_TRUNC('month', pp.start_date),
+                    DATE_TRUNC('month', pp.end_date),
+                    INTERVAL '1 month'
+                                ) AS month_series)
+            select *
+            from data
+            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')                                                                       
+              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')                                                                     
+            order by "year-month", client_id, project_id, employee_id
+            """, nativeQuery = true)
+    List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(@Param("start_date") LocalDate startDate,
+            @Param("end_date") LocalDate endDate);
 }
