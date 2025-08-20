@@ -29,13 +29,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ReactAdminMapper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactAdminMapper.class);
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    public final static String ID_FIELD = "id";
+    private static final String YEAR_SEARCH_TERM_KEY = "year";
+    private final static String ID_FIELD = "id";
     public static final String SEARCH_TERM_KEY = "q";
-    public static final String YEAR_SEARCH_TERM_KEY = "year";
     public static final String DATE_FROM_TERM_KEY = "dateFrom";
     public static final String DATE_TO_TERM_KEY = "dateTo";
+
+    private final ObjectMapper mapper;
+
+    public ReactAdminMapper(ObjectMapper mapper) {
+        this.mapper = mapper;
+    }
 
     /**
      * The filter param could be:
@@ -54,7 +58,7 @@ public class ReactAdminMapper {
             Map<String, LocalDate> getByDateFieldsFilter = new HashMap<>();
 
             if (params.getFilter() != null) {
-                Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
+                Map<String, Object> requestFilter = mapper.readValue(params.getFilter(), Map.class);
                 for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
                     if (StringUtils.equalsIgnoreCase(filter.getKey(), ID_FIELD)) {
                         // getMany filter
@@ -100,12 +104,12 @@ public class ReactAdminMapper {
                 return Pageable.unpaged();
             }
 
-            List<Integer> rangeList = MAPPER.readValue(params.getRange(), List.class);
+            List<Integer> rangeList = mapper.readValue(params.getRange(), List.class);
             Integer start = rangeList.get(0);
             Integer size = (rangeList.get(1) + 1) - start;
             Integer page = start.equals(0) ? start : Integer.divideUnsigned(start, size);
 
-            List<String> sortList = MAPPER.readValue(params.getSort(), List.class);
+            List<String> sortList = mapper.readValue(params.getSort(), List.class);
             String sortField = sortList.get(0);
             if (!isEntityField(entityClass, sortField)) {
                 // TODO: filter by related entities id
@@ -124,7 +128,7 @@ public class ReactAdminMapper {
         try {
             Map<String, Object> getByFieldsFilter = new HashMap<>();
             if (params.getFilter() != null) {
-                Map<String, Object> requestFilter = MAPPER.readValue(params.getFilter(), Map.class);
+                Map<String, Object> requestFilter = mapper.readValue(params.getFilter(), Map.class);
                 for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
                     if (isEntityField(report, filter.getKey())) {
                         getByFieldsFilter.put(filter.getKey(), filter.getValue());
@@ -141,11 +145,11 @@ public class ReactAdminMapper {
         return Arrays.stream(entityClass.getDeclaredFields()).anyMatch(f -> StringUtils.equals(f.getName(), field));
     }
 
-    static <T> Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
+    public <T> Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
 
         return (object1, object2) -> {
             try {
-                List<String> sortList = MAPPER.readValue(params.getSort(), List.class);
+                List<String> sortList = mapper.readValue(params.getSort(), List.class);
                 String sort = sortList.get(0);
                 String order = sortList.get(1);
 
@@ -177,7 +181,7 @@ public class ReactAdminMapper {
      * @return A predicate that tests if an object matches all filter criteria
      */
 
-    public static <T> Predicate<T> getFilter(ReactAdminParams params, Class<T> clazz) {
+    public <T> Predicate<T> getFilter(ReactAdminParams params, Class<T> clazz) {
         Map<String, String> filters = parseFilters(params);
 
         return dto -> {
@@ -226,10 +230,10 @@ public class ReactAdminMapper {
         };
     }
 
-    private static Map<String, String> parseFilters(ReactAdminParams params) {
+    private Map<String, String> parseFilters(ReactAdminParams params) {
         Map<String, String> filters;
         try {
-            filters = MAPPER.readValue(params.getFilter(), Map.class);
+            filters = mapper.readValue(params.getFilter(), Map.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -276,9 +280,9 @@ public class ReactAdminMapper {
     }
 
 
-    static Range<Integer> getRange(ReactAdminParams params) {
+    public Range<Integer> getRange(ReactAdminParams params) {
         try {
-            List<Integer> rangeList = MAPPER.readValue(params.getRange(), List.class);
+            List<Integer> rangeList = mapper.readValue(params.getRange(), List.class);
             Integer start = rangeList.get(0);
             Integer end = rangeList.get(1);
             return Range.of(start, end);
@@ -286,5 +290,32 @@ public class ReactAdminMapper {
             throw new RuntimeException("Error parsing range: " + params.getRange(), e);
         }
 
+    }
+
+    /**
+     * Maps ReactAdminParams to ReactAdminSqlParams by deserializing JSON strings
+     * into Java objects and calculating SQL query parameters.
+     *
+     * @param params ReactAdminParams containing the filter, range, and sort parameters as JSON strings.
+     * @return ReactAdminSqlParams with deserialized and calculated SQL query parameters.
+     * @throws RuntimeException if JSON processing fails.
+     */
+    @SuppressWarnings("unchecked")
+    public ReactAdminSqlParams map(ReactAdminParams params) {
+        try {
+            String[] array = mapper.readValue(params.getSort(), String[].class);
+            String sort = array[0];
+            String order = array[1];
+
+            int[] range = mapper.readValue(params.getRange(), int[].class);
+            int limit = range[1] - range[0] + 1;
+            int offset = range[0];
+
+            Map<String, String> queryParameters = mapper.readValue(params.getFilter(), Map.class);
+
+            return new ReactAdminSqlParams(queryParameters, limit, offset, sort, order);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

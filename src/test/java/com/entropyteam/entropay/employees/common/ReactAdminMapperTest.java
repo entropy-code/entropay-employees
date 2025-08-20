@@ -13,6 +13,7 @@ import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.models.Contract;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ReactAdminMapperTest {
 
@@ -20,7 +21,7 @@ public class ReactAdminMapperTest {
 
     @BeforeEach
     public void setUp() {
-        this.mapper = new ReactAdminMapper();
+        this.mapper = new ReactAdminMapper(new ObjectMapper());
     }
 
     @Test

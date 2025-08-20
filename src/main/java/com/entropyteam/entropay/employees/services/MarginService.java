@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -36,16 +36,16 @@ public class MarginService {
     private final OvertimeService overtimeService;
     private final AssignmentService assignmentService;
     private final ContractService contractService;
-    private final ReactAdminSqlMapper sqlMapper;
+    private final ReactAdminMapper mapper;
 
 
     public MarginService(PtoService ptoService, OvertimeService overtimeService, AssignmentService assignmentService,
-            ContractService contractService, ReactAdminSqlMapper sqlMapper) {
+            ContractService contractService, ReactAdminMapper mapper) {
         this.ptoService = ptoService;
         this.overtimeService = overtimeService;
         this.assignmentService = assignmentService;
         this.contractService = contractService;
-        this.sqlMapper = sqlMapper;
+        this.mapper = mapper;
     }
 
     public record MarginDto(UUID id, String yearMonth, UUID employeeId, String internalId, String firstName,
@@ -74,7 +74,7 @@ public class MarginService {
 
     @Transactional(readOnly = true)
     public ReportDto<MarginDto> generateMarginReport(ReactAdminParams params) {
-        DateRangeDto dateRange = new DateRangeDto(sqlMapper.map(params));
+        DateRangeDto dateRange = new DateRangeDto(mapper.map(params));
         LocalDate startDate = dateRange.getStartDate();
         LocalDate endDate = dateRange.getEndDate();
 
@@ -143,15 +143,15 @@ public class MarginService {
         return salaries;
     }
 
-    private static ReportDto<MarginDto> getPaginatedEntries(ReactAdminParams params,
+    private ReportDto<MarginDto> getPaginatedEntries(ReactAdminParams params,
             List<MarginDto> marginDtos) {
 
         List<MarginDto> data = marginDtos.stream()
-                .filter(params.getFilter(MarginDto.class))
-                .sorted(params.getComparator(MarginDto.class))
+                .filter(mapper.getFilter(params, MarginDto.class))
+                .sorted(mapper.getComparator(params, MarginDto.class))
                 .toList();
 
-        Range<Integer> range = params.getRangeInterval();
+        Range<Integer> range = mapper.getRange(params);
         int minimum = range.getMinimum();
         int maximum = Math.min(range.getMaximum() + 1, data.size());
 

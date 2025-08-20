@@ -10,11 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ReactAdminSqlMapperTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private ReactAdminSqlMapper reactAdminSqlMapper;
+    private ReactAdminMapper reactAdminMapper;
 
     @BeforeEach
     public void setUp() {
-        reactAdminSqlMapper = new ReactAdminSqlMapper(OBJECT_MAPPER);
+        reactAdminMapper = new ReactAdminMapper(OBJECT_MAPPER);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class ReactAdminSqlMapperTest {
         ReactAdminSqlParams expected = new ReactAdminSqlParams(Map.of("q", "John"), 11, 0, "name", "ASC");
 
         // When
-        ReactAdminSqlParams result = reactAdminSqlMapper.map(params);
+        ReactAdminSqlParams result = reactAdminMapper.map(params);
 
         // Then
         assertEquals(expected, result);

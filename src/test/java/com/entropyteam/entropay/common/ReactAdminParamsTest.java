@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.function.Predicate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class ReactAdminParamsTest {
@@ -17,6 +19,13 @@ public class ReactAdminParamsTest {
 
     }
 
+    private ReactAdminMapper mapper;
+
+    @BeforeEach
+    void setUp() {
+        mapper = new ReactAdminMapper(new ObjectMapper());
+    }
+
     @Test
     public void getFilter_shouldReturnTrueForAllItems_whenNoFiltersProvided() {
         // Given
@@ -24,7 +33,7 @@ public class ReactAdminParamsTest {
         TestDto dto = new TestDto("Test", "Description", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(dto));
@@ -38,7 +47,7 @@ public class ReactAdminParamsTest {
         TestDto nonMatchingDto = new TestDto("Other", "Description", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(matchingDto));
@@ -53,7 +62,7 @@ public class ReactAdminParamsTest {
         TestDto nonMatchingDto = new TestDto("Test", "Other", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(matchingDto));
@@ -69,7 +78,7 @@ public class ReactAdminParamsTest {
         TestDto nonMatching = new TestDto("Test", "Description", "Alice", "Smith", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(matchingByFirstName));
@@ -85,7 +94,7 @@ public class ReactAdminParamsTest {
         TestDto dto = new TestDto("Test", "Description", "John", "Doe", "2022-01-01", "2022-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(dto));
@@ -98,7 +107,7 @@ public class ReactAdminParamsTest {
         TestDto dtoWithNullDescription = new TestDto("Test", null, "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertFalse(filter.test(dtoWithNullDescription));
@@ -111,7 +120,7 @@ public class ReactAdminParamsTest {
         TestDto dto = new TestDto("Test", "Description", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(dto));
@@ -124,7 +133,7 @@ public class ReactAdminParamsTest {
         TestDto dto = new TestDto("Test", "Description", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(dto));
@@ -140,7 +149,7 @@ public class ReactAdminParamsTest {
         TestDto nonMatchingDto2 = new TestDto("Test", "Other", "John", "Doe", "2023-01-01", "2023-12-31");
 
         // When
-        Predicate<TestDto> filter = params.getFilter(TestDto.class);
+        Predicate<TestDto> filter = mapper.getFilter(params, TestDto.class);
 
         // Then
         assertTrue(filter.test(matchingDto));

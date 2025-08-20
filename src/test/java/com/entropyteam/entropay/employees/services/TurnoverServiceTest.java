@@ -20,11 +20,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.common.ReactAdminSqlParams;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
@@ -34,20 +34,14 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.projections.MonthlyAssignment;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class TurnoverServiceTest {
 
-    private static final LocalDate TEST_START_DATE = LocalDate.of(2023, 1, 1);
-    private static final LocalDate TEST_END_DATE = LocalDate.of(2023, 3, 31);
-
     @Mock
     private AssignmentRepository assignmentRepository;
 
-    @Mock
-    private ReactAdminSqlMapper sqlMapper;
-
-    @InjectMocks
     private TurnoverService turnoverService;
 
     private TurnoverReportDto report;
@@ -56,29 +50,20 @@ public class TurnoverServiceTest {
     @BeforeEach
     void setUp() {
         setupMocks();
-        params = ReactAdminParams.createTestInstance(Map.of("startDate", "2023-01-01", "endDate", "2023-3-31"), 0, 100,
+        ReactAdminMapper mapper = new ReactAdminMapper(new ObjectMapper());
+        turnoverService = new TurnoverService(assignmentRepository, mapper);
+        params = ReactAdminParams.createTestInstance(Map.of("startDate", "2023-01-01", "endDate", "2023-03-31"), 0, 100,
                 Map.of("id", "ASC"));
         report = turnoverService.generateHierarchicalTurnoverReport(params);
     }
 
     private void setupMocks() {
-        Map<String, String> queryParams = createQueryParams();
-        ReactAdminSqlParams sqlParams = new ReactAdminSqlParams(queryParams, 100, 0, "id", "ASC");
-
         List<Client> clients = createTestClients();
         List<Project> projects = createTestProjects(clients);
         List<Employee> employees = createTestEmployees();
         List<MonthlyAssignment> monthlyAssignments = createTestMonthlyAssignments(clients, projects, employees);
 
-        when(sqlMapper.map(any())).thenReturn(sqlParams);
         when(assignmentRepository.findMonthlyAssignmentBetweenPeriod(any(), any())).thenReturn(monthlyAssignments);
-    }
-
-    private Map<String, String> createQueryParams() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("startDate", TEST_START_DATE.toString());
-        queryParams.put("endDate", TEST_END_DATE.toString());
-        return queryParams;
     }
 
     @Test
@@ -242,8 +227,8 @@ public class TurnoverServiceTest {
         // Then
         // Find company overall entry
         TurnoverEntryDto companyOverall = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
                 .findFirst()
                 .orElse(null);
 
@@ -256,8 +241,8 @@ public class TurnoverServiceTest {
 
         // Find company monthly entries
         List<TurnoverEntryDto> companyMonthly = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY)
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.COMPANY
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY)
                 .toList();
 
         assertEquals(3, companyMonthly.size(), "Should have 3 monthly entries for company");
@@ -283,8 +268,8 @@ public class TurnoverServiceTest {
         // Then
         // Find client entries
         List<TurnoverEntryDto> clientOverallEntries = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
                 .toList();
 
         assertEquals(2, clientOverallEntries.size(), "Should have 2 client overall entries");
@@ -303,9 +288,9 @@ public class TurnoverServiceTest {
 
         // Check Client 1 February metrics
         List<TurnoverEntryDto> client1Monthly = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
-                        && "Client 1".equals(entry.name()))
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.CLIENT
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
+                                 && "Client 1".equals(entry.name()))
                 .toList();
 
         assertEquals(3, client1Monthly.size(), "Should have 3 monthly entries for Client 1");
@@ -330,8 +315,8 @@ public class TurnoverServiceTest {
         // Then
         // Find project entries
         List<TurnoverEntryDto> projectOverallEntries = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.OVERALL)
                 .toList();
 
         assertEquals(3, projectOverallEntries.size(), "Should have 3 project overall entries");
@@ -350,9 +335,9 @@ public class TurnoverServiceTest {
 
         // Check Project 1 February metrics
         List<TurnoverEntryDto> project1Monthly = flatReport.data().stream()
-                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT 
-                        && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
-                        && "Project 1".equals(entry.name()))
+                .filter(entry -> entry.levelType() == TurnoverEntryDto.LevelType.PROJECT
+                                 && entry.periodType() == TurnoverEntryDto.PeriodType.MONTHLY
+                                 && "Project 1".equals(entry.name()))
                 .toList();
 
         assertEquals(3, project1Monthly.size(), "Should have 3 monthly entries for Project 1");

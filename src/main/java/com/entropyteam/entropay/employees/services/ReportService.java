@@ -25,7 +25,6 @@ import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.common.ReactAdminSqlParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
@@ -68,13 +67,12 @@ public class ReportService {
     private final EmployeeRepository employeeRepository;
     private final PtoRepository ptoRepository;
     private final ClientRepository clientRepository;
-    private final ReactAdminSqlMapper sqlMapper;
 
     @Autowired
     public ReportService(RoleRepository roleRepository, TechnologyRepository technologyRepository,
             AssignmentRepository assignmentRepository, ContractRepository contractRepository,
             EmployeeRepository employeeRepository, PtoRepository ptoRepository,
-            ClientRepository clientRepository, ReactAdminMapper mapper, ReactAdminSqlMapper sqlMapper) {
+            ClientRepository clientRepository, ReactAdminMapper mapper) {
         this.mapper = mapper;
         this.roleRepository = roleRepository;
         this.technologyRepository = technologyRepository;
@@ -83,7 +81,6 @@ public class ReportService {
         this.employeeRepository = employeeRepository;
         this.ptoRepository = ptoRepository;
         this.clientRepository = clientRepository;
-        this.sqlMapper = sqlMapper;
     }
 
     public Page<EmployeeReportDto> getEmployeesReport(ReactAdminParams params) {
@@ -353,7 +350,7 @@ public class ReportService {
 
     public Page<SalariesReportDto> getSalariesReport(ReactAdminParams params) {
         LOGGER.info("Getting salaries report with params: {}", params);
-        ReactAdminSqlParams queryParams = sqlMapper.map(params);
+        ReactAdminSqlParams queryParams = mapper.map(params);
 
         List<SalariesReportDto> salariesReport = employeeRepository.getSalariesReport(queryParams);
         Integer salariesCount = employeeRepository.getSalariesCount(queryParams);

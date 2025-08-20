@@ -17,8 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
 import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
@@ -33,13 +33,12 @@ public class TurnoverService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TurnoverService.class);
     private final AssignmentRepository assignmentRepository;
-    private final ReactAdminSqlMapper sqlMapper;
+    private final ReactAdminMapper mapper;
 
     public TurnoverService(
-            AssignmentRepository assignmentRepository,
-            ReactAdminSqlMapper sqlMapper) {
+            AssignmentRepository assignmentRepository, ReactAdminMapper mapper) {
         this.assignmentRepository = assignmentRepository;
-        this.sqlMapper = sqlMapper;
+        this.mapper = mapper;
     }
 
     /**
@@ -50,7 +49,7 @@ public class TurnoverService {
      */
     @Transactional(readOnly = true)
     public TurnoverReportDto generateHierarchicalTurnoverReport(ReactAdminParams params) {
-        DateRangeDto dateRange = new DateRangeDto(sqlMapper.map(params));
+        DateRangeDto dateRange = new DateRangeDto(mapper.map(params));
         LocalDate startDate = dateRange.getStartDate();
         LocalDate endDate = dateRange.getEndDate();
 
@@ -430,15 +429,15 @@ public class TurnoverService {
      * @param entries The list of turnover entries to paginate
      * @return A paginated list of turnover entries
      */
-    private static ReportDto<TurnoverEntryDto> getPaginatedEntries(ReactAdminParams params,
+    private ReportDto<TurnoverEntryDto> getPaginatedEntries(ReactAdminParams params,
             List<TurnoverEntryDto> entries) {
 
         List<TurnoverEntryDto> data = entries.stream()
-                .filter(params.getFilter(TurnoverEntryDto.class))
-                .sorted(params.getComparator(TurnoverEntryDto.class))
+                .filter(mapper.getFilter(params, TurnoverEntryDto.class))
+                .sorted(mapper.getComparator(params, TurnoverEntryDto.class))
                 .toList();
 
-        Range<Integer> range = params.getRangeInterval();
+        Range<Integer> range = mapper.getRange(params);
         int minimum = range.getMinimum();
         int maximum = Math.min(range.getMaximum() + 1, data.size());
 
