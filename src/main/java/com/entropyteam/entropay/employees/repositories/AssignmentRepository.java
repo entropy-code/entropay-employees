@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.repositories;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -98,4 +99,15 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
             """, nativeQuery = true)
     List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(@Param("start_date") LocalDate startDate,
             @Param("end_date") LocalDate endDate);
+
+    @Query("""
+            select distinct a.employee.id
+            from Assignment a
+            join a.project p 
+            where a.deleted = false 
+              and a.active = true 
+              and p.deleted = false
+              and p.isInternal = true
+            """)
+    Set<UUID> findAllInternalEmployeeIds();
 }

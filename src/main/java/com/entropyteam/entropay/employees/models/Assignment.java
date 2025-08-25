@@ -1,12 +1,10 @@
 package com.entropyteam.entropay.employees.models;
 
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
-import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,9 +14,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import com.entropyteam.entropay.auth.SecureField;
-import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 
 
 @Entity(name = "Assignment")
@@ -47,7 +42,6 @@ public class Assignment extends BaseEntity {
     @Column
     private String labourHours;
     @Column
-    @SecureField(roles = {ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     private BigDecimal billableRate;
     @Enumerated(EnumType.STRING)
     @Column(name = "currency")
@@ -56,6 +50,7 @@ public class Assignment extends BaseEntity {
     private boolean active;
     @Column
     private String endReason;
+
     public Assignment() {
     }
 
@@ -157,7 +152,9 @@ public class Assignment extends BaseEntity {
         this.active = active;
     }
 
-    public String getEndReason() {return endReason;}
+    public String getEndReason() {
+        return endReason;
+    }
 
     public void setEndReason(String endReason) {
         this.endReason = endReason;

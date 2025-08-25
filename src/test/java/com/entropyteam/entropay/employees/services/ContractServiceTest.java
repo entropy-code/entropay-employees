@@ -3,7 +3,6 @@ package com.entropyteam.entropay.employees.services;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aCompany;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aRole;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.aSeniority;
-import static com.entropyteam.entropay.employees.testUtils.TestUtils.anEndReason;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildContract;
 import static com.entropyteam.entropay.employees.testUtils.TestUtils.buildEmployee;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,7 +35,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -72,8 +70,6 @@ class ContractServiceTest {
 
     @Mock
     private PaymentSettlementRepository paymentSettlementRepository;
-    @Mock
-    private SecureObjectService secureObjectService;
     @Captor
     private ArgumentCaptor<Contract> contractCaptor;
     @InjectMocks
@@ -108,7 +104,6 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
-        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
@@ -139,7 +134,6 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
-        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
@@ -185,7 +179,6 @@ class ContractServiceTest {
         when(contractRepository.save(any())).thenReturn(activated);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
-        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
@@ -222,7 +215,6 @@ class ContractServiceTest {
         when(contractRepository.save(any())).thenReturn(activated);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
-        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);
@@ -296,7 +288,6 @@ class ContractServiceTest {
         when(contractRepository.save(any())).thenReturn(deactivated);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
-        when(secureObjectService.secureObjectByRole(any(), any())).thenCallRealMethod();
 
         // then
         ContractDto actual = contractService.modifyStatus(EXISTENT_CONTRACT_ID, setActive);

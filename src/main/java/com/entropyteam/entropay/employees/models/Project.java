@@ -31,6 +31,8 @@ public class Project extends BaseEntity {
     private String notes;
     @Column
     private boolean paidPto;
+    @Column
+    private boolean isInternal;
 
     public Project() {
     }
@@ -41,6 +43,7 @@ public class Project extends BaseEntity {
         this.endDate = entity.endDate();
         this.notes = entity.notes();
         this.paidPto = entity.paidPto();
+        this.isInternal = entity.isInternal();
     }
 
     public String getName() {
@@ -97,5 +100,13 @@ public class Project extends BaseEntity {
 
     public void setPaidPto(boolean paidPto) {
         this.paidPto = paidPto;
+    }
+
+    public boolean isInternal() {
+        return isInternal;
+    }
+
+    public void setInternal(boolean internal) {
+        isInternal = internal;
     }
 }

@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.common.ReactAdminSqlMapper;
+import com.entropyteam.entropay.common.sensitiveInformation.EmployeeIdAware;
+import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -49,9 +51,16 @@ public class MarginService {
     }
 
     public record MarginDto(UUID id, String yearMonth, UUID employeeId, String internalId, String firstName,
-                            String lastName, String clientName, String projectName, BigDecimal rate, double hours,
-                            double ptoHours, BigDecimal total, BigDecimal paid, BigDecimal margin) {
+                            String lastName, String clientName, String projectName,
+                            @SensitiveInformation BigDecimal rate, double hours,
+                            double ptoHours, @SensitiveInformation BigDecimal total,
+                            @SensitiveInformation BigDecimal paid, @SensitiveInformation BigDecimal margin)
+            implements EmployeeIdAware {
 
+        @Override
+        public UUID getEmployeeId() {
+            return employeeId();
+        }
     }
 
     private record MonthlyAssignment(Assignment assignment, YearMonth month) {
