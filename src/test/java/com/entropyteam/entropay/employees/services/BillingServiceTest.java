@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
@@ -42,7 +41,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class BillingServiceTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final ReactAdminSqlMapper REACT_ADMIN_SQL_MAPPER = new ReactAdminSqlMapper(OBJECT_MAPPER);
     private static final UUID ARG_COUNTRY_ID = UUID.fromString("e7cccdc7-b9b8-4017-b0c9-541abc1d6f9d");
     private static final UUID EMPLOYEE_ID = UUID.fromString("123e4567-e89b-12d3-a456-426655440000");
     private static final Country ARG = getArgentina();
@@ -58,8 +56,6 @@ class BillingServiceTest {
     private HolidayRepository holidayRepository;
     @Mock
     private CountryRepository countryRepository;
-    @Mock
-    private ReactAdminMapper mapper;
     @Mock
     private EmployeeRepository employeeRepository;
     @Mock
@@ -82,6 +78,7 @@ class BillingServiceTest {
     void setup() {
         LocalDate startDate = LocalDate.of(2025, 2, 1);
         LocalDate endDate = LocalDate.of(2025, 2, 28);
+        ReactAdminMapper mapper = new ReactAdminMapper(OBJECT_MAPPER);
 
         when(holidayRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSampleHolidays());
         when(ptoRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(createSamplePto());
@@ -97,7 +94,7 @@ class BillingServiceTest {
         AssignmentService assignmentService = new AssignmentService(assignmentRepository, employeeRepository,
                 roleRepository, seniorityRepository, projectRepository, mapper, holidayService);
 
-        billingService = new BillingService(assignmentService, ptoService, overtimeService, REACT_ADMIN_SQL_MAPPER);
+        billingService = new BillingService(assignmentService, ptoService, overtimeService, mapper);
     }
 
     @Test

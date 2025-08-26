@@ -17,7 +17,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
@@ -75,8 +74,7 @@ class MarginServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReactAdminSqlMapper sqlMapper = new ReactAdminSqlMapper(OBJECT_MAPPER);
-        ReactAdminMapper mapper = new ReactAdminMapper();
+        ReactAdminMapper mapper = new ReactAdminMapper(OBJECT_MAPPER);
 
         AssignmentService assignmentService =
                 new AssignmentService(assignmentRepository, employeeRepository, Mockito.mock(RoleRepository.class),
@@ -88,7 +86,7 @@ class MarginServiceTest {
                         Mockito.mock(HolidayRepository.class), holidayService, Mockito.mock(VacationService.class),
                         Mockito.mock(CalendarService.class));
 
-        marginService = new MarginService(ptoService, overtimeService, assignmentService, contractService, sqlMapper);
+        marginService = new MarginService(ptoService, overtimeService, assignmentService, contractService, mapper);
     }
 
     @Test
