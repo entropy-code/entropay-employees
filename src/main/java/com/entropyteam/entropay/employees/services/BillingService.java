@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
+import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
-import com.entropyteam.entropay.common.ReactAdminSqlMapper;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
@@ -26,15 +26,15 @@ public class BillingService {
     private final PtoService ptoService;
     private final OvertimeService overtimeService;
     private final AssignmentService assignmentService;
-    private final ReactAdminSqlMapper sqlMapper;
+    private final ReactAdminMapper mapper;
 
 
     public BillingService(AssignmentService assignmentService, PtoService ptoService,
-            OvertimeService overtimeService, ReactAdminSqlMapper sqlMapper) {
+            OvertimeService overtimeService, ReactAdminMapper mapper) {
         this.assignmentService = assignmentService;
         this.ptoService = ptoService;
         this.overtimeService = overtimeService;
-        this.sqlMapper = sqlMapper;
+        this.mapper = mapper;
     }
 
     public record BillingDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
@@ -53,7 +53,7 @@ public class BillingService {
      */
     @Transactional(readOnly = true)
     public ReportDto<BillingDto> generateBillingReport(ReactAdminParams params) {
-        DateRangeDto dateRange = new DateRangeDto(sqlMapper.map(params));
+        DateRangeDto dateRange = new DateRangeDto(mapper.map(params));
         LocalDate startDate = dateRange.getStartDate();
         LocalDate endDate = dateRange.getEndDate();
 
@@ -96,16 +96,16 @@ public class BillingService {
      * @return a ReportDto containing the paginated and sorted list of BillingDto objects
      *         and the total size of the original billing list
      */
-    private static ReportDto<BillingDto> getPaginatedBillingEntries(ReactAdminParams params,
+    private ReportDto<BillingDto> getPaginatedBillingEntries(ReactAdminParams params,
             List<BillingEntry> billingList) {
 
         List<BillingDto> data = billingList.stream()
                 .map(BillingEntry::toDto)
-                .filter(params.getFilter(BillingDto.class))
-                .sorted(params.getComparator(BillingDto.class))
+                .filter(mapper.getFilter(params, BillingDto.class))
+                .sorted(mapper.getComparator(params, BillingDto.class))
                 .toList();
 
-        Range<Integer> range = params.getRangeInterval();
+        Range<Integer> range = mapper.getRange(params);
         int minimum = range.getMinimum();
         int maximum = Math.min(range.getMaximum() + 1, data.size());
 
