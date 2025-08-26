@@ -1,7 +1,5 @@
 package com.entropyteam.entropay.employees.services;
 
-import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,7 +15,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
@@ -43,21 +40,19 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     private final RoleRepository roleRepository;
     private final SeniorityRepository seniorityRepository;
     private final ProjectRepository projectRepository;
-    private final SecureObjectService secureObjectService;
     private final HolidayService holidayService;
 
 
     @Autowired
     public AssignmentService(AssignmentRepository assignmentRepository, EmployeeRepository employeeRepository,
             RoleRepository roleRepository, SeniorityRepository seniorityRepository, ProjectRepository projectRepository,
-            SecureObjectService secureObjectService, ReactAdminMapper reactAdminMapper, HolidayService holidayService) {
+            ReactAdminMapper reactAdminMapper, HolidayService holidayService) {
         super(Assignment.class, reactAdminMapper);
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
         this.seniorityRepository = seniorityRepository;
         this.projectRepository = projectRepository;
-        this.secureObjectService = secureObjectService;
         this.holidayService = holidayService;
     }
 
@@ -86,8 +81,7 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
 
     @Override
     protected AssignmentDto toDTO(Assignment entity) {
-        Assignment securedEntity = (Assignment) secureObjectService.secureObjectByRole(entity, getUserRole());
-        return new AssignmentDto(securedEntity);
+        return new AssignmentDto(entity);
     }
 
     @Override
@@ -147,7 +141,8 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
                 workingDays.removeAll(startDate.datesUntil(assignment.getStartDate()).collect(Collectors.toSet()));
             }
             if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
-                workingDays.removeAll(assignment.getEndDate().datesUntil(endDate.plusDays(1)).collect(Collectors.toSet()));
+                workingDays.removeAll(
+                        assignment.getEndDate().datesUntil(endDate.plusDays(1)).collect(Collectors.toSet()));
             }
             if (!assignment.getProject().isPaidPto()) {
                 Country country = assignment.getEmployee().getCountry();

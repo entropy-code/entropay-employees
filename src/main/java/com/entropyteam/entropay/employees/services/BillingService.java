@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.DateRangeDto;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
+import com.entropyteam.entropay.common.sensitiveInformation.EmployeeIdAware;
+import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
@@ -38,9 +40,14 @@ public class BillingService {
     }
 
     public record BillingDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
-                             String clientName, String projectName, BigDecimal rate, double hours, double ptoHours,
-                             BigDecimal total, String notes) {
+                             String clientName, String projectName, @SensitiveInformation BigDecimal rate, double hours,
+                             double ptoHours, @SensitiveInformation BigDecimal total, String notes)
+            implements EmployeeIdAware {
 
+        @Override
+        public UUID getEmployeeId() {
+            return employeeId();
+        }
     }
 
     /**

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
@@ -73,8 +72,6 @@ class BillingServiceTest {
     private SeniorityRepository seniorityRepository;
     @Mock
     private ProjectRepository projectRepository;
-    @Mock
-    private SecureObjectService secureObjectService;
     private BillingService billingService;
 
     @BeforeEach
@@ -95,7 +92,7 @@ class BillingServiceTest {
                         holidayService, vacationRepository, calendarService);
 
         AssignmentService assignmentService = new AssignmentService(assignmentRepository, employeeRepository,
-                roleRepository, seniorityRepository, projectRepository, secureObjectService, mapper, holidayService);
+                roleRepository, seniorityRepository, projectRepository, mapper, holidayService);
 
         billingService = new BillingService(assignmentService, ptoService, overtimeService, mapper);
     }

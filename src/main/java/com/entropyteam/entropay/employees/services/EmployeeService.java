@@ -15,12 +15,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
-import com.entropyteam.entropay.employees.calendar.CalendarEventDto;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.models.Assignment;
@@ -227,21 +227,21 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     private int vacationDaysPerWorkDay(List<Holiday> holidaysInPeriod, LocalDate currentDate, LocalDate
-            startDate,
+                    startDate,
             String seniorityName) {
         double labourDays = 0;
         while (!startDate.isAfter(currentDate)) {
             LocalDate finalStartDate = startDate;
             if (startDate.getDayOfWeek() != DayOfWeek.SATURDAY &&
-                    startDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
-                    holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalStartDate))) {
+                startDate.getDayOfWeek() != DayOfWeek.SUNDAY &&
+                holidaysInPeriod.stream().noneMatch(holiday -> holiday.getDate().equals(finalStartDate))) {
                 labourDays++;
             }
             startDate = startDate.plusDays(1);
         }
         if (StringUtils.equalsIgnoreCase(seniorityName, "Senior 1") || StringUtils.equalsIgnoreCase(seniorityName,
                 "Senior 2")
-                || StringUtils.equalsIgnoreCase(seniorityName, "Architect")) {
+            || StringUtils.equalsIgnoreCase(seniorityName, "Architect")) {
             return (int) Math.round((labourDays * 1.5) / 20);
         } else {
             return (int) Math.round((labourDays * 1) / 20);
@@ -282,5 +282,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             Optional<Contract> activeContract) {
         int yearDiff = startDate.until(currentDate).getYears();
         return yearDiff >= 5 ? 20 : (yearDiff >= 2 ? 15 : activeContract.get().getSeniority().getVacationDays());
+    }
+
+    @Cacheable("internalEmployees")
+    public Set<UUID> getInternalEmployeeIds() {
+        return Set.copyOf(assignmentRepository.findAllInternalEmployeeIds());
     }
 }

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.entropyteam.entropay.auth.SecureObjectService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
@@ -79,8 +78,8 @@ class MarginServiceTest {
 
         AssignmentService assignmentService =
                 new AssignmentService(assignmentRepository, employeeRepository, Mockito.mock(RoleRepository.class),
-                        Mockito.mock(SeniorityRepository.class), Mockito.mock(ProjectRepository.class),
-                        new SecureObjectService(), mapper, holidayService);
+                        Mockito.mock(SeniorityRepository.class), Mockito.mock(ProjectRepository.class), mapper,
+                        holidayService);
 
         PtoService ptoService =
                 new PtoService(mapper, ptoRepository, employeeRepository, Mockito.mock(LeaveTypeRepository.class),

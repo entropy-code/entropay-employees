@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.entropyteam.entropay.common.sensitiveInformation.EmployeeIdAware;
+import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -20,6 +22,7 @@ public record AssignmentDto(UUID id,
                             UUID seniorityId,
                             Integer hoursPerMonth,
                             String labourHours,
+                            @SensitiveInformation
                             BigDecimal billableRate,
                             String currency,
                             @NotNull(message ="Start Date is mandatory")
@@ -34,7 +37,7 @@ public record AssignmentDto(UUID id,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime modifiedAt,
                             String endReason
-) {
+) implements EmployeeIdAware {
 
 
     public AssignmentDto(Assignment assignment) {
@@ -50,4 +53,8 @@ public record AssignmentDto(UUID id,
         );
     }
 
+    @Override
+    public UUID getEmployeeId() {
+        return employeeId();
+    }
 }
