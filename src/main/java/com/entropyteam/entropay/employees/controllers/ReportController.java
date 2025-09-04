@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
-import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
-import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportEmployeeDto;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.SalariesReportDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverEntryDto;
+import com.entropyteam.entropay.employees.dtos.TurnoverReportDto;
 import com.entropyteam.entropay.employees.services.BillingService;
 import com.entropyteam.entropay.employees.services.BillingService.BillingDto;
 import com.entropyteam.entropay.employees.services.MarginService;
@@ -104,10 +104,10 @@ public class ReportController {
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_HR_DIRECTOR})
     @Transactional
     public ResponseEntity<List<SalariesReportDto>> getSalariesReport(ReactAdminParams params) {
-        Page<SalariesReportDto> response = reportService.getSalariesReport(params);
+        ReportDto<SalariesReportDto> response = reportService.getSalariesReport(params);
         return ResponseEntity.ok()
-                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.getTotalElements()))
-                .body(response.getContent());
+                .header(BaseController.X_TOTAL_COUNT, String.valueOf(response.size()))
+                .body(response.data());
     }
 
 

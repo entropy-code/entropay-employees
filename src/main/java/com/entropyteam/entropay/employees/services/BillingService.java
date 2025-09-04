@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -70,7 +69,11 @@ public class BillingService {
         // Business rule: we paid Overtimes with a 10 days buffer
         billingList.addAll(getOvertimes(startDate.minusDays(10), endDate.minusDays(10)));
 
-        return getPaginatedBillingEntries(params, billingList);
+        List<BillingDto> billingDtos = billingList.stream()
+                .map(BillingEntry::toDto)
+                .toList();
+
+        return mapper.paginate(params, billingDtos, BillingDto.class);
     }
 
     private List<BillingEntry> getBillingEntries(LocalDate startDate, LocalDate endDate) {
@@ -93,29 +96,5 @@ public class BillingService {
                 .stream()
                 .map(BillingEntry::new)
                 .toList();
-    }
-
-    /**
-     * Retrieves a paginated list of billing entries based on the specified parameters.
-     *
-     * @param params the ReactAdminParams object containing pagination and sorting parameters
-     * @param billingList the list of BillingEntry objects to be paginated and processed
-     * @return a ReportDto containing the paginated and sorted list of BillingDto objects
-     *         and the total size of the original billing list
-     */
-    private ReportDto<BillingDto> getPaginatedBillingEntries(ReactAdminParams params,
-            List<BillingEntry> billingList) {
-
-        List<BillingDto> data = billingList.stream()
-                .map(BillingEntry::toDto)
-                .filter(mapper.getFilter(params, BillingDto.class))
-                .sorted(mapper.getComparator(params, BillingDto.class))
-                .toList();
-
-        Range<Integer> range = mapper.getRange(params);
-        int minimum = range.getMinimum();
-        int maximum = Math.min(range.getMaximum() + 1, data.size());
-
-        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
 }

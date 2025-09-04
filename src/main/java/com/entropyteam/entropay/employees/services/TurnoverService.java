@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.commons.lang3.Range;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -295,14 +294,9 @@ public class TurnoverService {
     public ReportDto<TurnoverEntryDto> generateFlatTurnoverReport(ReactAdminParams params) {
         LOGGER.info("Generating flat turnover report");
 
-        // Get the hierarchical report
         TurnoverReportDto hierarchicalReport = generateHierarchicalTurnoverReport(params);
-
-        // Transform it to a flat report
         List<TurnoverEntryDto> entries = transformToFlatReport(hierarchicalReport);
-
-        // Apply pagination and return
-        return getPaginatedEntries(params, entries);
+        return mapper.paginate(params, entries, TurnoverEntryDto.class);
     }
 
     /**
@@ -420,27 +414,5 @@ public class TurnoverService {
         }
 
         return entries;
-    }
-
-    /**
-     * Returns a paginated list of turnover entries based on the provided parameters.
-     *
-     * @param params The parameters for filtering and pagination
-     * @param entries The list of turnover entries to paginate
-     * @return A paginated list of turnover entries
-     */
-    private ReportDto<TurnoverEntryDto> getPaginatedEntries(ReactAdminParams params,
-            List<TurnoverEntryDto> entries) {
-
-        List<TurnoverEntryDto> data = entries.stream()
-                .filter(mapper.getFilter(params, TurnoverEntryDto.class))
-                .sorted(mapper.getComparator(params, TurnoverEntryDto.class))
-                .toList();
-
-        Range<Integer> range = mapper.getRange(params);
-        int minimum = range.getMinimum();
-        int maximum = Math.min(range.getMaximum() + 1, data.size());
-
-        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
 }
