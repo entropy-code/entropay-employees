@@ -142,7 +142,7 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
             }
             if (assignment.getEndDate() != null && assignment.getEndDate().isBefore(endDate)) {
                 workingDays.removeAll(
-                        assignment.getEndDate().datesUntil(endDate.plusDays(1)).collect(Collectors.toSet()));
+                        assignment.getEndDate().plusDays(1).datesUntil(endDate.plusDays(1)).collect(Collectors.toSet()));
             }
             if (!assignment.getProject().isPaidPto()) {
                 Country country = assignment.getEmployee().getCountry();

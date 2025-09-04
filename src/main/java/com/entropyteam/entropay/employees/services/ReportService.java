@@ -30,6 +30,7 @@ import com.entropyteam.entropay.employees.dtos.EmployeeReportDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportClientDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportDetailDto;
 import com.entropyteam.entropay.employees.dtos.PtoReportEmployeeDto;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.dtos.SalariesReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Client;
@@ -273,7 +274,7 @@ public class ReportService {
 
         return employeeList.stream()
                 .filter(employee -> totalPtoDaysMap.containsKey(employee.getId())
-                        && totalPtoDaysMap.get(employee.getId()) > 0)
+                                    && totalPtoDaysMap.get(employee.getId()) > 0)
                 .map(employee -> {
                     List<Assignment> employeeAssignments =
                             employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
@@ -348,13 +349,12 @@ public class ReportService {
         return Integer.parseInt(yearObject.toString());
     }
 
-    public Page<SalariesReportDto> getSalariesReport(ReactAdminParams params) {
+    public ReportDto<SalariesReportDto> getSalariesReport(ReactAdminParams params) {
         LOGGER.info("Getting salaries report with params: {}", params);
         ReactAdminSqlParams queryParams = mapper.map(params);
 
         List<SalariesReportDto> salariesReport = employeeRepository.getSalariesReport(queryParams);
-        Integer salariesCount = employeeRepository.getSalariesCount(queryParams);
 
-        return new PageImpl<>(salariesReport, Pageable.unpaged(), salariesCount);
+        return mapper.paginate(params, salariesReport, SalariesReportDto.class);
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -317,5 +318,18 @@ public class ReactAdminMapper {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public <T> ReportDto<T> paginate(ReactAdminParams params, List<T> items, Class<T> clazz) {
+        List<T> data = items.stream()
+                .filter(getFilter(params, clazz))
+                .sorted(getComparator(params, clazz))
+                .toList();
+
+        Range<Integer> range = getRange(params);
+        int minimum = range.getMinimum();
+        int maximum = Math.min(range.getMaximum() + 1, data.size());
+
+        return new ReportDto<>(data.subList(minimum, maximum), data.size());
     }
 }

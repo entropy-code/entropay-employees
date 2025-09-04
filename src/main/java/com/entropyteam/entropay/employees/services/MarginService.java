@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +115,7 @@ public class MarginService {
 
         LOGGER.info("Margin report generated in {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
 
-        return getPaginatedEntries(params, report);
+        return mapper.paginate(params, report, MarginDto.class);
     }
 
     private static MarginDto getMarginDto(MonthlyAssignment key, BigDecimal rate, Double hours, Double ptoHoursValue,
@@ -151,20 +150,4 @@ public class MarginService {
 
         return salaries;
     }
-
-    private ReportDto<MarginDto> getPaginatedEntries(ReactAdminParams params,
-            List<MarginDto> marginDtos) {
-
-        List<MarginDto> data = marginDtos.stream()
-                .filter(mapper.getFilter(params, MarginDto.class))
-                .sorted(mapper.getComparator(params, MarginDto.class))
-                .toList();
-
-        Range<Integer> range = mapper.getRange(params);
-        int minimum = range.getMinimum();
-        int maximum = Math.min(range.getMaximum() + 1, data.size());
-
-        return new ReportDto<>(data.subList(minimum, maximum), data.size());
-    }
-
 }
