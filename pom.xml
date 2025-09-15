@@ -19,12 +19,12 @@
     <properties>
         <apache-commons.version>3.18.0</apache-commons.version>
         <apache-commons-collections.version>4.5.0</apache-commons-collections.version>
-        <google-auth.version>1.38.0</google-auth.version>
+        <google-auth.version>1.39.0</google-auth.version>
         <google-services-calendar.version>v3-rev20250404-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.7</postgresql.version>
-        <software-amazon-sdk.version>2.32.29</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.33.4</software-amazon-sdk.version>
     </properties>
 
     <dependencies>
