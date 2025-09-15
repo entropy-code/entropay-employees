@@ -214,6 +214,12 @@ UPDATE public.config SET menu = e'[
       "href": "/#/overtimes",
       "icon": "overtimes",
       "key": 9
+    },
+    {
+      "name": "Reimbursements",
+      "href": "/#/reimbursements",
+      "icon": "reimbursements",
+      "key": 10
     }
 ]' WHERE role = 'ROLE_ADMIN';
 
