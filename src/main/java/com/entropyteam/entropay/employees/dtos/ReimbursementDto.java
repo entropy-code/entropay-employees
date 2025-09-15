@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 import com.entropyteam.entropay.employees.models.Reimbursement;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,6 +18,7 @@ public record ReimbursementDto(UUID id,
                                @Positive(message = "Amount must be positive")
                                BigDecimal amount,
                                @NotNull(message = "Date is mandatory")
+                               @JsonFormat(pattern = "yyyy-MM-dd")
                                LocalDate date,
                                String comment) {
 
