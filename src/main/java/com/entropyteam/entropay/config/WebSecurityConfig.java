@@ -29,7 +29,11 @@ import com.entropyteam.entropay.auth.AuthorizationService.Identity;
 public class WebSecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
-            "/actuator/**"
+            "/actuator/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/v3/api-docs",
+            "/v3/api-docs/**"
     };
 
     private final AuthorizationService authorizationService;
