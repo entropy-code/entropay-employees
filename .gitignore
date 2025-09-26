@@ -58,3 +58,5 @@ build/
 
 *.env
 *.versionsBackup
+/.hypersistence/
+.claude/
