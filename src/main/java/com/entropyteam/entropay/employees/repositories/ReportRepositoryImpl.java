@@ -51,11 +51,7 @@ public class ReportRepositoryImpl implements ReportRepository {
     @Override
     public List<SalariesReportDto> getSalariesReport(ReactAdminSqlParams params) {
 
-        String query = SALARIES_QUERY
-                + " order by " + params.sort() + " " + params.order()
-                + " limit " + params.limit() + " offset " + params.offset();
-
-        Query nativeQuery = entityManager.createNativeQuery(query, SalariesReportDto.class);
+        Query nativeQuery = entityManager.createNativeQuery(SALARIES_QUERY, SalariesReportDto.class);
 
         Map<String, String> filterMap = params.queryParameters();
         nativeQuery.setParameter("q", filterMap.containsKey("q") ? "%" + filterMap.get("q") + "%" : "%%");
