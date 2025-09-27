@@ -1,0 +1,45 @@
+# Git
+.git/
+.gitignore
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+docs/
+*.md
+
+# CI/CD
+.github/
+
+# Local env
+local.env
+.env*
+
+# Logs
+*.log
+
+# Temporary
+.tmp/
+*.tmp
+
+# Hypersistence (solo para docker)
+.hypersistence/
+
+# Claude
+.claude/
+
+# Docker
+Dockerfile.optimized
+docker-compose.yml
