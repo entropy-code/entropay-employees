@@ -30,9 +30,10 @@ COPY --from=build-env /app/target/entropay-employees.jar ./entropay-employees.ja
 USER appuser
 
 # JVM optimized for containers
-CMD ["java", \
-     "-XX:+UseContainerSupport", \
-     "-XX:MaxRAMPercentage=75.0", \
-     "-XX:+UseG1GC", \
-     "-XX:+UseStringDeduplication", \
-     "-jar", "/app/entropay-employees.jar"]
+ENV JAVA_MAX_RAM_PERCENTAGE=75.0
+CMD java \
+     -XX:+UseContainerSupport \
+     -XX:MaxRAMPercentage=${JAVA_MAX_RAM_PERCENTAGE} \
+     -XX:+UseG1GC \
+     -XX:+UseStringDeduplication \
+     -jar /app/entropay-employees.jar
