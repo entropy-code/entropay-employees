@@ -18,6 +18,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -69,7 +70,8 @@ public class EmailLeakCheckService {
     }
 
     @Scheduled(cron = "0 30 9 * * ?")
-    public void checkEmailsForLeaks() {
+    @Async
+    public void runAsyncEmailCheck() {
         LOGGER.info("{} process started.", EMAIL_LEAK_CHECKER);
 
         notificationService.sendSlackNotification(new AlertMessageDto(
@@ -82,6 +84,11 @@ public class EmailLeakCheckService {
         Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
 
         employees.forEach(employee -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+
+            }
             LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), employee.getLabourEmail());
             int newLabourLeaks = processEmailLeak(employee, employee.getLabourEmail(), vulnerabilityStats);
 
@@ -274,7 +281,7 @@ public class EmailLeakCheckService {
                     Optional.ofNullable(vulnerability.getPassword()).orElse("")
             );
 
-            case UNKNOWN_LEAK -> List.of(
+            case COMMON_LEAK -> List.of(
                     vulnerability.getEmail(),
                     vulnerability.getSourceName(),
                     Optional.ofNullable(vulnerability.getPassword()).orElse("")
@@ -303,7 +310,7 @@ public class EmailLeakCheckService {
                     Optional.ofNullable(leak.password()).orElse("")
             );
 
-            case UNKNOWN_LEAK -> List.of(
+            case COMMON_LEAK -> List.of(
                     leak.email(),
                     leak.source().name(),
                     Optional.ofNullable(leak.password()).orElse("")
@@ -329,7 +336,7 @@ public class EmailLeakCheckService {
         } else if (StringUtils.isNotBlank(leak.source().breachDate())) {
             return LeakType.SITE_LEAK;
         } else {
-            return LeakType.UNKNOWN_LEAK;
+            return LeakType.COMMON_LEAK;
         }
     }
 

@@ -2,7 +2,9 @@ package com.entropyteam.entropay.security.controllers;
 
 import com.entropyteam.entropay.security.services.EmailLeakCheckService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/security")
@@ -16,7 +18,7 @@ public class SecurityController {
 
     @GetMapping("/trigger-email-check")
     public ResponseEntity<String> runEmailLeakCheck() {
-        emailLeakCheckService.checkEmailsForLeaks();
+        emailLeakCheckService.runAsyncEmailCheck();
         return ResponseEntity.ok("Leak check process started.");
     }
 }

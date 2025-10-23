@@ -86,7 +86,7 @@ class EmailLeakCheckServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("{}"));
 
-        emailLeakCheckService.checkEmailsForLeaks();
+        emailLeakCheckService.runAsyncEmailCheck();
 
         ArgumentCaptor<AlertMessageDto> messageCaptor = ArgumentCaptor.forClass(AlertMessageDto.class);
         verify(notificationService, times(2)).sendSlackNotification(messageCaptor.capture());
