@@ -7,8 +7,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
-import com.entropyteam.entropay.security.models.EmailLeakHistory;
-import com.entropyteam.entropay.security.models.EmailVulnerability;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

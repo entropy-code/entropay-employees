@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.email_leak_history
     CONSTRAINT fk_email_leak_history_employee FOREIGN KEY (employee_id)
     REFERENCES public.employee (id) MATCH SIMPLE
     ON UPDATE NO ACTION
-    ON DELETE SET NULL
+    ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS public.email_vulnerability

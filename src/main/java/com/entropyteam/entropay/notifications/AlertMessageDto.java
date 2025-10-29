@@ -1,5 +1,8 @@
 package com.entropyteam.entropay.notifications;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -23,7 +26,13 @@ public record AlertMessageDto(
     }
 
     public String toJsonPayload() {
-        return "{ \"text\": \""
-                + toSlackFormat().replace("\"", "\\\"") + "\" }";
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode payload = mapper.createObjectNode();
+        payload.put("text", toSlackFormat());
+        try {
+            return mapper.writeValueAsString(payload);
+        } catch (Exception e) {
+            throw new RuntimeException("Error creating JSON payload", e);
+        }
     }
 }
