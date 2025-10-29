@@ -1,16 +1,14 @@
-package com.entropyteam.entropay.notifications.slack;
+package com.entropyteam.entropay.notifications;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.entropyteam.entropay.notifications.MessageDto;
-import com.entropyteam.entropay.notifications.MessageType;
-import com.entropyteam.entropay.notifications.NotificationService;
+import com.entropyteam.entropay.notifications.services.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/slack/test")
@@ -24,22 +22,23 @@ public class SlackTestController {
         this.notificationService = notificationService;
     }
 
-    @GetMapping("/{messageType}")
-    public ResponseEntity<String> testSlackNotification(@PathVariable MessageType messageType) {
+    @GetMapping("/{status}")
+    public ResponseEntity<String> testSlackNotification(@PathVariable String status) {
         String returnMessage;
         try {
-            String message = String.format("Slack test message for type: [%s]", messageType.name());
+            SlackAlertStatus alertStatus = SlackAlertStatus.valueOf(status.toUpperCase());
+            String alertMessage = String.format("Slack test message for status: [%s]", alertStatus.name());
 
-            notificationService.sendNotification(new MessageDto(
+            notificationService.sendSlackNotification(new AlertMessageDto(
                     "Slack Test Feature",
-                    message,
-                    messageType
+                    alertMessage,
+                    alertStatus
             ));
-            returnMessage = String.format("Slack notification sent successfully with messageType: %s", messageType.name());
+            returnMessage = String.format("Slack notification sent successfully with status: %s", alertStatus.name());
             LOGGER.info(returnMessage);
             return ResponseEntity.ok(returnMessage);
         } catch (IllegalArgumentException e) {
-            returnMessage = "Invalid messageType received: " + messageType + ". Use: SUCCESS, WARNING, ERROR, INFO";
+            returnMessage = "Invalid status received: " + status + ". Use: SUCCESS, WARNING, ERROR, INFO";
             LOGGER.error(returnMessage);
             return ResponseEntity.badRequest().body(returnMessage);
         }

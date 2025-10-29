@@ -72,7 +72,6 @@ public class Employee extends BaseEntity {
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
     private Set<Children> children = new HashSet<>();
 
-
     public Employee() {
     }
 
@@ -304,6 +303,8 @@ public class Employee extends BaseEntity {
         this.children = children;
     }
 
+
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
@@ -312,4 +313,5 @@ public class Employee extends BaseEntity {
                 .append("lastName", lastName)
                 .toString();
     }
+
 }
