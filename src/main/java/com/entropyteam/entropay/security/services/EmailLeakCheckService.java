@@ -18,7 +18,7 @@ import com.entropyteam.entropay.security.enums.LeakType;
 @Service
 public class EmailLeakCheckService {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(EmailLeakCheckService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailLeakCheckService.class);
     private static final String EMAIL_LEAK_CHECKER = "Email Leak Checker";
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
