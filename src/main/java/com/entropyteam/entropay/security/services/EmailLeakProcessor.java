@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,8 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.notifications.AlertMessageDto;
-import com.entropyteam.entropay.notifications.SlackAlertStatus;
+import com.entropyteam.entropay.notifications.MessageDto;
+import com.entropyteam.entropay.notifications.MessageType;
+import com.entropyteam.entropay.notifications.NotificationService;
 import com.entropyteam.entropay.security.dtos.LeakDto;
 import com.entropyteam.entropay.security.dtos.LeakResponseDto;
 import com.entropyteam.entropay.security.enums.LeakType;
@@ -32,15 +33,14 @@ import com.entropyteam.entropay.security.models.EmailLeakHistory;
 import com.entropyteam.entropay.security.models.EmailVulnerability;
 import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
 import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
-import com.entropyteam.entropay.notifications.services.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class EmailLeakProcessor {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailLeakProcessor.class);
     private static final String STEALER_LOGS = "Stealer Logs";
     private static final String EMAIL_LEAK_CHECKER = "Email Leak Checker";
-    private static final Logger LOGGER = LogManager.getLogger();
 
     private final EmailLeakHistoryRepository emailLeakHistoryRepository;
     private final EmailVulnerabilityRepository emailVulnerabilityRepository;
@@ -66,7 +66,7 @@ public class EmailLeakProcessor {
     @Transactional
     public void processEmployeeLeaks(Employee employee, Map<LeakType, Integer> vulnerabilityStats) {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(400); // 400 ms delay to respect API rate limits
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -125,10 +125,10 @@ public class EmailLeakProcessor {
                     .append(" | *New Vulnerabilities:* ").append(newPersonalLeaks).append("\n");
         }
 
-        notificationService.sendSlackNotification(new AlertMessageDto(
+        notificationService.sendNotification(new MessageDto(
                 EMAIL_LEAK_CHECKER,
                 notificationMessage.toString(),
-                SlackAlertStatus.WARNING
+                MessageType.WARNING
         ));
     }
 
@@ -320,8 +320,8 @@ public class EmailLeakProcessor {
 
     private void notifyLeaks(Employee employee, int count) {
         String msg = String.format("🚨 %d new leaks found for %s", count, employee.getFullName());
-        notificationService.sendSlackNotification(
-                new AlertMessageDto("Email Leak Checker", msg, SlackAlertStatus.WARNING)
+        notificationService.sendNotification(
+                new MessageDto("Email Leak Checker", msg, MessageType.WARNING)
         );
     }
 
