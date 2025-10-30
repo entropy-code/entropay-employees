@@ -1,14 +1,16 @@
 package com.entropyteam.entropay.security.services;
 
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.notifications.AlertMessageDto;
-import com.entropyteam.entropay.notifications.SlackAlertStatus;
-import com.entropyteam.entropay.notifications.services.NotificationService;
-import com.entropyteam.entropay.security.enums.LeakType;
-import com.entropyteam.entropay.security.models.EmailLeakHistory;
-import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
-import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,18 +19,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
+import com.entropyteam.entropay.notifications.MessageDto;
+import com.entropyteam.entropay.notifications.MessageType;
+import com.entropyteam.entropay.notifications.NotificationService;
 
 class EmailLeakCheckServiceTest {
 
@@ -73,22 +68,22 @@ class EmailLeakCheckServiceTest {
 
         emailLeakCheckService.runAsyncEmailCheck();
 
-        ArgumentCaptor<AlertMessageDto> messageCaptor = ArgumentCaptor.forClass(AlertMessageDto.class);
-        verify(notificationService, times(2)).sendSlackNotification(messageCaptor.capture());
+        ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
+        verify(notificationService, times(2)).sendNotification(messageCaptor.capture());
 
-        List<AlertMessageDto> sentMessages = messageCaptor.getAllValues();
+        List<MessageDto> sentMessages = messageCaptor.getAllValues();
 
-        AlertMessageDto startMessage = sentMessages.get(0);
-        assertEquals("Email Leak Checker", startMessage.feature());
+        MessageDto startMessage = sentMessages.get(0);
+        assertEquals("Email Leak Checker", startMessage.title());
         assertTrue(startMessage.message().contains("The daily email leak scan has started."));
-        assertEquals(SlackAlertStatus.INFO, startMessage.status());
+        assertEquals(MessageType.INFO, startMessage.messageType());
 
-        AlertMessageDto finalMessage = sentMessages.get(1);
-        assertEquals("Email Leak Checker", finalMessage.feature());
+        MessageDto finalMessage = sentMessages.get(1);
+        assertEquals("Email Leak Checker", finalMessage.title());
         assertTrue(finalMessage.message().contains("Email Leak Check Completed"));
-        assertNotNull(finalMessage.status());
+        assertNotNull(finalMessage.messageType());
 
-        verify(notificationService, times(2)).sendSlackNotification(any(AlertMessageDto.class));
+        verify(notificationService, times(2)).sendNotification(any(MessageDto.class));
     }
 
 }

@@ -1,10 +1,29 @@
 package com.entropyteam.entropay.security.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.notifications.AlertMessageDto;
-import com.entropyteam.entropay.notifications.SlackAlertStatus;
-import com.entropyteam.entropay.notifications.services.NotificationService;
+import com.entropyteam.entropay.notifications.NotificationService;
 import com.entropyteam.entropay.security.dtos.LeakDto;
 import com.entropyteam.entropay.security.dtos.LeakResponseDto;
 import com.entropyteam.entropay.security.dtos.SourceDto;
@@ -14,28 +33,6 @@ import com.entropyteam.entropay.security.models.EmailVulnerability;
 import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
 import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 class EmailLeakProcessorTest {
 
