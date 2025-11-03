@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.config;
 
+import java.util.Optional;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,12 +18,14 @@ public class SpringDocConfig {
     private static final String SECURITY_SCHEME_NAME = "Bearer Authentication";
 
     @Bean
-    public OpenAPI customOpenAPI(BuildProperties buildProperties) {
+    public OpenAPI customOpenAPI(Optional<BuildProperties> buildProperties) {
+        String version = buildProperties.map(BuildProperties::getVersion).orElse("dev");
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Entroteam Employees API")
                         .description("API for managing employees, projects, and related resources")
-                        .version(buildProperties.getVersion())
+                        .version(version)
                         .contact(new Contact()
                                 .name("Entroteam")
                                 .email("support@entroteam.com")))

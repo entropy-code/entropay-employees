@@ -1,13 +1,12 @@
 package com.entropyteam.entropay.employees.models;
 
-import java.util.Set;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.TechnologyDto;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 @Entity(name = "Technology")
@@ -17,14 +16,16 @@ public class Technology extends BaseEntity {
     @Column
     private String name;
 
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "technologies")
-    private Set<Employee> employees;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "technology_type")
+    private TechnologyType technologyType;
 
     public Technology() {
     }
 
     public Technology(TechnologyDto entity) {
         this.name = entity.name();
+        this.technologyType = TechnologyType.valueOf(entity.technologyType());
     }
 
     public String getName() {
@@ -35,7 +36,11 @@ public class Technology extends BaseEntity {
         this.name = name;
     }
 
-    public Set<Employee> getEmployees() {return employees;}
+    public TechnologyType getTechnologyType() {
+        return technologyType;
+    }
 
-    public void setEmployees(Set<Employee> employees) {this.employees = employees;}
+    public void setTechnologyType(TechnologyType technologyType) {
+        this.technologyType = technologyType;
+    }
 }

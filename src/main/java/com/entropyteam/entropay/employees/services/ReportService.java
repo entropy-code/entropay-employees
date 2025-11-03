@@ -41,7 +41,6 @@ import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Status;
-import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ClientRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
@@ -92,7 +91,6 @@ public class ReportService {
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getEmployee().getId()));
         List<Role> employeeRolesList = roleRepository.findAllByDeletedIsFalse();
-        List<Technology> employeeTechnologiesList = technologyRepository.findAllByDeletedIsFalse();
         Map<UUID, List<Assignment>> employeeAssignmentsMap = assignmentRepository.findAllByDeletedIsFalse()
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getId()));
@@ -112,10 +110,6 @@ public class ReportService {
             List<String> profile = employeeRolesList.stream()
                     .filter(t -> t.getEmployees().contains(employee))
                     .map(Role::getName)
-                    .toList();
-            List<String> technologiesName = employeeTechnologiesList.stream()
-                    .filter(t -> t.getEmployees().contains(employee))
-                    .map(Technology::getName)
                     .toList();
             List<Assignment> employeeAssignments =
                     employeeAssignmentsMap.getOrDefault(employee.getId(), Collections.emptyList());
@@ -143,7 +137,7 @@ public class ReportService {
 
             EmployeeReportDto employeeReportDto =
                     new EmployeeReportDto(employee, profile, firstContract.orElse(null), latestContract.orElse(null),
-                            client, projectName, technologiesName, usdPayment, arsPayment, country, labourEmail);
+                            client, projectName, usdPayment, arsPayment, country, labourEmail);
             employeesReportDtoList.add(employeeReportDto);
         }
         return new PageImpl<>(employeesReportDtoList, Pageable.unpaged(), employeesReportDtoList.size());
