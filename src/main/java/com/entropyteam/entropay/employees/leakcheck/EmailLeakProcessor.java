@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.security.services;
+package com.entropyteam.entropay.employees.leakcheck;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,17 +7,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -25,15 +28,9 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.notifications.MessageDto;
 import com.entropyteam.entropay.notifications.MessageType;
 import com.entropyteam.entropay.notifications.NotificationService;
-import com.entropyteam.entropay.security.dtos.LeakDto;
-import com.entropyteam.entropay.security.dtos.LeakResponseDto;
-import com.entropyteam.entropay.security.enums.LeakType;
-import com.entropyteam.entropay.security.enums.VulnerabilityStatus;
-import com.entropyteam.entropay.security.models.EmailLeakHistory;
-import com.entropyteam.entropay.security.models.EmailVulnerability;
-import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
-import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.github.resilience4j.ratelimiter.RateLimiter;
 
 @Service
 public class EmailLeakProcessor {
@@ -46,6 +43,7 @@ public class EmailLeakProcessor {
     private final EmailVulnerabilityRepository emailVulnerabilityRepository;
     private final RestTemplate restTemplate;
     private final NotificationService notificationService;
+    private final RateLimiter rateLimiter;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Value("${leakcheck.api.key:DEFAULT_KEY}")
@@ -56,52 +54,51 @@ public class EmailLeakProcessor {
 
     public EmailLeakProcessor(EmailLeakHistoryRepository emailLeakHistoryRepository,
             EmailVulnerabilityRepository emailVulnerabilityRepository, RestTemplate restTemplate,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            @Qualifier("leakCheckRateLimiter") RateLimiter rateLimiter) {
         this.emailLeakHistoryRepository = emailLeakHistoryRepository;
         this.emailVulnerabilityRepository = emailVulnerabilityRepository;
         this.restTemplate = restTemplate;
         this.notificationService = notificationService;
+        this.rateLimiter = rateLimiter;
     }
 
+    @Async("leakCheckExecutor")
     @Transactional
-    public void processEmployeeLeaks(Employee employee, Map<LeakType, Integer> vulnerabilityStats) {
-        try {
-            Thread.sleep(400); // 400 ms delay to respect API rate limits
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+    public CompletableFuture<Void> processEmployeeLeaksAsync(Employee employee, Map<LeakType, Integer> vulnerabilityStats) {
+        return CompletableFuture.runAsync(() -> {
+            int newLabourLeaks = 0;
+            int newPersonalLeaks = 0;
 
-        int newLabourLeaks = 0;
-        int newPersonalLeaks = 0;
+            // Labour email
+            String labourEmail = employee.getLabourEmail();
+            if (isValidEmail(labourEmail)) {
+                LOGGER.info("Checking email leaks for employee: {}, email: {}",
+                        employee.getFullName(), obfuscateEmail(labourEmail));
+                newLabourLeaks = processEmailLeak(employee, labourEmail, vulnerabilityStats);
+            } else {
+                LOGGER.warn("Invalid or null labour email for employee: {} -> {}",
+                        employee.getFullName(), labourEmail);
+            }
 
-        // Labour email
-        String labourEmail = employee.getLabourEmail();
-        if (isValidEmail(labourEmail)) {
-            LOGGER.info("Checking email leaks for employee: {}, email: {}",
-                    employee.getFullName(), obfuscateEmail(labourEmail));
-            newLabourLeaks = processEmailLeak(employee, labourEmail, vulnerabilityStats);
-        } else {
-            LOGGER.warn("Invalid or null labour email for employee: {} -> {}",
-                    employee.getFullName(), labourEmail);
-        }
+            // Personal email
+            String personalEmail = employee.getPersonalEmail();
+            if (isValidEmail(personalEmail)) {
+                LOGGER.info("Checking email leaks for employee: {}, email: {}",
+                        employee.getFullName(), obfuscateEmail(personalEmail));
+                newPersonalLeaks = processEmailLeak(employee, personalEmail, vulnerabilityStats);
+            } else {
+                LOGGER.warn("Invalid or null personal email for employee: {} -> {}",
+                        employee.getFullName(), personalEmail);
+            }
 
-        // Personal email
-        String personalEmail = employee.getPersonalEmail();
-        if (isValidEmail(personalEmail)) {
-            LOGGER.info("Checking email leaks for employee: {}, email: {}",
-                    employee.getFullName(), obfuscateEmail(personalEmail));
-            newPersonalLeaks = processEmailLeak(employee, personalEmail, vulnerabilityStats);
-        } else {
-            LOGGER.warn("Invalid or null personal email for employee: {} -> {}",
-                    employee.getFullName(), personalEmail);
-        }
-
-        // Notify
-        if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
-            notifyEmployeeLeaks(employee, newLabourLeaks, newPersonalLeaks);
-        } else {
-            LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
-        }
+            // Notify
+            if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
+                notifyEmployeeLeaks(employee, newLabourLeaks, newPersonalLeaks);
+            } else {
+                LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
+            }
+        });
     }
 
     private boolean hasNewLeaks(int newLabourLeaks, int newPersonalLeaks) {
@@ -135,6 +132,9 @@ public class EmailLeakProcessor {
 
     private int processEmailLeak(Employee employee, String email, Map<LeakType, Integer> vulnerabilityStats) {
         LOGGER.info("Checking leaks for email: {}", obfuscateEmail(email));
+
+        // Acquire rate limiter permission (blocks if necessary to enforce rate limit)
+        rateLimiter.acquirePermission();
 
         HttpEntity<String> entity = new HttpEntity<>(createHeaders());
         String url = leakCheckApiUrl + "/query/" + email;
@@ -316,13 +316,6 @@ public class EmailLeakProcessor {
         history.setModifiedAt(LocalDateTime.now());
         history.setApiResponse(apiResponse);
         emailLeakHistoryRepository.save(history);
-    }
-
-    private void notifyLeaks(Employee employee, int count) {
-        String msg = String.format("🚨 %d new leaks found for %s", count, employee.getFullName());
-        notificationService.sendNotification(
-                new MessageDto("Email Leak Checker", msg, MessageType.WARNING)
-        );
     }
 
     public String obfuscateEmail(String email) {

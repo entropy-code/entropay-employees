@@ -1,6 +1,5 @@
-package com.entropyteam.entropay.security.controllers;
+package com.entropyteam.entropay.employees.leakcheck;
 
-import com.entropyteam.entropay.security.services.EmailLeakCheckService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;

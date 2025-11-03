@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.security.enums;
+package com.entropyteam.entropay.employees.leakcheck;
 
 public enum LeakType {
     SITE_LEAK,

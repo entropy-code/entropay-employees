@@ -1,11 +1,12 @@
-package com.entropyteam.entropay.security.services;
+package com.entropyteam.entropay.employees.leakcheck;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -13,7 +14,6 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.notifications.MessageDto;
 import com.entropyteam.entropay.notifications.MessageType;
 import com.entropyteam.entropay.notifications.NotificationService;
-import com.entropyteam.entropay.security.enums.LeakType;
 
 @Service
 public class EmailLeakCheckService {
@@ -33,7 +33,7 @@ public class EmailLeakCheckService {
     }
 
     @Scheduled(cron = "0 30 9 * * ?", zone = "GMT-3")
-    @Async
+    @ConditionalOnProperty(name = "leakcheck.enabled", havingValue = "true", matchIfMissing = false)
     public void runAsyncEmailCheck() {
         LOGGER.info("{} process started.", EMAIL_LEAK_CHECKER);
 
@@ -46,9 +46,25 @@ public class EmailLeakCheckService {
         List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
         Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
 
-        employees.forEach(employee -> emailLeakProcessor.processEmployeeLeaks(employee, vulnerabilityStats));
+        // Submit all tasks to the async executor
+        List<CompletableFuture<Void>> futures = employees.stream()
+                .map(employee -> emailLeakProcessor.processEmployeeLeaksAsync(employee, vulnerabilityStats))
+                .toList();
 
-        sendFinalReport(employees.size(), vulnerabilityStats);
+        // Wait for all tasks to complete
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+
+        try {
+            allOf.join(); // Wait for all tasks to complete
+            sendFinalReport(employees.size(), vulnerabilityStats);
+        } catch (Exception e) {
+            LOGGER.error("Error during email leak check: {}", e.getMessage(), e);
+            notificationService.sendNotification(new MessageDto(
+                    EMAIL_LEAK_CHECKER,
+                    "Error occurred during email leak check: " + e.getMessage(),
+                    MessageType.ERROR
+            ));
+        }
     }
 
     private void sendFinalReport(int totalChecked, Map<LeakType, Integer> vulnerabilityStats) {
