@@ -1,9 +1,11 @@
 -- Add technology_type column to technology table
 ALTER TABLE technology ADD COLUMN IF NOT EXISTS technology_type VARCHAR(50);
 
-delete from technology;
+-- Drop the old many-to-many junction table first (before deleting technologies)
+DROP TABLE IF EXISTS employee_technology;
 
-drop table employee_technology;
+-- Now safe to delete all technologies
+DELETE FROM technology;
 
 insert into technology (id, name, technology_type, created_at, modified_at, deleted)
 values (gen_random_uuid(), '.NET', 'BACKEND_FRAMEWORK', current_timestamp, current_timestamp, false),

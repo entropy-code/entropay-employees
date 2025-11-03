@@ -15,4 +15,3 @@ CREATE TABLE IF NOT EXISTS skill (
 -- Create indexes for foreign keys to improve query performance
 CREATE INDEX IF NOT EXISTS idx_skill_employee_id ON skill(employee_id);
 CREATE INDEX IF NOT EXISTS idx_skill_technology_id ON skill(technology_id);
-CREATE INDEX IF NOT EXISTS idx_skill_deleted ON skill(deleted);
