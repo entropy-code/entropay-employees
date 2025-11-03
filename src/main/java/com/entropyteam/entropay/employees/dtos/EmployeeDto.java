@@ -47,7 +47,6 @@ public record EmployeeDto(UUID id,
                           String healthInsurance,
                           List<PaymentInformationDto> paymentInformation,
                           List<ChildrenDto> children,
-                          List<UUID> technologies,
                           @Email
                           String labourEmail,
                           @NotNull(message = "Birth Date is mandatory")
@@ -75,9 +74,8 @@ public record EmployeeDto(UUID id,
                           String countryName) {
 
     public EmployeeDto(Employee employee, List<PaymentInformation> paymentInformationList, List<Children> childrenList,
-            Assignment lastAssignment,
-            Contract firstContract, Integer availableDays, Contract activeContract, LocalDate nearestPto,
-            String timeSinceStart) {
+            Assignment lastAssignment, Contract firstContract, Integer availableDays, Contract activeContract,
+            LocalDate nearestPto, String timeSinceStart) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getGender(), employee.getPersonalEmail(), employee.getPhoneNumber(),
                 employee.getMobileNumber(),
@@ -87,7 +85,6 @@ public record EmployeeDto(UUID id,
                 employee.getRoles().stream().map(BaseEntity::getId).collect(Collectors.toList()), employee.getNotes(),
                 employee.getHealthInsurance(), paymentInformationList.stream().map(PaymentInformationDto::new).toList(),
                 childrenList.stream().map(ChildrenDto::new).toList(),
-                employee.getTechnologies().stream().map(BaseEntity::getId).collect(Collectors.toList()),
                 employee.getLabourEmail(), employee.getBirthDate(), employee.getCreatedAt(), employee.getModifiedAt(),
                 employee.isDeleted(),
                 lastAssignment != null ? lastAssignment.getProject().getName() : "-",

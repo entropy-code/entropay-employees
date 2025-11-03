@@ -31,7 +31,6 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
-import com.entropyteam.entropay.employees.models.Technology;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
@@ -39,7 +38,6 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
-import com.entropyteam.entropay.employees.repositories.TechnologyRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 
 
@@ -50,7 +48,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final RoleRepository roleRepository;
     private final PaymentInformationRepository paymentRepository;
     private final PaymentInformationService paymentInformationService;
-    private final TechnologyRepository technologyRepository;
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
@@ -63,7 +60,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
             PaymentInformationRepository paymentInformationRepository,
-            PaymentInformationService paymentInformationService, TechnologyRepository technologyRepository,
+            PaymentInformationService paymentInformationService,
             AssignmentRepository assignmentRepository, ContractRepository contractRepository,
             ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
             CountryRepository countryRepository, CalendarService calendarService,
@@ -73,7 +70,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.roleRepository = roleRepository;
         this.paymentRepository = paymentInformationRepository;
         this.paymentInformationService = paymentInformationService;
-        this.technologyRepository = technologyRepository;
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
@@ -115,11 +111,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     protected Employee toEntity(EmployeeDto dto) {
         Employee employee = new Employee(dto);
         Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.profile());
-        Set<Technology> technologies = technologyRepository.findAllByDeletedIsFalseAndIdIn(dto.technologies());
         Country country = countryRepository.findById(dto.countryId()).orElseThrow();
         employee.setCountry(country);
         employee.setRoles(roles);
-        employee.setTechnologies(technologies);
         employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
                 : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
         employee.setChildren((dto.children() == null) ? Collections.emptySet()

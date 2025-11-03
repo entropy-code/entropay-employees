@@ -57,13 +57,8 @@ public class Employee extends BaseEntity {
     )
     private Set<Role> roles;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "employee_technology",
-            joinColumns = {@JoinColumn(name = "employee_id")},
-            inverseJoinColumns = {@JoinColumn(name = "technology_id")}
-    )
-    private Set<Technology> technologies;
+    @OneToMany(mappedBy = "employee")
+    private Set<Skill> skills = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "country_id")
@@ -267,12 +262,12 @@ public class Employee extends BaseEntity {
         this.paymentsInformation = paymentsInformation;
     }
 
-    public Set<Technology> getTechnologies() {
-        return technologies;
+    public Set<Skill> getSkills() {
+        return skills;
     }
 
-    public void setTechnologies(Set<Technology> technologies) {
-        this.technologies = technologies;
+    public void setSkills(Set<Skill> skills) {
+        this.skills = skills;
     }
 
     public String getLabourEmail() {

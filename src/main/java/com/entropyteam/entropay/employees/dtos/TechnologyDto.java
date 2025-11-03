@@ -7,9 +7,13 @@ import jakarta.validation.constraints.NotNull;
 
 public record TechnologyDto(UUID id,
                             @NotNull(message = "Name is mandatory")
-                            String name) {
+                            String name,
+                            @NotNull(message = "Type is mandatory")
+                            String technologyType,
+                            String technologyTypeName) {
 
     public TechnologyDto(Technology technology) {
-        this(technology.getId(), technology.getName());
+        this(technology.getId(), technology.getName(), technology.getTechnologyType().name(),
+                technology.getTechnologyType().getValue());
     }
 }

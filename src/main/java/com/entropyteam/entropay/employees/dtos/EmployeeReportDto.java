@@ -23,7 +23,6 @@ public class EmployeeReportDto {
     private Boolean status;
     private String clientName;
     private String projectName;
-    private List<String> technologiesNames;
     private Integer usdPayment;
     private Integer arsPayment;
     private String country;
@@ -43,7 +42,6 @@ public class EmployeeReportDto {
                              Boolean status,
                              String clientName,
                              String projectName,
-                             List<String> technologiesNames,
                              Integer usdPayment,
                              Integer arsPayment,
                              String country,
@@ -62,7 +60,6 @@ public class EmployeeReportDto {
         this.status = status;
         this.clientName = clientName;
         this.projectName = projectName;
-        this.technologiesNames = technologiesNames;
         this.usdPayment = usdPayment;
         this.arsPayment = arsPayment;
         this.country = country;
@@ -70,14 +67,14 @@ public class EmployeeReportDto {
         this.activeContract = activeContract;
     }
 
-    public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract latestContract, String client, String project, List<String> technologiesName, Integer usdPayment, Integer arsPayment, String country, String labourEmail) {
+    public EmployeeReportDto(Employee employee, List<String> profile, Contract firstContract, Contract latestContract, String client, String project, Integer usdPayment, Integer arsPayment, String country, String labourEmail) {
         this(employee.getId(), employee.getInternalId(), employee.getFirstName(), employee.getLastName(),
                 employee.getCity() != null ? employee.getCity() : "",
                 latestContract != null && latestContract.isActive() ? latestContract.getRole().getName() : null,
                 profile, latestContract != null && latestContract.isActive() ? latestContract.getSeniority().getName() : null,
                 firstContract != null ? firstContract.getStartDate() : null,
                 latestContract != null ? latestContract.getEndDate() : null,
-                employee.isActive(), client, project, technologiesName, usdPayment, arsPayment, country != null ? country : "", labourEmail != null ? labourEmail : "",
+                employee.isActive(), client, project, usdPayment, arsPayment, country != null ? country : "", labourEmail != null ? labourEmail : "",
                 latestContract != null ? latestContract.isActive() : false);
     }
 
@@ -171,14 +168,6 @@ public class EmployeeReportDto {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
-    }
-
-    public List<String> getTechnologiesNames() {
-        return technologiesNames;
-    }
-
-    public void setTechnologiesNames(List<String> technologiesNames) {
-        this.technologiesNames = technologiesNames;
     }
 
     public Integer getUsdPayment() {
