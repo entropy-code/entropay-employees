@@ -3,6 +3,7 @@ package com.entropyteam.entropay.employees.models;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.SkillDto;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -22,6 +23,7 @@ public class Skill extends BaseEntity {
     @JoinColumn(name = "technology_id", nullable = false)
     private Technology technology;
     @Enumerated(EnumType.STRING)
+    @Column(name = "proficiency_level", nullable = false)
     private ProficiencyLevel proficiencyLevel;
 
     public Skill() {

@@ -41,8 +41,10 @@ public class SkillService extends BaseService<Skill, SkillDto, UUID> {
     @Override
     protected Skill toEntity(SkillDto entity) {
         Skill skill = new Skill(entity);
-        skill.setEmployee(employeeRepository.findById(entity.employeeId()).orElse(null));
-        skill.setTechnology(technologyRepository.findById(entity.technologyId()).orElse(null));
+        skill.setEmployee(employeeRepository.findById(entity.employeeId()).orElseThrow(
+                () -> new IllegalArgumentException("Employee with id " + entity.employeeId() + " not found")));
+        skill.setTechnology(technologyRepository.findById(entity.technologyId()).orElseThrow(
+                () -> new IllegalArgumentException("Technology with id " + entity.technologyId() + " not found")));
         return skill;
     }
 }

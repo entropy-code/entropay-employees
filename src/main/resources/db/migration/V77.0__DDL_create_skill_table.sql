@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS skill (
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_skill_employee FOREIGN KEY (employee_id) REFERENCES employee(id),
     CONSTRAINT fk_skill_technology FOREIGN KEY (technology_id) REFERENCES technology(id),
-    CONSTRAINT uk_skill_employee_technology UNIQUE (employee_id, technology_id)
+    CONSTRAINT uk_skill_employee_technology UNIQUE (employee_id, technology_id, deleted)
 );
 
 -- Create indexes for foreign keys to improve query performance
