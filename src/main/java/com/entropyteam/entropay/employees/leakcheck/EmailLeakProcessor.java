@@ -71,44 +71,43 @@ class EmailLeakProcessor {
     @Async("leakCheckExecutor")
     @Transactional
     CompletableFuture<LeakCheckResult> processEmployeeLeaksAsync(Employee employee) {
-        return CompletableFuture.supplyAsync(() -> {
-            List<String> emails = getEmployeeEmails(employee);
+        List<String> emails = getEmployeeEmails(employee);
 
-            Map<String, EmailLeakResult> resultsByEmail = emails.stream()
-                    .filter(this::isValidEmail)
-                    .peek(email -> logEmailCheck(employee, email))
-                    .collect(Collectors.toMap(
-                            email -> email,
-                            email -> processEmailLeak(employee, email),
-                            (existing, replacement) -> existing
-                    ));
+        Map<String, EmailLeakResult> resultsByEmail = emails.stream()
+                .filter(this::isValidEmail)
+                .peek(email -> logEmailCheck(employee, email))
+                .collect(Collectors.toMap(
+                        email -> email,
+                        email -> processEmailLeak(employee, email),
+                        (existing, replacement) -> existing
+                ));
 
-            Map<LeakType, Integer> aggregatedLeaks = resultsByEmail.values().stream()
-                    .flatMap(result -> result.leaksByType.entrySet().stream())
-                    .collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue,
-                            Integer::sum,
-                            () -> new EnumMap<>(LeakType.class)
-                    ));
+        Map<LeakType, Integer> aggregatedLeaks = resultsByEmail.values().stream()
+                .flatMap(result -> result.leaksByType.entrySet().stream())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        Integer::sum,
+                        () -> new EnumMap<>(LeakType.class)
+                ));
 
-            int totalNewLeaks = aggregatedLeaks.values().stream()
-                    .mapToInt(Integer::intValue)
-                    .sum();
+        int totalNewLeaks = aggregatedLeaks.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
 
-            if (totalNewLeaks > 0) {
-                List<String> affectedEmails = resultsByEmail.entrySet().stream()
-                        .filter(entry -> entry.getValue().newLeaksCount > 0)
-                        .map(Map.Entry::getKey)
-                        .toList();
+        if (totalNewLeaks > 0) {
+            List<String> affectedEmails = resultsByEmail.entrySet().stream()
+                    .filter(entry -> entry.getValue().newLeaksCount > 0)
+                    .map(Map.Entry::getKey)
+                    .toList();
 
-                notifyEmployeeLeaks(employee, totalNewLeaks, affectedEmails);
-            } else {
-                LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
-            }
+            notifyEmployeeLeaks(employee, totalNewLeaks, affectedEmails);
+        } else {
+            LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
+        }
 
-            return new LeakCheckResult(employee.getFullName(), Map.copyOf(aggregatedLeaks));
-        });
+        LeakCheckResult result = new LeakCheckResult(employee.getFullName(), Map.copyOf(aggregatedLeaks));
+        return CompletableFuture.completedFuture(result);
     }
 
     /**
@@ -198,7 +197,6 @@ class EmailLeakProcessor {
     int processLeakResponse(Employee employee, String email, String responseBody,
             Map<LeakType, Integer> vulnerabilityStats) {
         try {
-            ObjectMapper objectMapper = this.objectMapper;
             LeakResponseDto leakResponse = objectMapper.readValue(responseBody, LeakResponseDto.class);
 
             List<EmailVulnerability> existingLeaks =
