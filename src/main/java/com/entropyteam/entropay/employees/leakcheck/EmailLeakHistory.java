@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "email_leak_history")
-public class EmailLeakHistory extends BaseEntity {
+class EmailLeakHistory extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String email;

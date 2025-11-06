@@ -13,7 +13,7 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 
 @Configuration
 @EnableAsync
-public class LeakCheckAsyncConfig {
+class LeakCheckAsyncConfig {
 
     @Value("${leakcheck.rate-limit.permits-per-second:3}")
     private int permitsPerSecond;

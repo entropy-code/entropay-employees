@@ -16,7 +16,7 @@ import com.entropyteam.entropay.notifications.MessageType;
 import com.entropyteam.entropay.notifications.NotificationService;
 
 @Service
-public class EmailLeakCheckService {
+class EmailLeakCheckService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailLeakCheckService.class);
     private static final String EMAIL_LEAK_CHECKER = "Email Leak Checker";
@@ -24,7 +24,7 @@ public class EmailLeakCheckService {
     private final NotificationService notificationService;
     private final EmailLeakProcessor emailLeakProcessor;
 
-    public EmailLeakCheckService(EmployeeRepository employeeRepository,
+    EmailLeakCheckService(EmployeeRepository employeeRepository,
             NotificationService notificationService,
             EmailLeakProcessor emailLeakProcessor) {
         this.employeeRepository = employeeRepository;
@@ -44,11 +44,10 @@ public class EmailLeakCheckService {
         ));
 
         List<Employee> employees = employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue();
-        Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
 
         // Submit all tasks to the async executor
-        List<CompletableFuture<Void>> futures = employees.stream()
-                .map(employee -> emailLeakProcessor.processEmployeeLeaksAsync(employee, vulnerabilityStats))
+        List<CompletableFuture<LeakCheckResult>> futures = employees.stream()
+                .map(emailLeakProcessor::processEmployeeLeaksAsync)
                 .toList();
 
         // Wait for all tasks to complete
@@ -56,6 +55,10 @@ public class EmailLeakCheckService {
 
         try {
             allOf.join(); // Wait for all tasks to complete
+
+            // Aggregate results from all futures
+            Map<LeakType, Integer> vulnerabilityStats = aggregateResults(futures);
+
             sendFinalReport(employees.size(), vulnerabilityStats);
         } catch (Exception e) {
             LOGGER.error("Error during email leak check: {}", e.getMessage(), e);
@@ -65,6 +68,45 @@ public class EmailLeakCheckService {
                     MessageType.ERROR
             ));
         }
+    }
+
+    private Map<LeakType, Integer> aggregateResults(List<CompletableFuture<LeakCheckResult>> futures) {
+        Map<LeakType, Integer> aggregated = new EnumMap<>(LeakType.class);
+
+        futures.stream()
+                .map(CompletableFuture::join)
+                .flatMap(result -> result.leaksByType().entrySet().stream())
+                .forEach(entry -> aggregated.merge(entry.getKey(), entry.getValue(), Integer::sum));
+
+        return aggregated;
+    }
+
+    /**
+     * Checks a single email address for leaks without saving to database.
+     * Used for ad-hoc email verification via API endpoint.
+     *
+     * @param email the email address to check
+     * @return structured leak check result
+     * @throws IllegalArgumentException if email format is invalid
+     */
+    public SingleEmailLeakCheckDto checkSingleEmail(String email) {
+        if (!emailLeakProcessor.isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid email format: " + email);
+        }
+
+        LOGGER.info("Single email leak check requested for: {}", emailLeakProcessor.obfuscateEmail(email));
+
+        String responseBody = emailLeakProcessor.checkEmailWithApi(email);
+        SingleEmailLeakCheckDto result = emailLeakProcessor.parseSingleEmailResponse(email, responseBody);
+
+        if (result.hasLeaks()) {
+            LOGGER.warn("Found {} leak(s) for email: {}", result.totalLeaksFound(),
+                    emailLeakProcessor.obfuscateEmail(email));
+        } else {
+            LOGGER.info("No leaks found for email: {}", emailLeakProcessor.obfuscateEmail(email));
+        }
+
+        return result;
     }
 
     private void sendFinalReport(int totalChecked, Map<LeakType, Integer> vulnerabilityStats) {

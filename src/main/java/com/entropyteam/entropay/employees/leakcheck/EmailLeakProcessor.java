@@ -4,12 +4,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -33,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 
 @Service
-public class EmailLeakProcessor {
+class EmailLeakProcessor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EmailLeakProcessor.class);
     private static final String STEALER_LOGS = "Stealer Logs";
@@ -52,7 +55,7 @@ public class EmailLeakProcessor {
     @Value("${leakcheck.api.url:DEFAULT_URL}")
     private String leakCheckApiUrl;
 
-    public EmailLeakProcessor(EmailLeakHistoryRepository emailLeakHistoryRepository,
+    EmailLeakProcessor(EmailLeakHistoryRepository emailLeakHistoryRepository,
             EmailVulnerabilityRepository emailVulnerabilityRepository, RestTemplate restTemplate,
             NotificationService notificationService,
             @Qualifier("leakCheckRateLimiter") RateLimiter rateLimiter) {
@@ -65,61 +68,70 @@ public class EmailLeakProcessor {
 
     @Async("leakCheckExecutor")
     @Transactional
-    public CompletableFuture<Void> processEmployeeLeaksAsync(Employee employee, Map<LeakType, Integer> vulnerabilityStats) {
-        return CompletableFuture.runAsync(() -> {
-            int newLabourLeaks = 0;
-            int newPersonalLeaks = 0;
+    CompletableFuture<LeakCheckResult> processEmployeeLeaksAsync(Employee employee) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<String> emails = getEmployeeEmails(employee);
 
-            // Labour email
-            String labourEmail = employee.getLabourEmail();
-            if (isValidEmail(labourEmail)) {
-                LOGGER.info("Checking email leaks for employee: {}, email: {}",
-                        employee.getFullName(), obfuscateEmail(labourEmail));
-                newLabourLeaks = processEmailLeak(employee, labourEmail, vulnerabilityStats);
-            } else {
-                LOGGER.warn("Invalid or null labour email for employee: {} -> {}",
-                        employee.getFullName(), labourEmail);
-            }
+            Map<String, EmailLeakResult> resultsByEmail = emails.stream()
+                    .filter(this::isValidEmail)
+                    .peek(email -> logEmailCheck(employee, email))
+                    .collect(Collectors.toMap(
+                            email -> email,
+                            email -> processEmailLeak(employee, email),
+                            (existing, replacement) -> existing
+                    ));
 
-            // Personal email
-            String personalEmail = employee.getPersonalEmail();
-            if (isValidEmail(personalEmail)) {
-                LOGGER.info("Checking email leaks for employee: {}, email: {}",
-                        employee.getFullName(), obfuscateEmail(personalEmail));
-                newPersonalLeaks = processEmailLeak(employee, personalEmail, vulnerabilityStats);
-            } else {
-                LOGGER.warn("Invalid or null personal email for employee: {} -> {}",
-                        employee.getFullName(), personalEmail);
-            }
+            Map<LeakType, Integer> aggregatedLeaks = resultsByEmail.values().stream()
+                    .flatMap(result -> result.leaksByType.entrySet().stream())
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            Integer::sum,
+                            () -> new EnumMap<>(LeakType.class)
+                    ));
 
-            // Notify
-            if (hasNewLeaks(newLabourLeaks, newPersonalLeaks)) {
-                notifyEmployeeLeaks(employee, newLabourLeaks, newPersonalLeaks);
+            int totalNewLeaks = aggregatedLeaks.values().stream()
+                    .mapToInt(Integer::intValue)
+                    .sum();
+
+            if (totalNewLeaks > 0) {
+                List<String> affectedEmails = resultsByEmail.entrySet().stream()
+                        .filter(entry -> entry.getValue().newLeaksCount > 0)
+                        .map(Map.Entry::getKey)
+                        .toList();
+
+                notifyEmployeeLeaks(employee, totalNewLeaks, affectedEmails);
             } else {
                 LOGGER.info("No new vulnerabilities found for employee: {}", employee.getFullName());
             }
+
+            return new LeakCheckResult(employee.getFullName(), Map.copyOf(aggregatedLeaks));
         });
     }
 
-    private boolean hasNewLeaks(int newLabourLeaks, int newPersonalLeaks) {
-        return newLabourLeaks > 0 || newPersonalLeaks > 0;
+    /**
+     * Extracts all non-null email addresses from an employee.
+     */
+    private List<String> getEmployeeEmails(Employee employee) {
+        return Stream.of(employee.getLabourEmail(), employee.getPersonalEmail())
+                .filter(Objects::nonNull)
+                .toList();
     }
 
-    private void notifyEmployeeLeaks(Employee employee, int newLabourLeaks, int newPersonalLeaks) {
+    private void logEmailCheck(Employee employee, String email) {
+        LOGGER.info("Checking email leaks for employee: {}, email: {}", employee.getFullName(), obfuscateEmail(email));
+    }
+
+    private void notifyEmployeeLeaks(Employee employee, int totalNewLeaks, List<String> affectedEmails) {
         StringBuilder notificationMessage = new StringBuilder()
                 .append("*New Leaks Found!*\n")
                 .append("👤 *User:* ").append(employee.getFullName()).append("\n")
-                .append("*Total New Vulnerabilities:* ").append(newLabourLeaks + newPersonalLeaks).append("\n");
+                .append("*Total New Vulnerabilities:* ").append(totalNewLeaks).append("\n");
 
-        if (newLabourLeaks > 0) {
-            notificationMessage.append("📧 *Labour Email Affected:* ")
-                    .append(obfuscateEmail(employee.getLabourEmail()))
-                    .append(" | *New Vulnerabilities:* ").append(newLabourLeaks).append("\n");
-        }
-        if (newPersonalLeaks > 0) {
-            notificationMessage.append("🏠 *Personal Email Affected:* ")
-                    .append(obfuscateEmail(employee.getPersonalEmail()))
-                    .append(" | *New Vulnerabilities:* ").append(newPersonalLeaks).append("\n");
+        if (!affectedEmails.isEmpty()) {
+            notificationMessage.append("📧 *Affected Emails:* ")
+                    .append(String.join(", ", affectedEmails))
+                    .append("\n");
         }
 
         notificationService.sendNotification(new MessageDto(
@@ -129,8 +141,29 @@ public class EmailLeakProcessor {
         ));
     }
 
+    /**
+     * Internal result holder for processing a single email.
+     */
+    private record EmailLeakResult(int newLeaksCount, Map<LeakType, Integer> leaksByType) {}
 
-    private int processEmailLeak(Employee employee, String email, Map<LeakType, Integer> vulnerabilityStats) {
+    private EmailLeakResult processEmailLeak(Employee employee, String email) {
+        String responseBody = checkEmailWithApi(email);
+        saveEmailLeakHistory(employee, email, responseBody);
+
+        Map<LeakType, Integer> leaksByType = new EnumMap<>(LeakType.class);
+        int newLeaks = processLeakResponseForEmployee(employee, email, responseBody, leaksByType);
+
+        return new EmailLeakResult(newLeaks, leaksByType);
+    }
+
+    /**
+     * Checks an email against the leak API without saving to database.
+     * Used for ad-hoc email checks via API endpoint.
+     *
+     * @param email the email address to check
+     * @return the raw API response body
+     */
+    String checkEmailWithApi(String email) {
         LOGGER.info("Checking leaks for email: {}", obfuscateEmail(email));
 
         // Acquire rate limiter permission (blocks if necessary to enforce rate limit)
@@ -141,9 +174,12 @@ public class EmailLeakProcessor {
 
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
 
-        saveEmailLeakHistory(employee, email, response.getBody());
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return response.getBody();
+        }
 
-        return handleApiResponse(employee, email, response, vulnerabilityStats);
+        LOGGER.error("Failed to check email: {}", email);
+        return "{}";
     }
 
     private HttpHeaders createHeaders() {
@@ -152,14 +188,9 @@ public class EmailLeakProcessor {
         return headers;
     }
 
-    private int handleApiResponse(Employee employee, String email, ResponseEntity<String> response,
+    private int processLeakResponseForEmployee(Employee employee, String email, String responseBody,
             Map<LeakType, Integer> vulnerabilityStats) {
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            return processLeakResponse(employee, email, response.getBody(), vulnerabilityStats);
-        }
-
-        LOGGER.error("Failed to check email: {}", email);
-        return 0;
+        return processLeakResponse(employee, email, responseBody, vulnerabilityStats);
     }
 
     int processLeakResponse(Employee employee, String email, String responseBody,
@@ -318,7 +349,7 @@ public class EmailLeakProcessor {
         emailLeakHistoryRepository.save(history);
     }
 
-    public String obfuscateEmail(String email) {
+    String obfuscateEmail(String email) {
         if (email == null || !email.contains("@")) {
             return email;
         }
@@ -344,12 +375,60 @@ public class EmailLeakProcessor {
         return local + "@" + domainName + (tld.isEmpty() ? "" : "." + tld);
     }
 
-    public boolean isValidEmail(String email) {
+    boolean isValidEmail(String email) {
         if (StringUtils.isBlank(email)) {
             return false;
         }
 
         String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
         return Pattern.compile(emailRegex).matcher(email).matches();
+    }
+
+    /**
+     * Parses leak check API response into a structured DTO for single email checks.
+     * Does not save anything to database.
+     *
+     * @param email the email that was checked
+     * @param responseBody the API response JSON
+     * @return structured leak check result
+     */
+    SingleEmailLeakCheckDto parseSingleEmailResponse(String email, String responseBody) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            LeakResponseDto leakResponse = objectMapper.readValue(responseBody, LeakResponseDto.class);
+
+            if (!leakResponse.success() || leakResponse.result() == null || leakResponse.result().isEmpty()) {
+                return SingleEmailLeakCheckDto.noLeaks(email);
+            }
+
+            List<SingleEmailLeakCheckDto.LeakDetailDto> leakDetails = leakResponse.result().stream()
+                    .map(this::mapToLeakDetail)
+                    .toList();
+
+            return new SingleEmailLeakCheckDto(
+                    email,
+                    true,
+                    leakDetails.size(),
+                    leakDetails
+            );
+        } catch (Exception e) {
+            LOGGER.error("Error parsing leak response for email {}: {}", obfuscateEmail(email), e.getMessage());
+            return SingleEmailLeakCheckDto.noLeaks(email);
+        }
+    }
+
+    private SingleEmailLeakCheckDto.LeakDetailDto mapToLeakDetail(LeakDto leak) {
+        LeakType leakType = determineLeakType(leak);
+        String breachDate = leak.source().breachDate();
+        boolean hasPassword = StringUtils.isNotBlank(leak.password());
+        List<String> origins = leak.origin() != null ? leak.origin() : List.of();
+
+        return new SingleEmailLeakCheckDto.LeakDetailDto(
+                leak.source().name(),
+                breachDate,
+                leakType,
+                hasPassword,
+                origins
+        );
     }
 }

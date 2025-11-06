@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,9 +67,10 @@ class EmailLeakCheckServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("{}"));
 
-        // Mock the async method to return a completed future
-        when(emailLeakProcessor.processEmployeeLeaksAsync(any(Employee.class), any(Map.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        // Mock the async method to return a completed future with empty result
+        LeakCheckResult emptyResult = LeakCheckResult.empty(employee.getFullName());
+        when(emailLeakProcessor.processEmployeeLeaksAsync(any(Employee.class)))
+                .thenReturn(CompletableFuture.completedFuture(emptyResult));
 
         emailLeakCheckService.runAsyncEmailCheck();
 

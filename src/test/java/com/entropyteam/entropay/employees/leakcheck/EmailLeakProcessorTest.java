@@ -86,13 +86,15 @@ class EmailLeakProcessorTest {
         when(emailVulnerabilityRepository.findAllByEmployeeAndDeletedFalse(any(Employee.class)))
                 .thenReturn(Collections.emptyList());
 
-        Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
-
-        emailLeakProcessor.processEmployeeLeaksAsync(employee, vulnerabilityStats).join();
+        LeakCheckResult result = emailLeakProcessor.processEmployeeLeaksAsync(employee).join();
 
         verify(restTemplate, times(2)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class));
         verify(emailLeakHistoryRepository, times(2)).save(any(EmailLeakHistory.class));
         verify(rateLimiter, times(2)).acquirePermission();
+
+        // Verify result
+        assertEquals(employee.getFullName(), result.employeeName());
+        assertEquals(0, result.totalLeaks());
     }
 
     @Test
