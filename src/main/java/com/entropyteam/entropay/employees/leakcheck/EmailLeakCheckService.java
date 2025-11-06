@@ -74,6 +74,7 @@ class EmailLeakCheckService {
         Map<LeakType, Integer> aggregated = new EnumMap<>(LeakType.class);
 
         futures.stream()
+                .filter(future -> !future.isCompletedExceptionally())
                 .map(CompletableFuture::join)
                 .flatMap(result -> result.leaksByType().entrySet().stream())
                 .forEach(entry -> aggregated.merge(entry.getKey(), entry.getValue(), Integer::sum));

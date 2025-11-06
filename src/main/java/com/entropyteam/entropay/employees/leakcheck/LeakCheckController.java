@@ -1,6 +1,5 @@
 package com.entropyteam.entropay.employees.leakcheck;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,27 +34,13 @@ class LeakCheckController {
      * Does not save results to database.
      *
      * @param email the email address to check
-     * @return leak check results or error message
+     * @return leak check results
+     * @throws IllegalArgumentException if email format is invalid
      */
     @Secured({"ROLE_ADMIN", "ROLE_MANAGER_HR"})
     @GetMapping("/check-email")
-    public ResponseEntity<?> checkSingleEmail(@RequestParam String email) {
-        try {
-            SingleEmailLeakCheckDto result = emailLeakCheckService.checkSingleEmail(email);
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorResponse(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorResponse("Error checking email: " + e.getMessage()));
-        }
+    public ResponseEntity<SingleEmailLeakCheckDto> checkSingleEmail(@RequestParam String email) {
+        SingleEmailLeakCheckDto result = emailLeakCheckService.checkSingleEmail(email);
+        return ResponseEntity.ok(result);
     }
-
-    /**
-     * Simple error response record for API errors.
-     */
-    private record ErrorResponse(String error) {}
 }

@@ -66,7 +66,8 @@ class EmailLeakProcessorTest {
                 emailVulnerabilityRepository,
                 restTemplate,
                 notificationService,
-                rateLimiter
+                rateLimiter,
+                new ObjectMapper()
         );
 
         employee = new Employee();

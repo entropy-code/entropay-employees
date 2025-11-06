@@ -48,6 +48,7 @@ class EmailLeakProcessor {
     private final NotificationService notificationService;
     private final RateLimiter rateLimiter;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private final ObjectMapper objectMapper;
 
     @Value("${leakcheck.api.key:DEFAULT_KEY}")
     private String leakCheckApiKey;
@@ -58,12 +59,13 @@ class EmailLeakProcessor {
     EmailLeakProcessor(EmailLeakHistoryRepository emailLeakHistoryRepository,
             EmailVulnerabilityRepository emailVulnerabilityRepository, RestTemplate restTemplate,
             NotificationService notificationService,
-            @Qualifier("leakCheckRateLimiter") RateLimiter rateLimiter) {
+            @Qualifier("leakCheckRateLimiter") RateLimiter rateLimiter, ObjectMapper objectMapper) {
         this.emailLeakHistoryRepository = emailLeakHistoryRepository;
         this.emailVulnerabilityRepository = emailVulnerabilityRepository;
         this.restTemplate = restTemplate;
         this.notificationService = notificationService;
         this.rateLimiter = rateLimiter;
+        this.objectMapper = objectMapper;
     }
 
     @Async("leakCheckExecutor")
@@ -196,7 +198,7 @@ class EmailLeakProcessor {
     int processLeakResponse(Employee employee, String email, String responseBody,
             Map<LeakType, Integer> vulnerabilityStats) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = this.objectMapper;
             LeakResponseDto leakResponse = objectMapper.readValue(responseBody, LeakResponseDto.class);
 
             List<EmailVulnerability> existingLeaks =
@@ -394,7 +396,6 @@ class EmailLeakProcessor {
      */
     SingleEmailLeakCheckDto parseSingleEmailResponse(String email, String responseBody) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             LeakResponseDto leakResponse = objectMapper.readValue(responseBody, LeakResponseDto.class);
 
             if (!leakResponse.success() || leakResponse.result() == null || leakResponse.result().isEmpty()) {
