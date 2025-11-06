@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.security.services;
+package com.entropyteam.entropay.employees.leakcheck;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -65,6 +66,11 @@ class EmailLeakCheckServiceTest {
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("{}"));
+
+        // Mock the async method to return a completed future with empty result
+        LeakCheckResult emptyResult = LeakCheckResult.empty(employee.getFullName());
+        when(emailLeakProcessor.processEmployeeLeaksAsync(any(Employee.class)))
+                .thenReturn(CompletableFuture.completedFuture(emptyResult));
 
         emailLeakCheckService.runAsyncEmailCheck();
 

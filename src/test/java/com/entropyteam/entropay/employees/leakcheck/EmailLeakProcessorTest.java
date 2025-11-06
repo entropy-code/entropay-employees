@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.security.services;
+package com.entropyteam.entropay.employees.leakcheck;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,15 +24,9 @@ import org.springframework.web.client.RestTemplate;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.notifications.NotificationService;
-import com.entropyteam.entropay.security.dtos.LeakDto;
-import com.entropyteam.entropay.security.dtos.LeakResponseDto;
-import com.entropyteam.entropay.security.dtos.SourceDto;
-import com.entropyteam.entropay.security.enums.LeakType;
-import com.entropyteam.entropay.security.models.EmailLeakHistory;
-import com.entropyteam.entropay.security.models.EmailVulnerability;
-import com.entropyteam.entropay.security.repositories.EmailLeakHistoryRepository;
-import com.entropyteam.entropay.security.repositories.EmailVulnerabilityRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.github.resilience4j.ratelimiter.RateLimiter;
 
 class EmailLeakProcessorTest {
 
@@ -51,6 +45,9 @@ class EmailLeakProcessorTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private RateLimiter rateLimiter;
+
     private EmailLeakProcessor emailLeakProcessor;
 
     private Employee employee;
@@ -60,11 +57,17 @@ class EmailLeakProcessorTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        // Mock rate limiter to not block during tests - acquirePermission returns boolean
+        when(rateLimiter.acquirePermission()).thenReturn(true);
+
         emailLeakProcessor = new EmailLeakProcessor(
                 emailLeakHistoryRepository,
                 emailVulnerabilityRepository,
                 restTemplate,
-                notificationService
+                notificationService,
+                rateLimiter,
+                new ObjectMapper()
         );
 
         employee = new Employee();
@@ -81,12 +84,18 @@ class EmailLeakProcessorTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok("{}"));
 
-        Map<LeakType, Integer> vulnerabilityStats = new EnumMap<>(LeakType.class);
+        when(emailVulnerabilityRepository.findAllByEmployeeAndDeletedFalse(any(Employee.class)))
+                .thenReturn(Collections.emptyList());
 
-        emailLeakProcessor.processEmployeeLeaks(employee, vulnerabilityStats);
+        LeakCheckResult result = emailLeakProcessor.processEmployeeLeaksAsync(employee).join();
 
         verify(restTemplate, times(2)).exchange(anyString(), eq(HttpMethod.GET), any(), eq(String.class));
         verify(emailLeakHistoryRepository, times(2)).save(any(EmailLeakHistory.class));
+        verify(rateLimiter, times(2)).acquirePermission();
+
+        // Verify result
+        assertEquals(employee.getFullName(), result.employeeName());
+        assertEquals(0, result.totalLeaks());
     }
 
     @Test

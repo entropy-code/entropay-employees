@@ -1,4 +1,4 @@
-package com.entropyteam.entropay.security.models;
+package com.entropyteam.entropay.employees.leakcheck;
 
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "email_leak_history")
-public class EmailLeakHistory extends BaseEntity {
+class EmailLeakHistory extends BaseEntity {
 
     @Column(nullable = false, length = 255)
     private String email;
