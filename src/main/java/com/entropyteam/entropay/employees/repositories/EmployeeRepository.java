@@ -23,4 +23,5 @@ public interface EmployeeRepository extends BaseRepository<Employee, UUID>, Repo
             "SELECT * FROM Assignment AS a WHERE e.id = a.employee_id AND a.active = true AND a.deleted = false)",
             nativeQuery = true)
     List<Employee> findAllUnassignedEmployees();
+
 }
