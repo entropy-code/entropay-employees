@@ -1,7 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Employee" type="Application" factoryName="Application">
     <envs>
+ HEAD
 
+
+ b892fcc (Remove acces key)
     </envs>
     <option name="MAIN_CLASS_NAME" value="com.entropyteam.entropay.EntropayEmployeesApplication" />
     <module name="entropay-employees" />
