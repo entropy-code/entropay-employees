@@ -123,6 +123,14 @@ public class Pto extends BaseEntity {
     }
 
     public boolean isHalfDay() {
+        return startDate.isEqual(endDate) && days == 0.5;
+    }
+
+    public boolean isSameDay() {
         return startDate.isEqual(endDate);
+    }
+
+    public double getHours() {
+        return days * 8;
     }
 }
