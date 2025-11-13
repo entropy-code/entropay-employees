@@ -21,7 +21,6 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
-import com.entropyteam.entropay.employees.timetracking.PtoTimeEntry;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Country;
@@ -34,6 +33,7 @@ import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.HolidayRepository;
 import com.entropyteam.entropay.employees.repositories.LeaveTypeRepository;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
+import com.entropyteam.entropay.employees.timetracking.PtoTimeEntry;
 
 @Service
 public class PtoService extends BaseService<Pto, PtoDto, UUID> {
@@ -249,7 +249,7 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
      */
     private Double getPtoHours(Pto pto, LocalDate startDate, LocalDate endDate,
             Map<Country, Set<LocalDate>> holidaysByCountry) {
-        if (startDate.isEqual(endDate)) {
+        if (pto.getStartDate().isEqual(pto.getEndDate())) {
             return pto.getDays() * 8;
         }
 

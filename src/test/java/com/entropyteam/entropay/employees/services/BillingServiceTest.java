@@ -118,6 +118,31 @@ class BillingServiceTest {
         Assertions.assertEquals(BigDecimal.valueOf(14 * 8 * 20.0), billingDto.total());
     }
 
+    @Test
+    void testGenerateBillingReportWithHalfDayPto() {
+        ReactAdminParams params = new ReactAdminParams();
+        params.setFilter("{\"startDate\":\"2025-02-01\",\"endDate\":\"2025-02-28\"}\n");
+        params.setRange("[0,10]");
+        params.setSort("[\"internalId\",\"ASC\"]");
+
+        // Override February mocks with half-day PTO data
+        when(ptoRepository.findAllBetweenPeriod(LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 28)))
+                .thenReturn(createHalfDayPto());
+
+        ReportDto<BillingDto> generatedReport = billingService.generateBillingReport(params);
+
+        List<BillingDto> data = generatedReport.data();
+
+        Assertions.assertEquals(1, data.size());
+        BillingDto billingDto = data.getFirst();
+        // Half-day PTO on a single day should be 4 hours, not 8
+        Assertions.assertEquals(4.0, billingDto.ptoHours());
+        // February has 20 weekdays, minus 0.5 day for half-day PTO = 19.5 working days
+        Assertions.assertEquals(19.5 * 8, billingDto.hours());
+        // The rate is 20, so the total is:
+        Assertions.assertEquals(BigDecimal.valueOf(19.5 * 8 * 20.0), billingDto.total());
+    }
+
     private static Employee getEmployee() {
         Employee employee = new Employee();
         employee.setId(EMPLOYEE_ID);
@@ -135,6 +160,20 @@ class BillingServiceTest {
         pto.setStatus(Status.APPROVED);
         pto.setDetails("Test intra month pto");
         pto.setDays(9.0);
+        pto.setLabourHours(0);
+        pto.setEmployee(getEmployee());
+        pto.setLeaveType(LEAVE_TYPE);
+
+        return List.of(pto);
+    }
+
+    private static List<Pto> createHalfDayPto() {
+        Pto pto = new Pto();
+        pto.setStartDate(LocalDate.of(2025, 2, 15));
+        pto.setEndDate(LocalDate.of(2025, 2, 15)); // Same day for half-day (isHalfDay() will return true)
+        pto.setStatus(Status.APPROVED);
+        pto.setDetails("Half day PTO");
+        pto.setDays(0.5);
         pto.setLabourHours(0);
         pto.setEmployee(getEmployee());
         pto.setLeaveType(LEAVE_TYPE);
