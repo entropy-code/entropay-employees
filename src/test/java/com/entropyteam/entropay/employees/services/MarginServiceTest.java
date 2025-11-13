@@ -139,7 +139,7 @@ class MarginServiceTest {
 
         Assertions.assertEquals(16, data.size());
         validateResult(data.get(0), YearMonth.of(2024, 1), rate2024, 176.0, 0d, BigDecimal.valueOf(2300));
-        validateResult(data.get(1), YearMonth.of(2024, 2), rate2024, 152.0, 4d, BigDecimal.valueOf(2530));
+        validateResult(data.get(1), YearMonth.of(2024, 2), rate2024, 152.0, 8d, BigDecimal.valueOf(2530));
         validateResult(data.get(2), YearMonth.of(2024, 3), rate2024, 160.0, 0d, BigDecimal.valueOf(2530));
         validateResult(data.get(3), YearMonth.of(2024, 4), rate2024, 160.0, 0d, BigDecimal.valueOf(2530));
         validateResult(data.get(4), YearMonth.of(2024, 5), rate2024, 176.0, 0d, BigDecimal.valueOf(2530));
@@ -152,7 +152,7 @@ class MarginServiceTest {
         validateResult(data.get(11), YearMonth.of(2024, 12), rate2024, 156.0, 0d, BigDecimal.valueOf(2530));
         validateResult(data.get(12), YearMonth.of(2025, 1), rate2025, 179.0, 0d, BigDecimal.valueOf(2530));
         validateResult(data.get(13), YearMonth.of(2025, 2), rate2025, 168.0, 0d, BigDecimal.valueOf(2530));
-        validateResult(data.get(14), YearMonth.of(2025, 3), rate2025, 146.0, 4d, BigDecimal.valueOf(2530));
+        validateResult(data.get(14), YearMonth.of(2025, 3), rate2025, 146.0, 8d, BigDecimal.valueOf(2530));
         validateResult(data.get(15), YearMonth.of(2025, 4), rate2025, 160.0, 56d, BigDecimal.valueOf(2800));
     }
 

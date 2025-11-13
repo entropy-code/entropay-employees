@@ -249,8 +249,8 @@ public class PtoService extends BaseService<Pto, PtoDto, UUID> {
      */
     private Double getPtoHours(Pto pto, LocalDate startDate, LocalDate endDate,
             Map<Country, Set<LocalDate>> holidaysByCountry) {
-        if (pto.getStartDate().isEqual(pto.getEndDate())) {
-            return pto.getDays() * 8;
+        if (pto.isSameDay()) {
+            return pto.getHours();
         }
 
         Country country = pto.getEmployee().getCountry();
