@@ -24,7 +24,7 @@ class LeakCheckController {
     @Secured("ROLE_ADMIN")
     @GetMapping("/trigger")
     public ResponseEntity<String> runEmailLeakCheck() {
-        emailLeakCheckService.runAsyncEmailCheck();
+        emailLeakCheckService.executeEmailLeakScan();
         return ResponseEntity.ok("Leak check process started.");
     }
 

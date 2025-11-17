@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -23,18 +23,24 @@ class EmailLeakCheckService {
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
     private final EmailLeakProcessor emailLeakProcessor;
+    private final boolean leakCheckEnabled;
 
     EmailLeakCheckService(EmployeeRepository employeeRepository,
             NotificationService notificationService,
-            EmailLeakProcessor emailLeakProcessor) {
+            EmailLeakProcessor emailLeakProcessor,
+            @Value("${leakcheck.enabled:false}") boolean leakCheckEnabled) {
         this.employeeRepository = employeeRepository;
         this.notificationService = notificationService;
         this.emailLeakProcessor = emailLeakProcessor;
+        this.leakCheckEnabled = leakCheckEnabled;
     }
 
     @Scheduled(cron = "0 30 9 * * ?", zone = "GMT-3")
-    @ConditionalOnProperty(name = "leakcheck.enabled", havingValue = "true", matchIfMissing = false)
-    public void runAsyncEmailCheck() {
+    public void executeEmailLeakScan() {
+        if (!leakCheckEnabled) {
+            LOGGER.debug("Leak check is disabled via configuration");
+            return;
+        }
         LOGGER.info("{} process started.", EMAIL_LEAK_CHECKER);
 
         notificationService.sendNotification(new MessageDto(
