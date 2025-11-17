@@ -15,8 +15,8 @@ import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 @EnableAsync
 class LeakCheckAsyncConfig {
 
-    @Value("${leakcheck.rate-limit.permits-per-second:3}")
-    private int permitsPerSecond;
+    @Value("${leakcheck.rate-limit.refresh-period:400}")
+    private int refreshPeriod;
 
     @Value("${leakcheck.executor.core-pool-size:1}")
     private int corePoolSize;
@@ -43,8 +43,8 @@ class LeakCheckAsyncConfig {
     @Bean(name = "leakCheckRateLimiter")
     public RateLimiter leakCheckRateLimiter() {
         RateLimiterConfig config = RateLimiterConfig.custom()
-                .limitRefreshPeriod(Duration.ofSeconds(1))
-                .limitForPeriod(permitsPerSecond)
+                .limitRefreshPeriod(Duration.ofMillis(refreshPeriod))
+                .limitForPeriod(1)
                 .timeoutDuration(Duration.ofMinutes(5))
                 .build();
 

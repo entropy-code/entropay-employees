@@ -50,7 +50,8 @@ class EmailLeakCheckServiceTest {
         emailLeakCheckService = new EmailLeakCheckService(
                 employeeRepository,
                 notificationService,
-                emailLeakProcessor
+                emailLeakProcessor,
+                true
         );
 
         employee = new Employee();
@@ -72,7 +73,7 @@ class EmailLeakCheckServiceTest {
         when(emailLeakProcessor.processEmployeeLeaksAsync(any(Employee.class)))
                 .thenReturn(CompletableFuture.completedFuture(emptyResult));
 
-        emailLeakCheckService.runAsyncEmailCheck();
+        emailLeakCheckService.executeEmailLeakScan();
 
         ArgumentCaptor<MessageDto> messageCaptor = ArgumentCaptor.forClass(MessageDto.class);
         verify(notificationService, times(2)).sendNotification(messageCaptor.capture());
