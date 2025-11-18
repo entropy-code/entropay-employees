@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseRepository;
@@ -33,9 +32,7 @@ public class ChildrenService extends BaseService<Children, ChildrenDto, UUID> {
     }
 
     protected List<Children> findAllByParentIdAndDeletedIsFalse(UUID parentId) {
-        return childrenRepository.findAll().stream()
-                .filter(c -> c.getParents().stream().anyMatch(p -> p.getId().equals(parentId)) && !c.isDeleted())
-                .collect(Collectors.toList());
+        return childrenRepository.findAllByParentId(parentId);
     }
 
     @Override
