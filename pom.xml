@@ -17,7 +17,7 @@
     <description>Entropay Employees API</description>
 
     <properties>
-        <apache-commons.version>3.19.0</apache-commons.version>
+        <apache-commons.version>3.20.0</apache-commons.version>
         <apache-commons-collections.version>4.5.0</apache-commons-collections.version>
         <google-auth.version>1.40.0</google-auth.version>
         <google-services-calendar.version>v3-rev20251028-2.0.0</google-services-calendar.version>
