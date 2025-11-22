@@ -29,6 +29,7 @@ import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
 
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -85,6 +86,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
                 query.setFirstResult((int) pageable.getOffset());
                 query.setMaxResults(pageable.getPageSize());
             }
+
+            configureEntityGraph(query);
 
             // Get entity response
             List<DTO> entitiesResponse = query.getResultList().stream().map(this::toDTO).collect(Collectors.toList());
@@ -198,6 +201,13 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return predicates;
     }
 
+    private void configureEntityGraph(Query<Entity> query) {
+        getEntityGraphName().ifPresent(entityGraphName -> {
+            EntityGraph<?> entityGraph = entityManager.getEntityGraph(entityGraphName);
+            query.setHint("jakarta.persistence.fetchgraph", entityGraph);
+        });
+    }
+
     @Override
     @Transactional
     public DTO delete(Key id) {
@@ -243,5 +253,9 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     protected List<String> getDateColumnsForSearch() {
         return Collections.emptyList();
+    }
+
+    protected Optional<String> getEntityGraphName() {
+        return Optional.empty();
     }
 }

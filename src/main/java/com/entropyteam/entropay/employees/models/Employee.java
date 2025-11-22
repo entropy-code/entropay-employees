@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.hibernate.annotations.SQLRestriction;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
@@ -16,12 +17,23 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedAttributeNode;
+import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 
 @Entity(name = "Employee")
 @Table(name = "employee")
+@NamedEntityGraph(name = "Employee.all", attributeNodes = {
+        @NamedAttributeNode("roles"),
+        @NamedAttributeNode("paymentsInformation"),
+        @NamedAttributeNode("children"),
+        @NamedAttributeNode("assignments"),
+        @NamedAttributeNode("contracts"),
+        @NamedAttributeNode("vacations"),
+        @NamedAttributeNode("ptos")
+})
 public class Employee extends BaseEntity {
 
     private String internalId;
@@ -65,7 +77,24 @@ public class Employee extends BaseEntity {
     private Country country;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
+    @SQLRestriction("deleted = false")
     private Set<Children> children = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    private Set<Assignment> assignments = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    private Set<Contract> contracts = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    private Set<Vacation> vacations = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    private Set<Pto> ptos = new HashSet<>();
 
     public Employee() {
     }
@@ -299,6 +328,54 @@ public class Employee extends BaseEntity {
     }
 
 
+    public Set<Assignment> getAssignments() {
+        return assignments;
+    }
+
+    public void setAssignments(Set<Assignment> assignments) {
+        this.assignments = assignments;
+    }
+
+    public Set<Contract> getContracts() {
+        return contracts;
+    }
+
+    public void setContracts(Set<Contract> contracts) {
+        this.contracts = contracts;
+    }
+
+    public Set<Vacation> getVacations() {
+        return vacations;
+    }
+
+    public void setVacations(Set<Vacation> vacations) {
+        this.vacations = vacations;
+    }
+
+    public Set<Pto> getPtos() {
+        return ptos;
+    }
+
+    public void setPtos(Set<Pto> ptos) {
+        this.ptos = ptos;
+    }
+
+    public int getAvailableVacationsDays() {
+        return this.vacations.stream()
+                .filter(vacation -> !vacation.isDeleted())
+                .mapToInt(v -> v.getCredit() - v.getDebit())
+                .sum();
+    }
+
+    public LocalDate getNearestPto() {
+        LocalDate today = LocalDate.now();
+        return this.ptos.stream()
+                .filter(pto -> !pto.isDeleted())
+                .map(Pto::getStartDate)
+                .filter(startDate -> !startDate.isBefore(today))
+                .min(LocalDate::compareTo)
+                .orElse(null);
+    }
 
     @Override
     public String toString() {
@@ -308,5 +385,4 @@ public class Employee extends BaseEntity {
                 .append("lastName", lastName)
                 .toString();
     }
-
 }
