@@ -7,6 +7,7 @@ import java.time.Month;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
@@ -38,6 +40,11 @@ import com.entropyteam.entropay.employees.repositories.CountryRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 
 @Service
@@ -278,5 +285,35 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Cacheable("internalEmployees")
     public Set<UUID> getInternalEmployeeIds() {
         return Set.copyOf(assignmentRepository.findAllInternalEmployeeIds());
+    }
+
+    @Override
+    protected Collection<Predicate> buildCustomFieldsPredicates(Root<Employee> root, Filter filter,
+            CriteriaBuilder cb) {
+        Collection<Predicate> predicates = new ArrayList<>();
+
+        // Handle clientId filter: Employee -> assignments -> project -> client
+        if (filter.getGetCustomFieldsFilter().containsKey("clientId")) {
+            List<UUID> clientIds = filter.getGetCustomFieldsFilter().get("clientId").stream()
+                    .map(UUID::fromString)
+                    .toList();
+
+            // Use subquery to avoid interfering with NamedEntityGraph fetching
+            Subquery<UUID> subquery = cb.createQuery().subquery(UUID.class);
+            Root<Assignment> assignmentRoot = subquery.from(Assignment.class);
+
+            subquery.select(assignmentRoot.get("employee").get("id"))
+                    .where(
+                            cb.and(
+                                    assignmentRoot.get("project").get("client").get("id").in(clientIds),
+                                    cb.equal(assignmentRoot.get("active"), true),
+                                    cb.equal(assignmentRoot.get("deleted"), false)
+                            )
+                    );
+
+            predicates.add(root.get("id").in(subquery));
+        }
+
+        return predicates;
     }
 }

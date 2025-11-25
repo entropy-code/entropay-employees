@@ -1,6 +1,5 @@
 package com.entropyteam.entropay.common;
 
-import static com.entropyteam.entropay.auth.AuthUtils.getUserRole;
 import static com.entropyteam.entropay.common.ReactAdminMapper.DATE_FROM_TERM_KEY;
 import static com.entropyteam.entropay.common.ReactAdminMapper.DATE_TO_TERM_KEY;
 import static com.entropyteam.entropay.common.ReactAdminMapper.SEARCH_TERM_KEY;
@@ -25,7 +24,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.transaction.annotation.Transactional;
-import com.entropyteam.entropay.auth.AppRole;
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.employees.models.Contract;
 
@@ -111,13 +109,20 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         }
     }
 
+    private void configureEntityGraph(Query<Entity> query) {
+        getEntityGraphName().ifPresent(entityGraphName -> {
+            EntityGraph<?> entityGraph = entityManager.getEntityGraph(entityGraphName);
+            query.setHint("jakarta.persistence.fetchgraph", entityGraph);
+        });
+    }
+
     private List<Predicate> getPredicates(CriteriaBuilder cb, Root<Entity> root, Filter filter) {
         List<Predicate> predicates = new ArrayList<>();
         predicates.add(cb.equal(root.get("deleted"), false));
-        predicates.addAll(buildEntityRestrictedFields(root, filter, cb));
         predicates.addAll(buildIdPredicates(root, filter));
         predicates.addAll(buildEntityPredicates(root, filter, cb));
         predicates.addAll(buildEntityRelatedPredicates(root, filter, cb));
+        predicates.addAll(buildCustomFieldsPredicates(root, filter, cb));
         return predicates;
     }
 
@@ -134,9 +139,10 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         if (MapUtils.isEmpty(filter.getGetByFieldsFilter()) && MapUtils.isEmpty(filter.getGetByDateFieldsFilter())) {
             return CollectionUtils.emptyCollection();
         }
-        Collection<Predicate> predicates =
-                filter.getGetByFieldsFilter().entrySet().stream().filter(f -> !SEARCH_TERM_KEY.equals(f.getKey()))
-                        .map(f -> cb.equal(root.get(f.getKey()), f.getValue())).collect(Collectors.toSet());
+        Collection<Predicate> predicates = filter.getGetByFieldsFilter().entrySet().stream()
+                .filter(f -> !SEARCH_TERM_KEY.equals(f.getKey()))
+                .map(f -> cb.equal(root.get(f.getKey()), f.getValue()))
+                .collect(Collectors.toSet());
 
         if (filter.getGetByDateFieldsFilter().containsKey(DATE_TO_TERM_KEY) && filter.getGetByDateFieldsFilter()
                 .containsKey(DATE_FROM_TERM_KEY)) {
@@ -192,22 +198,6 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return predicates;
     }
 
-    private Collection<Predicate> buildEntityRestrictedFields(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
-        Collection<Predicate> predicates = new ArrayList<>();
-        Map<String, Object> restrictedFields = getRestrictedFields(getUserRole());
-        for (Map.Entry<String, Object> entry : restrictedFields.entrySet()) {
-            predicates.add(cb.not(root.get(entry.getKey()).in(entry.getValue())));
-        }
-        return predicates;
-    }
-
-    private void configureEntityGraph(Query<Entity> query) {
-        getEntityGraphName().ifPresent(entityGraphName -> {
-            EntityGraph<?> entityGraph = entityManager.getEntityGraph(entityGraphName);
-            query.setHint("jakarta.persistence.fetchgraph", entityGraph);
-        });
-    }
-
     @Override
     @Transactional
     public DTO delete(Key id) {
@@ -247,15 +237,15 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
         return Collections.emptyMap();
     }
 
-    protected Map<String, Object> getRestrictedFields(AppRole userRole) {
-        return Collections.emptyMap();
-    }
-
     protected List<String> getDateColumnsForSearch() {
         return Collections.emptyList();
     }
 
     protected Optional<String> getEntityGraphName() {
         return Optional.empty();
+    }
+
+    protected Collection<Predicate> buildCustomFieldsPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
+        return CollectionUtils.emptyCollection();
     }
 }

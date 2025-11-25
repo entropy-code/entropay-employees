@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.Range;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -57,37 +56,43 @@ public class ReactAdminMapper {
             Map<String, Object> getByFieldsFilter = new HashMap<>();
             Map<String, UUID> getByRelatedFieldsFilter = new HashMap<>();
             Map<String, LocalDate> getByDateFieldsFilter = new HashMap<>();
+            Map<String, List<String>> getCustomFieldsFilter = new HashMap<>();
 
-            if (params.getFilter() != null) {
-                Map<String, Object> requestFilter = mapper.readValue(params.getFilter(), Map.class);
-                for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
-                    if (StringUtils.equalsIgnoreCase(filter.getKey(), ID_FIELD)) {
-                        // getMany filter
-                        List<String> ids = (List<String>) filter.getValue();
-                        getByIdsFilter.put(filter.getKey(),
-                                ids.stream().map(UUID::fromString).collect(Collectors.toList()));
-                    } else if (isEntityField(entityClass, filter.getKey()) || StringUtils.equalsIgnoreCase(
-                            filter.getKey(), SEARCH_TERM_KEY)) {
-                        // getList filter
-                        getByFieldsFilter.put(filter.getKey(), filter.getValue());
-                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), YEAR_SEARCH_TERM_KEY)) {
-                        String year = filter.getValue().toString();
-                        LocalDate dateFrom = LocalDate.parse(year + "-01-01");
-                        LocalDate dateTo = LocalDate.parse(year + "-12-31");
-                        getByDateFieldsFilter.put("dateFrom", dateFrom);
-                        getByDateFieldsFilter.put("dateTo", dateTo);
-                    } else if (StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY)
-                               || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY)) {
-                        LocalDate date = LocalDate.parse(filter.getValue().toString());
-                        getByDateFieldsFilter.put(filter.getKey(), date);
-                    } else {
-                        // getManyReference filter
-                        String relatedEntity = StringUtils.removeEnd(filter.getKey(), "Id");
-                        getByRelatedFieldsFilter.put(relatedEntity, UUID.fromString((String) filter.getValue()));
-                    }
-                }
+            if (params.getFilter() == null) {
+                return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByDateFieldsFilter,
+                        getCustomFieldsFilter);
             }
-            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByDateFieldsFilter);
+
+            Map<String, Object> requestFilter = mapper.readValue(params.getFilter(), Map.class);
+
+            requestFilter.forEach((key, value) -> {
+                if (StringUtils.equalsIgnoreCase(key, ID_FIELD)) {
+                    // getMany filter
+                    List<UUID> ids = ((List<String>) value).stream()
+                            .map(UUID::fromString)
+                            .toList();
+                    getByIdsFilter.put(key, ids);
+                } else if (isEntityField(entityClass, key) || StringUtils.equalsIgnoreCase(key, SEARCH_TERM_KEY)) {
+                    // getList filter
+                    getByFieldsFilter.put(key, value);
+                } else if (StringUtils.equalsIgnoreCase(key, YEAR_SEARCH_TERM_KEY)) {
+                    String year = value.toString();
+                    LocalDate dateFrom = LocalDate.parse(year + "-01-01");
+                    LocalDate dateTo = LocalDate.parse(year + "-12-31");
+                    getByDateFieldsFilter.put("dateFrom", dateFrom);
+                    getByDateFieldsFilter.put("dateTo", dateTo);
+                } else if (StringUtils.equalsIgnoreCase(key, DATE_FROM_TERM_KEY)
+                           || StringUtils.equalsIgnoreCase(key, DATE_TO_TERM_KEY)) {
+                    LocalDate date = LocalDate.parse(value.toString());
+                    getByDateFieldsFilter.put(key, date);
+                } else if (isEntityField(entityClass, StringUtils.removeEnd(key, "Id"))) {
+                    getByRelatedFieldsFilter.put(StringUtils.removeEnd(key, "Id"), UUID.fromString((String) value));
+                } else {
+                    getCustomFieldsFilter.put(key, (List<String>) value);
+                }
+            });
+            return new Filter(getByIdsFilter, getByFieldsFilter, getByRelatedFieldsFilter, getByDateFieldsFilter,
+                    getCustomFieldsFilter);
         } catch (JsonProcessingException e) {
             throw new InvalidRequestParametersException("Bad param on filters");
         }
