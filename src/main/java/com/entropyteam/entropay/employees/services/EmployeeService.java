@@ -288,7 +288,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Collection<Predicate> predicates = new ArrayList<>();
 
         // Handle clientId filter: Employee -> assignments -> project -> client
-        if (filter.getGetCustomFieldsFilter().containsKey("clientId")) {
+        if (filter.getGetCustomFieldsFilter() != null && filter.getGetCustomFieldsFilter().containsKey("clientId")) {
             List<UUID> clientIds = filter.getGetCustomFieldsFilter().get("clientId").stream()
                     .map(UUID::fromString)
                     .toList();
