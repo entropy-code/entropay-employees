@@ -12,13 +12,16 @@ public class Filter {
     private Map<String, Object> getByFieldsFilter;
     private Map<String, UUID> getByRelatedFieldsFilter;
     private Map<String, LocalDate> getByDateFieldsFilter;
+    private Map<String, List<String>> getCustomFieldsFilter;
 
     public Filter(Map<String, List<UUID>> getByIdsFilter, Map<String, Object> getByFieldsFilter,
-            Map<String, UUID> getByRelatedFieldsFilter, Map<String, LocalDate> getByDateFieldsFilter) {
+            Map<String, UUID> getByRelatedFieldsFilter, Map<String, LocalDate> getByDateFieldsFilter,
+            Map<String, List<String>> getCustomFieldsFilter) {
         this.getByIdsFilter = getByIdsFilter;
         this.getByFieldsFilter = getByFieldsFilter;
         this.getByRelatedFieldsFilter = getByRelatedFieldsFilter;
         this.getByDateFieldsFilter = getByDateFieldsFilter;
+        this.getCustomFieldsFilter = getCustomFieldsFilter;
     }
 
     public Filter(Map<String, Object> getByFieldsFilter) {
@@ -55,5 +58,13 @@ public class Filter {
 
     public void setGetByDateFieldsFilter(Map<String, LocalDate> getByDateFieldsFilter) {
         this.getByDateFieldsFilter = getByDateFieldsFilter;
+    }
+
+    public Map<String, List<String>> getGetCustomFieldsFilter() {
+        return getCustomFieldsFilter;
+    }
+
+    public void setGetCustomFieldsFilter(Map<String, List<String>> getCustomFieldsFilter) {
+        this.getCustomFieldsFilter = getCustomFieldsFilter;
     }
 }

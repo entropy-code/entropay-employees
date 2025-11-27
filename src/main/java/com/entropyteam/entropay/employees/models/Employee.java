@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLRestriction;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
@@ -47,6 +49,8 @@ public class Employee extends BaseEntity {
     private boolean active;
 
     @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -55,9 +59,12 @@ public class Employee extends BaseEntity {
             joinColumns = {@JoinColumn(name = "employee_id")},
             inverseJoinColumns = {@JoinColumn(name = "role_id")}
     )
+    @BatchSize(size = 100)
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Skill> skills = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -65,7 +72,29 @@ public class Employee extends BaseEntity {
     private Country country;
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Children> children = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
+    private Set<Assignment> assignments = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
+    private Set<Contract> contracts = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
+    private Set<Vacation> vacations = new HashSet<>();
+
+    @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
+    private Set<Pto> ptos = new HashSet<>();
 
     public Employee() {
     }
@@ -299,6 +328,51 @@ public class Employee extends BaseEntity {
     }
 
 
+    public Set<Assignment> getAssignments() {
+        return assignments;
+    }
+
+    public void setAssignments(Set<Assignment> assignments) {
+        this.assignments = assignments;
+    }
+
+    public Set<Contract> getContracts() {
+        return contracts;
+    }
+
+    public void setContracts(Set<Contract> contracts) {
+        this.contracts = contracts;
+    }
+
+    public Set<Vacation> getVacations() {
+        return vacations;
+    }
+
+    public void setVacations(Set<Vacation> vacations) {
+        this.vacations = vacations;
+    }
+
+    public Set<Pto> getPtos() {
+        return ptos;
+    }
+
+    public void setPtos(Set<Pto> ptos) {
+        this.ptos = ptos;
+    }
+
+    public int getAvailableVacationsDays() {
+        return this.vacations.stream()
+                .mapToInt(v -> v.getCredit() - v.getDebit())
+                .sum();
+    }
+
+    public LocalDate getNearestPto(LocalDate today) {
+        return this.ptos.stream()
+                .map(Pto::getStartDate)
+                .filter(startDate -> !startDate.isBefore(today))
+                .min(LocalDate::compareTo)
+                .orElse(null);
+    }
 
     @Override
     public String toString() {
@@ -308,5 +382,4 @@ public class Employee extends BaseEntity {
                 .append("lastName", lastName)
                 .toString();
     }
-
 }

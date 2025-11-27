@@ -5,7 +5,9 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
+import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
@@ -35,10 +38,13 @@ import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.CountryRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.employees.repositories.PaymentInformationRepository;
-import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 
 @Service
@@ -46,12 +52,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
-    private final PaymentInformationRepository paymentRepository;
     private final PaymentInformationService paymentInformationService;
     private final AssignmentRepository assignmentRepository;
     private final ContractRepository contractRepository;
     private final VacationRepository vacationRepository;
-    private final PtoRepository ptoRepository;
     private final CountryRepository countryRepository;
     private final CalendarService calendarService;
     private final ChildrenService childrenService;
@@ -59,21 +63,17 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Autowired
     public EmployeeService(EmployeeRepository employeeRepository, RoleRepository roleRepository,
-            PaymentInformationRepository paymentInformationRepository,
-            PaymentInformationService paymentInformationService,
-            AssignmentRepository assignmentRepository, ContractRepository contractRepository,
-            ReactAdminMapper reactAdminMapper, VacationRepository vacationRepository, PtoRepository ptoRepository,
-            CountryRepository countryRepository, CalendarService calendarService,
-            ChildrenService childrenService) {
+            PaymentInformationService paymentInformationService, AssignmentRepository assignmentRepository,
+            ContractRepository contractRepository, ReactAdminMapper reactAdminMapper,
+            VacationRepository vacationRepository, CountryRepository countryRepository,
+            CalendarService calendarService, ChildrenService childrenService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
-        this.paymentRepository = paymentInformationRepository;
         this.paymentInformationService = paymentInformationService;
         this.assignmentRepository = assignmentRepository;
         this.contractRepository = contractRepository;
         this.vacationRepository = vacationRepository;
-        this.ptoRepository = ptoRepository;
         this.countryRepository = countryRepository;
         this.calendarService = calendarService;
         this.childrenService = childrenService;
@@ -85,24 +85,23 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     @Override
-    protected EmployeeDto toDTO(Employee entity) {
-        List<PaymentInformation> paymentInformationList =
-                paymentRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
-        List<Children> childrenList =
-                childrenService.findAllByParentIdAndDeletedIsFalse(entity.getId());
+    protected EmployeeDto toDTO(Employee employee) {
+        List<PaymentInformation> paymentInformationList = new ArrayList<>(employee.getPaymentsInformation());
+        List<Children> childrenList = new ArrayList<>(employee.getChildren());
         Optional<Assignment> assignment =
-                assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
-        List<Contract> contracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(entity.getId());
+                employee.getAssignments().stream().filter(Assignment::isActive).findFirst();
+        List<Contract> contracts = new ArrayList<>(employee.getContracts());
         Optional<Contract> firstContract = contracts.stream().min(Comparator.comparing(Contract::getStartDate));
-        Integer availableDays = vacationRepository.getAvailableDays(entity.getId());
-        Optional<Contract> latestContract =
-                contractRepository.findContractByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(entity.getId());
+        Optional<Contract> latestContract = contracts.stream().filter(Contract::isActive).findFirst();
         if (latestContract.isEmpty()) {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
+
+        Integer availableDays = employee.getAvailableVacationsDays();
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
-        LocalDate nearestPto = ptoRepository.findNearestPto(entity.getId());
-        return new EmployeeDto(entity, paymentInformationList, childrenList, assignment.orElse(null),
+        LocalDate nearestPto = employee.getNearestPto(LocalDate.now());
+
+        return new EmployeeDto(employee, paymentInformationList, childrenList, assignment.orElse(null),
                 firstContract.orElse(null),
                 availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
     }
@@ -281,5 +280,35 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Cacheable("internalEmployees")
     public Set<UUID> getInternalEmployeeIds() {
         return Set.copyOf(assignmentRepository.findAllInternalEmployeeIds());
+    }
+
+    @Override
+    protected Collection<Predicate> buildCustomFieldsPredicates(Root<Employee> root, Filter filter,
+            CriteriaBuilder cb) {
+        Collection<Predicate> predicates = new ArrayList<>();
+
+        // Handle clientId filter: Employee -> assignments -> project -> client
+        if (filter.getGetCustomFieldsFilter() != null && filter.getGetCustomFieldsFilter().containsKey("clientId")) {
+            List<UUID> clientIds = filter.getGetCustomFieldsFilter().get("clientId").stream()
+                    .map(UUID::fromString)
+                    .toList();
+
+            // Use subquery to avoid interfering with NamedEntityGraph fetching
+            Subquery<UUID> subquery = cb.createQuery().subquery(UUID.class);
+            Root<Assignment> assignmentRoot = subquery.from(Assignment.class);
+
+            subquery.select(assignmentRoot.get("employee").get("id"))
+                    .where(
+                            cb.and(
+                                    assignmentRoot.get("project").get("client").get("id").in(clientIds),
+                                    cb.equal(assignmentRoot.get("active"), true),
+                                    cb.equal(assignmentRoot.get("deleted"), false)
+                            )
+                    );
+
+            predicates.add(root.get("id").in(subquery));
+        }
+
+        return predicates;
     }
 }
