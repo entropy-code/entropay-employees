@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
@@ -17,23 +18,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedAttributeNode;
-import jakarta.persistence.NamedEntityGraph;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 
 @Entity(name = "Employee")
 @Table(name = "employee")
-@NamedEntityGraph(name = "Employee.all", attributeNodes = {
-        @NamedAttributeNode("roles"),
-        @NamedAttributeNode("paymentsInformation"),
-        @NamedAttributeNode("children"),
-        @NamedAttributeNode("assignments"),
-        @NamedAttributeNode("contracts"),
-        @NamedAttributeNode("vacations"),
-        @NamedAttributeNode("ptos")
-})
 public class Employee extends BaseEntity {
 
     private String internalId;
@@ -59,6 +49,7 @@ public class Employee extends BaseEntity {
     private boolean active;
 
     @OneToMany(mappedBy = "employee")
+    @BatchSize(size = 100)
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -67,9 +58,11 @@ public class Employee extends BaseEntity {
             joinColumns = {@JoinColumn(name = "employee_id")},
             inverseJoinColumns = {@JoinColumn(name = "role_id")}
     )
+    @BatchSize(size = 100)
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "employee")
+    @BatchSize(size = 100)
     private Set<Skill> skills = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -78,22 +71,27 @@ public class Employee extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "parents")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Children> children = new HashSet<>();
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Assignment> assignments = new HashSet<>();
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Contract> contracts = new HashSet<>();
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Vacation> vacations = new HashSet<>();
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<Pto> ptos = new HashSet<>();
 
     public Employee() {
@@ -367,8 +365,7 @@ public class Employee extends BaseEntity {
                 .sum();
     }
 
-    public LocalDate getNearestPto() {
-        LocalDate today = LocalDate.now();
+    public LocalDate getNearestPto(LocalDate today) {
         return this.ptos.stream()
                 .filter(pto -> !pto.isDeleted())
                 .map(Pto::getStartDate)

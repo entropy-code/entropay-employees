@@ -85,11 +85,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     }
 
     @Override
-    protected Optional<String> getEntityGraphName() {
-        return Optional.of("Employee.all");
-    }
-
-    @Override
     protected EmployeeDto toDTO(Employee employee) {
         List<PaymentInformation> paymentInformationList = new ArrayList<>(employee.getPaymentsInformation());
         List<Children> childrenList = new ArrayList<>(employee.getChildren());
@@ -104,7 +99,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
         Integer availableDays = employee.getAvailableVacationsDays();
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
-        LocalDate nearestPto = employee.getNearestPto();
+        LocalDate nearestPto = employee.getNearestPto(LocalDate.now());
 
         return new EmployeeDto(employee, paymentInformationList, childrenList, assignment.orElse(null),
                 firstContract.orElse(null),
