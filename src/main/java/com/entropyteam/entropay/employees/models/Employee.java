@@ -49,6 +49,7 @@ public class Employee extends BaseEntity {
     private boolean active;
 
     @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
     @BatchSize(size = 100)
     private Set<PaymentInformation> paymentsInformation = new HashSet<>();
 
@@ -62,6 +63,7 @@ public class Employee extends BaseEntity {
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "employee")
+    @SQLRestriction("deleted = false")
     @BatchSize(size = 100)
     private Set<Skill> skills = new HashSet<>();
 
@@ -360,14 +362,12 @@ public class Employee extends BaseEntity {
 
     public int getAvailableVacationsDays() {
         return this.vacations.stream()
-                .filter(vacation -> !vacation.isDeleted())
                 .mapToInt(v -> v.getCredit() - v.getDebit())
                 .sum();
     }
 
     public LocalDate getNearestPto(LocalDate today) {
         return this.ptos.stream()
-                .filter(pto -> !pto.isDeleted())
                 .map(Pto::getStartDate)
                 .filter(startDate -> !startDate.isBefore(today))
                 .min(LocalDate::compareTo)
