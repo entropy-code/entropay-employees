@@ -2,46 +2,37 @@ package com.entropyteam.entropay.summary.dtos;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.entropyteam.entropay.summary.model.EmployeeSummary;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.NotNull;
 
-public class EmployeeSummaryDto {
-    private UUID id;
-    private String prompt;
-    private String summaryText;
-    private String createdBy;
-    private LocalDateTime createdAt;
-    private String employeeName;
 
-    public EmployeeSummaryDto(UUID id, String prompt, String summaryText, String createdBy, LocalDateTime createdAt, String employeeName) {
-        this.id = id;
-        this.prompt = prompt;
-        this.summaryText = summaryText;
-        this.createdBy = createdBy;
-        this.createdAt = createdAt;
-        this.employeeName = employeeName;
-    }
+public record EmployeeSummaryDto (
 
-    // Getters
-    public UUID getId() {
-        return id;
-    }
+        UUID id,
 
-    public String getPrompt() {
-        return prompt;
-    }
+        @NotNull(message = "Prompt is mandatory")
+    String prompt,
 
-    public String getSummaryText() {
-        return summaryText;
-    }
+        @NotNull(message = "Summary text is mandatory")
+    String summaryText,
 
-    public String getCreatedBy() {
-        return createdBy;
-    }
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    String createdBy,
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 
-    public String getEmployeeName() {
-        return employeeName;
-    }
+        LocalDateTime createdAt, String employeeName) {
+
+    public EmployeeSummaryDto(EmployeeSummary summary) {
+            this(
+                    summary.getId(),
+                    summary.getPrompt(),
+                    summary.getSummaryText(),
+                    summary.getCreatedBy(),
+                    summary.getCreatedAt(),
+                    summary.getEmployee() != null ? summary.getEmployee().getFullName() : null
+            );
+        }
+
 }
+

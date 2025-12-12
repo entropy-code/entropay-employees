@@ -1,5 +1,6 @@
 # Compiled class file
 *.class
+.run/Employee.run.xml
 
 # Log file
 *.log
@@ -42,6 +43,8 @@ target/
 *.iws
 *.iml
 *.ipr
+.run/
+
 
 ### NetBeans ###
 /nbproject/private/

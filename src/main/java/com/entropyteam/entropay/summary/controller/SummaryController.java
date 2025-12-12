@@ -1,22 +1,54 @@
 package com.entropyteam.entropay.summary.controller;
 
-import com.entropyteam.entropay.summary.dtos.EmployeeSummaryDto;
-import com.entropyteam.entropay.summary.dtos.SummaryRequest;
-import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.summary.model.EmployeeSummary;
-import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
-import com.entropyteam.entropay.summary.repository.EmployeeSummaryRepository;
-import com.entropyteam.entropay.summary.services.SummaryService;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.web.bind.annotation.*;
+import com.entropyteam.entropay.summary.dtos.EmployeeSummaryDto;
+import com.entropyteam.entropay.summary.services.SummaryService;
+import com.entropyteam.entropay.common.BaseController;
 
+import java.util.List;
 import java.util.UUID;
+
+import static com.entropyteam.entropay.auth.AuthConstants.*;
 
 
 @RestController
-@RequestMapping("/api/summaries")
+@CrossOrigin
+@Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_ANALYST, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
+@RequestMapping("/summary")
+
+public class SummaryController extends BaseController<EmployeeSummaryDto, UUID> {
+
+  /*  public SummaryController(SummaryService summaryService) {
+        super(summaryService);  }*/
+
+    private final SummaryService summaryService;
+
+    public SummaryController(SummaryService summaryService) {
+        super(summaryService);
+        this.summaryService = summaryService;
+    }
+
+    // Generar resumen pasando nombre y feedbacks manualmente
+    @PostMapping("/{id}/generate")
+    public ResponseEntity<String> generateSummary(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String prompt) {
+
+        String summary = summaryService.generateSummaryByEmployeeId(id, prompt);
+        return ResponseEntity.ok(summary);
+    }
+
+}
+
+
+
+
+
+
+
+/*
 public class SummaryController {
 
     private final SummaryService summaryService;
@@ -56,4 +88,4 @@ public class SummaryController {
         return ResponseEntity.ok(dto);
     }
 }
-
+*/

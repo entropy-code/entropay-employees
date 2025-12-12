@@ -2,11 +2,10 @@ CREATE TABLE IF NOT EXISTS employee_summary (
     id               UUID                        NOT NULL,
     employee_id      UUID                        NOT NULL,
     prompt           VARCHAR(5000),
-    summary_text     VARCHAR(5000),
+    summary_text     VARCHAR(100000),
 
     created_by       VARCHAR(255),
     created_at       TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    modified_by      VARCHAR(255),
     modified_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     deleted          BOOLEAN                     NOT NULL DEFAULT FALSE,
 

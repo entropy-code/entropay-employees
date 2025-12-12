@@ -1,74 +1,47 @@
 package com.entropyteam.entropay.summary.model;
 
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.summary.dtos.EmployeeSummaryDto;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
-
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 import com.entropyteam.entropay.common.BaseEntity;
-import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-@Entity
+@Entity(name = "EmployeeSummary")
 @Table(name = "employee_summary")
-public class EmployeeSummary {
-    @Id
-    @Column(nullable = false)
-    private UUID id;
 
-    public EmployeeSummary() {
-        this.id = UUID.randomUUID();
-    }
-
-    public EmployeeSummary(Employee employee, String prompt, String summaryText, String createdBy) {
-        this.id = UUID.randomUUID();
-        this.employee = employee;
-        this.prompt = prompt;
-        this.summaryText = summaryText;
-        this.createdBy = createdBy;
-        this.createdAt = LocalDateTime.now();
-    }
+public class EmployeeSummary extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "employee_id")
+    @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
     @Column(length = 5000)
     private String prompt;
 
-    @Column(length = 5000)
+    @Column(length = 100000)
     private String summaryText;
 
     @Column(length = 255)
     private String createdBy;
 
-    private LocalDateTime modifiedAt;
-    private LocalDateTime createdAt;
+    public EmployeeSummary(EmployeeSummaryDto dto) {}
+    protected EmployeeSummary() {}
+
+
+    public EmployeeSummary ( EmployeeSummaryDto dto, Employee employee) {
+        this.employee = employee;
+        this.prompt = dto.prompt();
+        this.summaryText = dto.summaryText();
+        this.createdBy = dto.createdBy();
+    }
+
 
     // Getters y Setters
-    public UUID  getId() {
-        return id;
-    }
-
-    public void setId(UUID  id) {
-        this.id = id;
-    }
 
     public Employee getEmployee() {
         return employee;
@@ -102,31 +75,5 @@ public class EmployeeSummary {
         this.createdBy = createdBy;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    public LocalDateTime getModifiedAt() {
-        return modifiedAt;
-    }
-
-    public void setModifiedAt(LocalDateTime modifiedAt) {
-        this.modifiedAt = modifiedAt;
-    }
-
-
-
-    @PreUpdate
-    public void updateModifiedAt() {
-        this.modifiedAt = LocalDateTime.now();
-    }
-
-    @PrePersist
-    public void setCreationTimestamp() {
-        this.createdAt = LocalDateTime.now();
-    }
 
 }

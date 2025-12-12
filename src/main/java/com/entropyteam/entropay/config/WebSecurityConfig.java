@@ -32,10 +32,7 @@ public class WebSecurityConfig {
             "/actuator/**",
             "/swagger-ui.html",
             "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "api/summaries/**",
-            "/v3/api-docs/"
-
+            "/v3/api-docs/**"
     };
 
     private final AuthorizationService authorizationService;
