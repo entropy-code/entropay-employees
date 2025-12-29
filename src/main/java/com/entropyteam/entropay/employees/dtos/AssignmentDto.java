@@ -20,8 +20,6 @@ public record AssignmentDto(UUID id,
                             UUID roleId,
                             @NotNull(message ="Seniority is mandatory")
                             UUID seniorityId,
-                            Integer hoursPerMonth,
-                            String labourHours,
                             @SensitiveInformation
                             BigDecimal billableRate,
                             String currency,
@@ -36,20 +34,20 @@ public record AssignmentDto(UUID id,
                             LocalDateTime createdAt,
                             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
                             LocalDateTime modifiedAt,
-                            String endReason
+                            String endReason,
+                            @NotNull(message = "Engagement type is mandatory")
+                            String engagementType
 ) implements EmployeeIdAware {
 
 
     public AssignmentDto(Assignment assignment) {
         this(
                 assignment.getId(), assignment.getProject().getId(), assignment.getEmployee().getId(),
-                assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getHoursPerMonth(),
-                assignment.getLabourHours(), assignment.getBillableRate(),
+                assignment.getRole().getId(), assignment.getSeniority().getId(), assignment.getBillableRate(),
                 assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(),
-                assignment.isActive(),
-                assignment.getModifiedAt(), assignment.getCreatedAt(),
-                assignment.getEndReason()
+                assignment.isActive(), assignment.getModifiedAt(), assignment.getCreatedAt(),
+                assignment.getEndReason(), assignment.getEngagementType().name()
         );
     }
 

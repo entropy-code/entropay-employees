@@ -99,27 +99,27 @@ public class Employee extends BaseEntity {
     public Employee() {
     }
 
-    public Employee(EmployeeDto entity) {
-        this.internalId = entity.internalId();
-        this.firstName = entity.firstName();
-        this.lastName = entity.lastName();
-        this.gender = entity.gender();
-        this.personalEmail = entity.personalEmail();
-        this.phoneNumber = entity.phoneNumber();
-        this.mobileNumber = entity.mobileNumber();
-        this.address = entity.address();
-        this.city = entity.city();
-        this.state = entity.state();
-        this.zip = entity.zip();
-        this.birthDate = entity.birthDate();
-        this.personalNumber = entity.personalNumber();
-        this.taxId = entity.taxId();
-        this.emergencyContactFullName = entity.emergencyContactFullName();
-        this.emergencyContactPhone = entity.emergencyContactPhone();
-        this.notes = entity.notes();
-        this.healthInsurance = entity.healthInsurance();
-        this.labourEmail = entity.labourEmail();
-        this.active = entity.active();
+    public Employee(EmployeeDto employeeDto) {
+        this.internalId = employeeDto.getInternalId();
+        this.firstName = employeeDto.getFirstName();
+        this.lastName = employeeDto.getLastName();
+        this.gender = employeeDto.getGender();
+        this.personalEmail = employeeDto.getPersonalEmail();
+        this.phoneNumber = employeeDto.getPhoneNumber();
+        this.mobileNumber = employeeDto.getMobileNumber();
+        this.address = employeeDto.getAddress();
+        this.city = employeeDto.getCity();
+        this.state = employeeDto.getState();
+        this.zip = employeeDto.getZip();
+        this.birthDate = employeeDto.getBirthDate();
+        this.personalNumber = employeeDto.getPersonalNumber();
+        this.taxId = employeeDto.getTaxId();
+        this.emergencyContactFullName = employeeDto.getEmergencyContactFullName();
+        this.emergencyContactPhone = employeeDto.getEmergencyContactPhone();
+        this.notes = employeeDto.getNotes();
+        this.healthInsurance = employeeDto.getHealthInsurance();
+        this.labourEmail = employeeDto.getLabourEmail();
+        this.active = employeeDto.isActive();
     }
 
     public String getFirstName() {

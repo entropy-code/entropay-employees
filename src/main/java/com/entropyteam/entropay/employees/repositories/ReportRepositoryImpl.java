@@ -27,14 +27,15 @@ public class ReportRepositoryImpl implements ReportRepository {
                     last_name as lastName,
                     c.name as clientName,
                     ps.salary,
-                    a.billable_rate as rate,
                     ps.modality,
                     ps.currency,
                     pi.platform,
                     country.name as country
                 from employee e
                      inner join country on e.country_id = country.id
-                     left join assignment a on e.id = a.employee_id and a.active = true
+                     left join assignment a on e.id = a.employee_id
+                                                   and a.active = true
+                                                   and a.engagement_type in ('FULL_TIME', 'PART_TIME')
                      left join project p on p.id = a.project_id
                      left join client c on c.id = p.client_id
                      left join contract co on e.id = co.employee_id and co.active = true
