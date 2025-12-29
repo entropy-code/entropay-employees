@@ -20,7 +20,7 @@
         <apache-commons.version>3.20.0</apache-commons.version>
         <apache-commons-collections.version>4.5.0</apache-commons-collections.version>
         <google-auth.version>1.40.0</google-auth.version>
-        <google-services-calendar.version>v3-rev20251028-2.0.0</google-services-calendar.version>
+        <google-services-calendar.version>v3-rev20251207-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
         <java.version>21</java.version>
         <postgresql.version>42.7.8</postgresql.version>
