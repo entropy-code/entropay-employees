@@ -86,8 +86,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Override
     protected EmployeeDto toDTO(Employee employee) {
-        List<PaymentInformation> paymentInformationList = new ArrayList<>(employee.getPaymentsInformation());
-        List<Children> childrenList = new ArrayList<>(employee.getChildren());
         Optional<Assignment> assignment =
                 employee.getAssignments().stream().filter(Assignment::isActive).findFirst();
         List<Contract> contracts = new ArrayList<>(employee.getContracts());
@@ -97,26 +95,22 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
 
-        Integer availableDays = employee.getAvailableVacationsDays();
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
-        LocalDate nearestPto = employee.getNearestPto(LocalDate.now());
 
-        return new EmployeeDto(employee, paymentInformationList, childrenList, assignment.orElse(null),
-                firstContract.orElse(null),
-                availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
+        return new EmployeeDto(employee, assignment.orElse(null), firstContract.orElse(null),
+                latestContract.orElse(null), timeSinceStart);
     }
 
     @Override
     protected Employee toEntity(EmployeeDto dto) {
         Employee employee = new Employee(dto);
-        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.profile());
-        Country country = countryRepository.findById(dto.countryId()).orElseThrow();
+        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.getProfile());
+        Country country = countryRepository.findById(dto.getCountryId()).orElseThrow();
         employee.setCountry(country);
         employee.setRoles(roles);
-        employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
-                : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
-        employee.setChildren((dto.children() == null) ? Collections.emptySet()
-                : dto.children().stream().map(Children::new).collect(Collectors.toSet()));
+        employee.setPaymentsInformation(
+                dto.getPaymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        employee.setChildren(dto.getChildren().stream().map(Children::new).collect(Collectors.toSet()));
         return employee;
     }
 
@@ -151,14 +145,14 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
 
-        if (!employeeDto.active()) {
+        if (!employeeDto.isActive()) {
             calendarService.deleteBirthdayEvent(savedEntity.getId().toString());
         } else {
             calendarService.updateBirthdayEvent(savedEntity.getId().toString(), savedEntity.getFirstName(),
                     savedEntity.getLastName(), savedEntity.getBirthDate());
         }
-        paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
-        childrenService.updateChildren(employeeDto.children(), savedEntity);
+        paymentInformationService.updatePaymentsInformation(employeeDto.getPaymentInformation(), savedEntity);
+        childrenService.updateChildren(employeeDto.getChildren(), savedEntity);
 
         return toDTO(savedEntity);
     }

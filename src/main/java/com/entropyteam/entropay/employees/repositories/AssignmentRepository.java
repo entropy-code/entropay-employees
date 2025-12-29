@@ -15,7 +15,15 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     List<Assignment> findAssignmentByEmployee_IdAndDeletedIsFalse(UUID employee_id);
 
-    Optional<Assignment> findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(UUID employee_id);
+    @Query(value = """
+            SELECT a
+            FROM Assignment a
+            WHERE a.active is TRUE
+              AND a.deleted is FALSE
+              AND a.employee.id = :employeeId
+              AND a.project.id = :projectId
+            """)
+    Optional<Assignment> findActiveAssignmentByEmployeeAndProject(UUID employeeId, UUID projectId);
 
     List<Assignment> findAllByDeletedIsFalseAndActiveIsTrueAndEndDateLessThan(LocalDate date);
 
@@ -45,6 +53,13 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
 
+    /**
+     * This query is used for the Billing. Therefore, we are only including assignments that are full time or part
+     *
+     * @param startDate start date
+     * @param endDate end date
+     * @return list of assignments
+     */
     @Query(value = """
             FROM Assignment a
             JOIN FETCH a.employee e
@@ -54,6 +69,7 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
             WHERE a.startDate <= :endDate
                 AND (a.endDate IS NULL OR a.endDate between :startDate and :endDate)
                 AND a.deleted = FALSE
+                AND a.engagementType in ('FULL_TIME', 'PART_TIME')
                 AND e.active = TRUE""")
     List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
 
@@ -72,6 +88,7 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                                      where a.deleted is false
                                        and e.deleted is false
                                        and p.deleted is false
+                                       and a.engagement_type in ('FULL_TIME', 'PART_TIME')
                                      GROUP BY a.employee_id, a.project_id),
             data as (SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
                    pp.employee_id,
@@ -93,8 +110,8 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                                 ) AS month_series)
             select *
             from data
-            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')                                                                       
-              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')                                                                     
+            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')
+              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')
             order by "year-month", client_id, project_id, employee_id
             """, nativeQuery = true)
     List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(@Param("start_date") LocalDate startDate,

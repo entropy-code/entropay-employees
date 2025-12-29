@@ -38,10 +38,6 @@ public class Assignment extends BaseEntity {
     @Column
     private LocalDate endDate;
     @Column
-    private Integer hoursPerMonth;
-    @Column
-    private String labourHours;
-    @Column
     private BigDecimal billableRate;
     @Enumerated(EnumType.STRING)
     @Column(name = "currency")
@@ -50,6 +46,9 @@ public class Assignment extends BaseEntity {
     private boolean active;
     @Column
     private String endReason;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "engagement_type")
+    private EngagementType engagementType;
 
     public Assignment() {
     }
@@ -57,11 +56,10 @@ public class Assignment extends BaseEntity {
     public Assignment(AssignmentDto assignmentDto) {
         this.startDate = assignmentDto.startDate();
         this.endDate = assignmentDto.endDate();
-        this.hoursPerMonth = assignmentDto.hoursPerMonth();
         this.billableRate = assignmentDto.billableRate();
         this.currency = Currency.findByName(assignmentDto.currency());
-        this.labourHours = assignmentDto.labourHours();
         this.endReason = assignmentDto.endReason();
+        this.engagementType = EngagementType.valueOf(assignmentDto.engagementType());
     }
 
     public Project getProject() {
@@ -112,28 +110,12 @@ public class Assignment extends BaseEntity {
         this.endDate = endDate;
     }
 
-    public Integer getHoursPerMonth() {
-        return hoursPerMonth;
-    }
-
-    public void setHoursPerMonth(Integer hoursPerMonth) {
-        this.hoursPerMonth = hoursPerMonth;
-    }
-
     public BigDecimal getBillableRate() {
         return billableRate != null ? billableRate : BigDecimal.ZERO;
     }
 
     public void setBillableRate(BigDecimal billableRate) {
         this.billableRate = billableRate;
-    }
-
-    public String getLabourHours() {
-        return labourHours;
-    }
-
-    public void setLabourHours(String labourHours) {
-        this.labourHours = labourHours;
     }
 
     public Currency getCurrency() {
@@ -160,21 +142,27 @@ public class Assignment extends BaseEntity {
         this.endReason = endReason;
     }
 
+    public EngagementType getEngagementType() {
+        return engagementType;
+    }
+    public void setEngagementType(EngagementType engagementType) {
+        this.engagementType = engagementType;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("hoursPerMonth", hoursPerMonth)
                 .append("project", project)
                 .append("role", role)
                 .append("seniority", seniority)
                 .append("employee", employee)
                 .append("startDate", startDate)
                 .append("endDate", endDate)
-                .append("labourHours", labourHours)
                 .append("billableRate", billableRate)
                 .append("currency", currency)
                 .append("active", active)
                 .append("endReason", endReason)
+                .append("engagementType", engagementType)
                 .toString();
     }
 }
