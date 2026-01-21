@@ -11,6 +11,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLRestriction;
 import com.entropyteam.entropay.common.BaseEntity;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
 
@@ -58,6 +60,8 @@ public class Contract extends BaseEntity {
     @Column
     private boolean active;
     @OneToMany(mappedBy = "contract")
+    @SQLRestriction("deleted = false")
+    @BatchSize(size = 100)
     private Set<PaymentSettlement> paymentsSettlement = new HashSet<>();
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "end_reason_id")
@@ -225,5 +229,20 @@ public class Contract extends BaseEntity {
     public void addPaymentSettlement(PaymentSettlement paymentSettlement) {
         paymentSettlement.setContract(this);
         this.paymentsSettlement.add(paymentSettlement);
+    }
+
+    /**
+     * Calculates the cumulative monthly salary in USD for all payment settlements
+     * in the contract with a modality of "MONTHLY" and currency "USD".
+     *
+     * @return the total monthly salary as a {@code BigDecimal}. If no matching payment settlements
+     *         are found, returns {@code BigDecimal.ZERO}.
+     */
+    public BigDecimal calculateMonthlySalaryInUSD() {
+        return paymentsSettlement.stream()
+                .filter(payment -> Modality.MONTHLY.equals(payment.getModality()))
+                .filter(payment -> Currency.USD.equals(payment.getCurrency()))
+                .map(PaymentSettlement::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

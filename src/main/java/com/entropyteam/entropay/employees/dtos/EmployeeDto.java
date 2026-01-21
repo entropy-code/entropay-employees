@@ -1,5 +1,6 @@
 package com.entropyteam.entropay.employees.dtos;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,6 +13,7 @@ import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Gender;
 import com.entropyteam.entropay.employees.models.Project;
+import com.entropyteam.entropay.employees.services.MarginService;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Email;
@@ -71,6 +73,9 @@ public final class EmployeeDto {
     private LocalDate nearestPto;
     private String timeSinceStart;
     private String countryName;
+    private BigDecimal rate;
+    private BigDecimal salary;
+    private BigDecimal margin;
 
     public EmployeeDto() {
     }
@@ -126,6 +131,9 @@ public final class EmployeeDto {
         this.nearestPto = employee.getNearestPto(LocalDate.now());
         this.timeSinceStart = timeSinceStart;
         this.countryName = employee.getCountry().getName();
+        this.salary = activeContract != null ? activeContract.calculateMonthlySalaryInUSD() : BigDecimal.ZERO;
+        this.rate = lastAssignment != null ? lastAssignment.getBillableRate() : BigDecimal.ZERO;
+        this.margin = MarginService.calculateMargin(salary, rate);
     }
 
     public void setId(UUID id) {
@@ -431,5 +439,29 @@ public final class EmployeeDto {
 
     public String getCountryName() {
         return countryName;
+    }
+
+    public BigDecimal getRate() {
+        return rate;
+    }
+
+    public void setRate(BigDecimal rate) {
+        this.rate = rate;
+    }
+
+    public BigDecimal getSalary() {
+        return salary;
+    }
+
+    public void setSalary(BigDecimal salary) {
+        this.salary = salary;
+    }
+
+    public BigDecimal getMargin() {
+        return margin;
+    }
+
+    public void setMargin(BigDecimal margin) {
+        this.margin = margin;
     }
 }
