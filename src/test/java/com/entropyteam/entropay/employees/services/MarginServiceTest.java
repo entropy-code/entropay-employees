@@ -260,4 +260,62 @@ class MarginServiceTest {
                 LocalDate.of(2025, 3, 3), LocalDate.of(2025, 3, 4), LocalDate.of(2025, 3, 24), LocalDate.of(2025, 4, 2),
                 LocalDate.of(2025, 4, 18)));
     }
+
+    @Test
+    void testCalculateMargin_WithValidSalaryAndRate() {
+        BigDecimal salary = BigDecimal.valueOf(3000);
+        BigDecimal rate = BigDecimal.valueOf(25);
+
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        // Expected calculation:
+        // annualRevenue = 25 * 1850 = 46,250
+        // annualCost = 3000 * 12 = 36,000
+        // grossMargin = 46,250 - 36,000 = 10,250
+        // marginPercentage = 10,250 / 46,250 = 0.2216... (rounded to 2 decimal places = 0.22)
+        // return = 0.22 * 100 = 22.00
+        Assertions.assertEquals(new BigDecimal("22.00"), margin);
+    }
+
+    @Test
+    void testCalculateMargin_WithZeroRate() {
+        BigDecimal salary = BigDecimal.valueOf(3000);
+        BigDecimal rate = BigDecimal.ZERO;
+
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        Assertions.assertEquals(BigDecimal.ZERO, margin);
+    }
+
+    @Test
+    void testCalculateMargin_WithZeroSalary() {
+        BigDecimal salary = BigDecimal.ZERO;
+        BigDecimal rate = BigDecimal.valueOf(25);
+
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        // Expected calculation:
+        // annualRevenue = 25 * 1850 = 46,250
+        // annualCost = 0 * 12 = 0
+        // grossMargin = 46,250 - 0 = 46,250
+        // marginPercentage = 46,250 / 46,250 = 1.00
+        // return = 1.00 * 100 = 100.00
+        Assertions.assertEquals(new BigDecimal("100.00"), margin);
+    }
+
+    @Test
+    void testCalculateMargin_WithNegativeValues() {
+        BigDecimal salary = BigDecimal.valueOf(5000);
+        BigDecimal rate = BigDecimal.valueOf(20);
+
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        // Expected calculation:
+        // annualRevenue = 20 * 1850 = 37,000
+        // annualCost = 5000 * 12 = 60,000
+        // grossMargin = 37,000 - 60,000 = -23,000
+        // marginPercentage = -23,000 / 37,000 = -0.6216... (rounded to 2 decimal places = -0.62)
+        // return = -0.62 * 100 = -62.00
+        Assertions.assertEquals(new BigDecimal("-62.00"), margin);
+    }
 }
