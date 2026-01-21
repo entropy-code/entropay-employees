@@ -269,7 +269,8 @@ class MarginServiceTest {
         BigDecimal margin = MarginService.calculateMargin(salary, rate);
 
         // Expected calculation:
-        // annualRevenue = 25 * 1850 = 46,250
+        // annualRevenue = 25 * 1850 (standard billable hours per year)
+        // = 46,250
         // annualCost = 3000 * 12 = 36,000
         // grossMargin = 46,250 - 36,000 = 10,250
         // marginPercentage = 10,250 / 46,250 = 0.2216... (rounded to 2 decimal places = 0.22)
@@ -295,7 +296,8 @@ class MarginServiceTest {
         BigDecimal margin = MarginService.calculateMargin(salary, rate);
 
         // Expected calculation:
-        // annualRevenue = 25 * 1850 = 46,250
+        // annualRevenue = 25 * 1850 (standard billable hours per year)
+        // = 46,250
         // annualCost = 0 * 12 = 0
         // grossMargin = 46,250 - 0 = 46,250
         // marginPercentage = 46,250 / 46,250 = 1.00
@@ -311,7 +313,8 @@ class MarginServiceTest {
         BigDecimal margin = MarginService.calculateMargin(salary, rate);
 
         // Expected calculation:
-        // annualRevenue = 20 * 1850 = 37,000
+        // annualRevenue = 20 * 1850 (standard billable hours per year)
+        // = 37,000
         // annualCost = 5000 * 12 = 60,000
         // grossMargin = 37,000 - 60,000 = -23,000
         // marginPercentage = -23,000 / 37,000 = -0.6216... (rounded to 2 decimal places = -0.62)
