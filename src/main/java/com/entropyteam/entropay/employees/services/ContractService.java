@@ -19,6 +19,7 @@ import com.entropyteam.entropay.common.BaseRepository;
 import com.entropyteam.entropay.common.BaseService;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.ContractDto;
+import com.entropyteam.entropay.employees.models.Benefit;
 import com.entropyteam.entropay.employees.models.Company;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -26,6 +27,7 @@ import com.entropyteam.entropay.employees.models.EndReason;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Seniority;
+import com.entropyteam.entropay.employees.repositories.BenefitRepository;
 import com.entropyteam.entropay.employees.repositories.CompanyRepository;
 import com.entropyteam.entropay.employees.repositories.ContractRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeRepository;
@@ -46,13 +48,14 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
     private final PaymentSettlementService paymentSettlementService;
     private final PaymentSettlementRepository paymentSettlementRepository;
     private final EndReasonRepository endReasonRepository;
+    private final BenefitRepository benefitRepository;
 
     @Autowired
     public ContractService(ContractRepository contractRepository, CompanyRepository companyRepository,
             EmployeeRepository employeeRepository, RoleRepository roleRepository,
             SeniorityRepository seniorityRepository, PaymentSettlementService paymentSettlementService,
             PaymentSettlementRepository paymentSettlementRepository, EndReasonRepository endReasonRepository,
-            ReactAdminMapper reactAdminMapper) {
+            BenefitRepository benefitRepository, ReactAdminMapper reactAdminMapper) {
         super(Contract.class, reactAdminMapper);
         this.contractRepository = contractRepository;
         this.companyRepository = companyRepository;
@@ -62,6 +65,7 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         this.paymentSettlementService = paymentSettlementService;
         this.paymentSettlementRepository = paymentSettlementRepository;
         this.endReasonRepository = endReasonRepository;
+        this.benefitRepository = benefitRepository;
     }
 
     @Transactional
@@ -115,6 +119,11 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Override
     public ContractDto toDTO(Contract entity) {
+        // Force initialization of lazy-loaded benefits collection
+        if (entity.getBenefits() != null) {
+            entity.getBenefits().size();
+        }
+        
         List<PaymentSettlement> paymentsSettlementList =
                 paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
         return new ContractDto(entity, paymentsSettlementList);
@@ -139,6 +148,18 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setPaymentsSettlement(entity.paymentSettlement() == null ? Collections.emptySet() :
                 entity.paymentSettlement().stream().map(PaymentSettlement::new).collect(Collectors.toSet()));
         contract.setEndReason(endReason);
+        
+        // Set benefits
+        if (entity.benefitIds() != null && !entity.benefitIds().isEmpty()) {
+            List<Benefit> benefits = entity.benefitIds().stream()
+                .map(benefitId -> benefitRepository.findById(benefitId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benefit not found: " + benefitId)))
+                .collect(Collectors.toList());
+            contract.setBenefits(benefits.stream().collect(Collectors.toSet()));
+        } else {
+            contract.setBenefits(Collections.emptySet());
+        }
+        
         return contract;
     }
 

@@ -23,6 +23,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -50,8 +52,14 @@ public class Contract extends BaseEntity {
     private LocalDate endDate;
     @Column
     private Integer hoursPerMonth;
-    @Column
-    private String benefits;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "contract_benefit",
+            joinColumns = {@JoinColumn(name = "contract_id")},
+            inverseJoinColumns = {@JoinColumn(name = "benefit_id")}
+    )
+    @BatchSize(size = 100)
+    private Set<Benefit> benefits = new HashSet<>();
     @Column
     private String notes;
     @Enumerated(EnumType.STRING)
@@ -74,7 +82,6 @@ public class Contract extends BaseEntity {
         this.startDate = entity.startDate();
         this.endDate = entity.endDate();
         this.hoursPerMonth = entity.hoursPerMonth();
-        this.benefits = entity.benefits();
         this.notes = entity.notes();
         this.contractType = ContractType.valueOf(entity.contractType());
         this.active = entity.active();
@@ -137,11 +144,11 @@ public class Contract extends BaseEntity {
         this.hoursPerMonth = hoursPerMonth;
     }
 
-    public String getBenefits() {
+    public Set<Benefit> getBenefits() {
         return benefits;
     }
 
-    public void setBenefits(String benefits) {
+    public void setBenefits(Set<Benefit> benefits) {
         this.benefits = benefits;
     }
 

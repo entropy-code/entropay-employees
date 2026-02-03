@@ -33,4 +33,12 @@ public interface ContractRepository extends BaseRepository<Contract, UUID> {
               AND c.deleted = false
             """)
     List<Contract> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
+
+    @Query(value = """
+            SELECT DISTINCT c
+            FROM Contract c
+            LEFT JOIN FETCH c.benefits
+            WHERE c.id = :id
+            """)
+    Optional<Contract> findByIdWithBenefits(@Param("id") UUID id);
 }
