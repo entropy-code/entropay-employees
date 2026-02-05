@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,11 +120,6 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
 
     @Override
     public ContractDto toDTO(Contract entity) {
-        // Force initialization of lazy-loaded benefits collection
-        if (entity.getBenefits() != null) {
-            entity.getBenefits().size();
-        }
-        
         List<PaymentSettlement> paymentsSettlementList =
                 paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(entity.getId());
         return new ContractDto(entity, paymentsSettlementList);
@@ -150,15 +146,12 @@ public class ContractService extends BaseService<Contract, ContractDto, UUID> {
         contract.setEndReason(endReason);
         
         // Set benefits
-        if (entity.benefitIds() != null && !entity.benefitIds().isEmpty()) {
-            List<Benefit> benefits = entity.benefitIds().stream()
-                .map(benefitId -> benefitRepository.findById(benefitId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Benefit not found: " + benefitId)))
-                .collect(Collectors.toList());
-            contract.setBenefits(benefits.stream().collect(Collectors.toSet()));
-        } else {
-            contract.setBenefits(Collections.emptySet());
+        List<UUID> benefitIds = entity.benefitIds() != null ? entity.benefitIds() : Collections.emptyList();
+        Set<Benefit> benefits = benefitRepository.findAllByDeletedIsFalseAndIdIn(benefitIds);
+        if (benefits.size() != benefitIds.size()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Some benefits were not found");
         }
+        contract.setBenefits(benefits);
         
         return contract;
     }
