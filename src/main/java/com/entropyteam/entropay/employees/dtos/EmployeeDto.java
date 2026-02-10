@@ -76,6 +76,7 @@ public final class EmployeeDto {
     private BigDecimal rate;
     private BigDecimal salary;
     private BigDecimal margin;
+    private boolean hasChildren;
 
     public EmployeeDto() {
     }
@@ -103,7 +104,7 @@ public final class EmployeeDto {
         this.notes = employee.getNotes();
         this.healthInsurance = employee.getHealthInsurance();
         this.paymentInformation = employee.getPaymentsInformation().stream().map(PaymentInformationDto::new).toList();
-        this.children = employee.getChildren().stream().map(ChildrenDto::new).toList();
+        this.hasChildren = employee.isHasChildren();
         this.labourEmail = employee.getLabourEmail();
         this.birthDate = employee.getBirthDate();
         this.createdAt = employee.getCreatedAt();
@@ -134,6 +135,7 @@ public final class EmployeeDto {
         this.salary = activeContract != null ? activeContract.calculateMonthlySalaryInUSD() : BigDecimal.ZERO;
         this.rate = lastAssignment != null ? lastAssignment.getBillableRate() : BigDecimal.ZERO;
         this.margin = MarginService.calculateMargin(salary, rate);
+        this.hasChildren = employee.isHasChildren();
     }
 
     public void setId(UUID id) {
@@ -463,5 +465,13 @@ public final class EmployeeDto {
 
     public void setMargin(BigDecimal margin) {
         this.margin = margin;
+    }
+
+    public boolean isHasChildren() {
+        return hasChildren;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
     }
 }
