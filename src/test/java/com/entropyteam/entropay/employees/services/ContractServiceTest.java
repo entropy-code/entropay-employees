@@ -46,6 +46,7 @@ import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
+import com.entropyteam.entropay.employees.repositories.BenefitRepository;
 import com.entropyteam.entropay.employees.testUtils.SecurityContextFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +71,8 @@ class ContractServiceTest {
 
     @Mock
     private PaymentSettlementRepository paymentSettlementRepository;
+    @Mock
+    private BenefitRepository benefitRepository;
     @Captor
     private ArgumentCaptor<Contract> contractCaptor;
     @InjectMocks
