@@ -107,6 +107,7 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
+        when(benefitRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(Collections.emptySet());
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
@@ -137,6 +138,7 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
+        when(benefitRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(Collections.emptySet());
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
