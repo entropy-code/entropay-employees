@@ -110,8 +110,8 @@ public class SensitiveInformationSerializerTest {
         UUID employeeId = UUID.randomUUID();
         when(sensitiveInformationService.shouldMask(employeeId)).thenReturn(true);
         SalariesReportDto dto = new SalariesReportDto(
-                UUID.randomUUID(), employeeId, "INT-1", "John", "Doe", "ClientCo",
-                new BigDecimal("10000"), "Mural", "USD", "PlatformX", "CountryY");
+            UUID.randomUUID(), employeeId, "INT-1", "John", "Doe", "ClientCo",
+            new BigDecimal("10000"), "Mural", "USD", "PlatformX", "CountryY", true);
 
         // when
         String json = objectMapper.writeValueAsString(dto);
