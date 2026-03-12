@@ -64,27 +64,3 @@ UPDATE public.config SET permissions = e'[
     {"entity": "skills", "actions": ["create", "read", "update", "delete"]},
     {"entity": "feedback-summary", "actions": ["create", "read", "update", "delete"]}
 ]' WHERE role = 'ROLE_MANAGER_HR';
-
-
--- Remove Pto Report permissions ROLE_DEVELOPMENT
-UPDATE public.config SET permissions = e'[
-  {"entity": "employees", "actions": ["create", "read", "update"]},
-  {"entity": "contracts", "actions": ["create", "read", "delete"]},
-  {"entity": "assignments", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "clients", "actions": ["create", "read", "update"]},
-  {"entity": "companies", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "projects", "actions": ["create", "read", "update"]},
-  {"entity": "project-types", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "roles", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "seniorities", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "technologies", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "end-reasons", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "tenants", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "leave-types", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "holidays", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "countries", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "vacations", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "ptos", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "overtimes", "actions": ["create", "read", "update", "delete"]},
-  {"entity": "feedback-summary", "actions": ["create", "read", "update", "delete"]}
-]' WHERE role = 'ROLE_DEVELOPMENT';
