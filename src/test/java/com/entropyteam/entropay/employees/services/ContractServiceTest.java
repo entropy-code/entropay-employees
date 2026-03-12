@@ -46,6 +46,7 @@ import com.entropyteam.entropay.employees.repositories.EndReasonRepository;
 import com.entropyteam.entropay.employees.repositories.PaymentSettlementRepository;
 import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.SeniorityRepository;
+import com.entropyteam.entropay.employees.repositories.BenefitRepository;
 import com.entropyteam.entropay.employees.testUtils.SecurityContextFactory;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,6 +71,8 @@ class ContractServiceTest {
 
     @Mock
     private PaymentSettlementRepository paymentSettlementRepository;
+    @Mock
+    private BenefitRepository benefitRepository;
     @Captor
     private ArgumentCaptor<Contract> contractCaptor;
     @InjectMocks
@@ -104,6 +107,7 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
+        when(benefitRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(Collections.emptySet());
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
@@ -134,6 +138,7 @@ class ContractServiceTest {
         when(paymentSettlementService.createPaymentsSettlement(any(), any())).thenReturn(null);
         when(paymentSettlementRepository.findAllByContractIdAndDeletedIsFalse(any())).thenReturn(
                 Collections.emptyList());
+        when(benefitRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(Collections.emptySet());
 
         // then
         ContractDto response = contractService.create(new ContractDto(existentContract));
