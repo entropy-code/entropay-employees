@@ -7,7 +7,7 @@ import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation
 
 public record SalariesReportDto(UUID id, UUID employeeId, String internalId, String firstName, String lastName,
                                 String clientName, @SensitiveInformation BigDecimal salary, String modality,
-                                String currency, String platform, String country) implements EmployeeIdAware {
+                                String currency, String platform, String country, Boolean active) implements EmployeeIdAware {
 
     @Override
     public UUID getEmployeeId() {
