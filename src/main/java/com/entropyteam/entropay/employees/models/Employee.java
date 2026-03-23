@@ -48,6 +48,7 @@ public class Employee extends BaseEntity {
     private String notes;
     private String labourEmail;
     private boolean active;
+    private boolean hasChildren;
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
@@ -124,6 +125,7 @@ public class Employee extends BaseEntity {
         this.healthInsurance = employeeDto.getHealthInsurance();
         this.labourEmail = employeeDto.getLabourEmail();
         this.active = employeeDto.isActive();
+        this.hasChildren = employeeDto.isHasChildren();
     }
 
     public String getFirstName() {
@@ -337,6 +339,14 @@ public class Employee extends BaseEntity {
 
     public void setEducation(EmployeeEducation education) {
         this.education = education;
+    }
+  
+    public boolean isHasChildren() {
+        return hasChildren;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
     }
 
     public Set<Assignment> getAssignments() {

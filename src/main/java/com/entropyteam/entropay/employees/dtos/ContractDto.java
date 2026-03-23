@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.entropyteam.entropay.employees.models.Benefit;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.PaymentSettlement;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -27,7 +28,7 @@ public record ContractDto(UUID id,
                           LocalDate startDate,
                           @JsonFormat(pattern = "yyyy-MM-dd")
                           LocalDate endDate,
-                          String benefits,
+                          List<UUID> benefitIds,
                           String notes,
                           @NotNull(message = "Contract type is mandatory")
                           String contractType,
@@ -45,7 +46,8 @@ public record ContractDto(UUID id,
     public ContractDto(Contract contract) {
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(), contract.getStartDate(), contract.getEndDate(),
-                contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
+                contract.getBenefits() != null ? contract.getBenefits().stream().map(Benefit::getId).toList() : List.of(),
+                contract.getNotes(), contract.getContractType().name(),
                 contract.getPaymentsSettlement().stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
                 contract.isActive(), contract.getEndReasonId(), contract.getCreatedAt(), contract.getModifiedAt());
     }
@@ -60,7 +62,7 @@ public record ContractDto(UUID id,
                 this.hoursPerMonth,
                 this.startDate,
                 this.endDate,
-                this.benefits,
+                this.benefitIds,
                 this.notes,
                 this.contractType,
                 this.paymentSettlement,
@@ -76,7 +78,8 @@ public record ContractDto(UUID id,
         this(contract.getId(), contract.getCompany().getId(), contract.getEmployee().getId(),
                 contract.getRole().getId(), contract.getSeniority().getId(), contract.getHoursPerMonth(),
                 contract.getStartDate(), contract.getEndDate(),
-                contract.getBenefits(), contract.getNotes(), contract.getContractType().name(),
+                contract.getBenefits() != null ? contract.getBenefits().stream().map(Benefit::getId).toList() : List.of(),
+                contract.getNotes(), contract.getContractType().name(),
                 paymentSettlementList.stream().map(PaymentSettlementDto::new).toList(), contract.isDeleted(),
                 contract.isActive(), contract.getEndReasonId(), contract.getCreatedAt(), contract.getModifiedAt());
     }
