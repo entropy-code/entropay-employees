@@ -19,6 +19,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 
@@ -75,6 +76,9 @@ public class Employee extends BaseEntity {
     @SQLRestriction("deleted = false")
     @BatchSize(size = 100)
     private Set<Children> children = new HashSet<>();
+
+    @OneToOne(mappedBy = "employee")
+    private EmployeeEducation education;
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
@@ -327,6 +331,13 @@ public class Employee extends BaseEntity {
         this.children = children;
     }
 
+    public EmployeeEducation getEducation() {
+        return education;
+    }
+
+    public void setEducation(EmployeeEducation education) {
+        this.education = education;
+    }
 
     public Set<Assignment> getAssignments() {
         return assignments;

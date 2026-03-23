@@ -14,6 +14,7 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Gender;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.services.MarginService;
+import com.entropyteam.entropay.employees.dtos.EmployeeEducationDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.constraints.Email;
@@ -48,6 +49,7 @@ public final class EmployeeDto {
     private String healthInsurance;
     private List<PaymentInformationDto> paymentInformation;
     private List<ChildrenDto> children;
+    private EmployeeEducationDto education;
     @Email
     private String labourEmail;
     @NotNull(message = "Birth Date is mandatory")
@@ -104,6 +106,7 @@ public final class EmployeeDto {
         this.healthInsurance = employee.getHealthInsurance();
         this.paymentInformation = employee.getPaymentsInformation().stream().map(PaymentInformationDto::new).toList();
         this.children = employee.getChildren().stream().map(ChildrenDto::new).toList();
+        this.education = employee.getEducation() != null ? new EmployeeEducationDto(employee.getEducation()) : null;
         this.labourEmail = employee.getLabourEmail();
         this.birthDate = employee.getBirthDate();
         this.createdAt = employee.getCreatedAt();
@@ -375,6 +378,14 @@ public final class EmployeeDto {
 
     public List<ChildrenDto> getChildren() {
         return children;
+    }
+
+    public EmployeeEducationDto getEducation() {
+        return education;
+    }
+
+    public void setEducation(EmployeeEducationDto education) {
+        this.education = education;
     }
 
     public String getLabourEmail() {
