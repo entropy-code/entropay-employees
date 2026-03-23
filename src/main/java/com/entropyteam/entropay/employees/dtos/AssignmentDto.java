@@ -47,7 +47,7 @@ public record AssignmentDto(UUID id,
                 assignment.getCurrency() != null ? assignment.getCurrency().name() : null,
                 assignment.getStartDate(), assignment.getEndDate(), assignment.isDeleted(),
                 assignment.isActive(), assignment.getModifiedAt(), assignment.getCreatedAt(),
-                assignment.getEndReason(), assignment.getEngagementType().name()
+                assignment.getEndReason(), assignment.getEngagementType() != null ? assignment.getEngagementType().name() : null
         );
     }
 
