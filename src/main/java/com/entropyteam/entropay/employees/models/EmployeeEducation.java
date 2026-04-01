@@ -19,8 +19,8 @@ public class EmployeeEducation extends BaseEntity {
     @JoinColumn(name = "employee_id", nullable = false, unique = true)
     private Employee employee;
 
-    @Column(name = "education_level", nullable = false)
-    private String level;
+    @Column(name = "education_level_id", nullable = false)
+    private UUID educationLevelId;
 
     @Column(name = "education_level_other")
     private String levelOther;
@@ -32,7 +32,7 @@ public class EmployeeEducation extends BaseEntity {
     private String degree;
 
     public EmployeeEducation(EmployeeEducationDto employeeEducationDto) {
-        this.level = employeeEducationDto.level();
+        this.educationLevelId = employeeEducationDto.educationLevelId();
         this.levelOther = employeeEducationDto.levelOther();
         this.institution = employeeEducationDto.institution();
         this.degree = employeeEducationDto.degree();
@@ -50,12 +50,12 @@ public class EmployeeEducation extends BaseEntity {
         this.employee = employee;
     }
 
-    public String getLevel() {
-        return level;
+    public UUID getEducationLevelId() {
+        return educationLevelId;
     }
 
-    public void setLevel(String level) {
-        this.level = level;
+    public void setEducationLevelId(UUID educationLevelId) {
+        this.educationLevelId = educationLevelId;
     }
 
     public String getLevelOther() {

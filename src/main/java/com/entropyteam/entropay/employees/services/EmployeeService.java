@@ -122,8 +122,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
         if (employeeDto.getEducation() != null) {
-            EmployeeEducation education = new EmployeeEducation(employeeDto.getEducation());
-            employeeEducationService.createEducation(education, savedEntity);
+            employeeEducationService.createEducation(employeeDto.getEducation(), savedEntity);
         }
 
         calendarService.createBirthdayEvent(entityToCreate.getId().toString(), entityToCreate.getFirstName(),

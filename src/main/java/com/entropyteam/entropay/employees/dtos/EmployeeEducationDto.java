@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 public record EmployeeEducationDto(
         UUID id,
         @NotNull(message = "Education Level is mandatory")
-        String level,
+        UUID educationLevelId,
         String levelOther,
         @NotNull(message = "Educational Institution is mandatory")
         String institution,
@@ -23,7 +23,7 @@ public record EmployeeEducationDto(
         LocalDateTime modifiedAt) {
 
     public EmployeeEducationDto(EmployeeEducation employeeEducation) {
-        this(employeeEducation.getId(), employeeEducation.getLevel(),
+        this(employeeEducation.getId(), employeeEducation.getEducationLevelId(),
                 employeeEducation.getLevelOther(),
                 employeeEducation.getInstitution(), employeeEducation.getDegree(),
                 employeeEducation.isDeleted(), employeeEducation.getCreatedAt(),

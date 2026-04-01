@@ -38,11 +38,12 @@ public class EmployeeEducationService extends BaseService<EmployeeEducation, Emp
         return new EmployeeEducation(dto);
     }
 
-    public void createEducation(EmployeeEducation education, Employee savedEntity) {
-        if (education == null) {
+    public void createEducation(EmployeeEducationDto educationDto, Employee employee) {
+        if (educationDto == null) {
             return;
         }
-        education.setEmployee(savedEntity);
+        EmployeeEducation education = new EmployeeEducation(educationDto);
+        education.setEmployee(employee);
         employeeEducationRepository.save(education);
     }
 
@@ -52,11 +53,11 @@ public class EmployeeEducationService extends BaseService<EmployeeEducation, Emp
         }
         
         var existingEducation = employeeEducationRepository
-                .findByEmployeeIdAndDeletedIsFalse(employee.getId());
+                .findByEmployeeIdAndDeletedFalse(employee.getId());
         
         if (existingEducation.isPresent()) {
             EmployeeEducation education = existingEducation.get();
-            education.setLevel(educationDto.level());
+            education.setEducationLevelId(educationDto.educationLevelId());
             education.setLevelOther(educationDto.levelOther());
             education.setInstitution(educationDto.institution());
             education.setDegree(educationDto.degree());
