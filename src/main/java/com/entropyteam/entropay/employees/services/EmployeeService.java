@@ -30,6 +30,7 @@ import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.EmployeeEducation;
 import com.entropyteam.entropay.employees.models.Holiday;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
@@ -57,6 +58,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final VacationRepository vacationRepository;
     private final CountryRepository countryRepository;
     private final CalendarService calendarService;
+    private final EmployeeEducationService employeeEducationService;
 
 
     @Autowired
@@ -64,7 +66,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             PaymentInformationService paymentInformationService, AssignmentRepository assignmentRepository,
             ContractRepository contractRepository, ReactAdminMapper reactAdminMapper,
             VacationRepository vacationRepository, CountryRepository countryRepository,
-            CalendarService calendarService) {
+            CalendarService calendarService, EmployeeEducationService employeeEducationService) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -74,6 +76,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.countryRepository = countryRepository;
         this.calendarService = calendarService;
+        this.employeeEducationService = employeeEducationService;
     }
 
     @Override
@@ -107,6 +110,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         employee.setRoles(roles);
         employee.setPaymentsInformation(
                 dto.getPaymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        // Note: education is handled separately in create/update methods to avoid transient object issues
         employee.setHasChildren(dto.isHasChildren());
         return employee;
     }
@@ -117,6 +121,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee entityToCreate = toEntity(employeeDto);
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
+        if (employeeDto.getEducation() != null) {
+            employeeEducationService.createEducation(employeeDto.getEducation(), savedEntity);
+        }
 
         calendarService.createBirthdayEvent(entityToCreate.getId().toString(), entityToCreate.getFirstName(),
                 entityToCreate.getLastName(), entityToCreate.getBirthDate());
@@ -148,6 +155,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
                     savedEntity.getLastName(), savedEntity.getBirthDate());
         }
         paymentInformationService.updatePaymentsInformation(employeeDto.getPaymentInformation(), savedEntity);
+        if (employeeDto.getEducation() != null) {
+            employeeEducationService.updateEducation(employeeDto.getEducation(), savedEntity);
+        }
 
         return toDTO(savedEntity);
     }
