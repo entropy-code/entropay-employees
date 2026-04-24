@@ -32,6 +32,7 @@ import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.EmployeeEducation;
 import com.entropyteam.entropay.employees.models.Holiday;
+import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
@@ -108,8 +109,9 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Country country = countryRepository.findById(dto.getCountryId()).orElseThrow();
         employee.setCountry(country);
         employee.setRoles(roles);
+        List<PaymentInformationDto> paymentInfo = dto.getPaymentInformation() != null ? dto.getPaymentInformation() : Collections.emptyList();
         employee.setPaymentsInformation(
-                dto.getPaymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+                paymentInfo.stream().map(PaymentInformation::new).collect(Collectors.toSet()));
         // Note: education is handled separately in create/update methods to avoid transient object issues
         employee.setHasChildren(dto.isHasChildren());
         return employee;
@@ -154,7 +156,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             calendarService.updateBirthdayEvent(savedEntity.getId().toString(), savedEntity.getFirstName(),
                     savedEntity.getLastName(), savedEntity.getBirthDate());
         }
-        paymentInformationService.updatePaymentsInformation(employeeDto.getPaymentInformation(), savedEntity);
+        paymentInformationService.updatePaymentsInformation(
+                employeeDto.getPaymentInformation() != null ? employeeDto.getPaymentInformation() : Collections.emptyList(), savedEntity);
         if (employeeDto.getEducation() != null) {
             employeeEducationService.updateEducation(employeeDto.getEducation(), savedEntity);
         }
