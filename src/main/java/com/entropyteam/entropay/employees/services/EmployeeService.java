@@ -26,13 +26,12 @@ import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
-import com.entropyteam.entropay.employees.models.EmployeeEducation;
 import com.entropyteam.entropay.employees.models.Holiday;
-import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
 import com.entropyteam.entropay.employees.models.PaymentInformation;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
@@ -43,6 +42,7 @@ import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -312,5 +312,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
 
         return predicates;
+    }
+
+    @Override
+    protected void addFetchJoins(Root<Employee> root) {
+        root.fetch("education", JoinType.LEFT);
     }
 }
