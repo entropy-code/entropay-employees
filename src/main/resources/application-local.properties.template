@@ -1,3 +1,0 @@
-# Local overrides — copy of this file is at application-local.properties (gitignored).
-# Activated automatically by `make run`. Add any local-only settings here.
-spring.datasource.url=jdbc:postgresql://localhost:5433/employees

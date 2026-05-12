@@ -2,7 +2,7 @@
 setup: ## Start database and build the application
 	docker compose up -d postgres pgweb
 	@[ -f src/main/resources/application-local.properties ] || \
-		cp src/main/resources/application-local.properties.template src/main/resources/application-local.properties
+		touch src/main/resources/application-local.properties
 	./mvnw clean package -DskipTests
 
 .PHONY: run
