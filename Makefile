@@ -1,6 +1,6 @@
 .PHONY: setup
 setup: ## Start database and build the application
-	docker-compose up -d postgres pgweb
+	docker compose up -d postgres pgweb
 	./mvnw clean package -DskipTests
 
 .PHONY: run
