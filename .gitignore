@@ -3,6 +3,7 @@
 
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -59,5 +60,6 @@ build/
 
 *.env
 *.versionsBackup
+src/main/resources/application-local.properties
 /.hypersistence/
 .claude/
