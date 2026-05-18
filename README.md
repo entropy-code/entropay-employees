@@ -5,7 +5,7 @@ Entroteam Employees is a Spring Boot application that manages employee data, int
 
 ## Tech Stack
 - **Java 21** with virtual threads support
-- **Spring Boot 3.4.5** (Web, Data JPA, Security, OAuth2)
+- **Spring Boot 3.5.7** (Web, Data JPA, Security, OAuth2)
 - **PostgreSQL** database
 - **Flyway** for database migrations
 - **Maven** for build management
