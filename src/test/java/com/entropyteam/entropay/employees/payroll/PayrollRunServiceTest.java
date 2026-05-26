@@ -229,6 +229,35 @@ class PayrollRunServiceTest {
     }
 
     @Test
+    void delete_whenStatusIsRunningAndUserIsManager_thenConflict() {
+        // RUNNING is unconditionally blocked — even ROLE_ADMIN can't bypass it, because the async
+        // orchestrator could still write items/flip status after the delete commits and resurrect
+        // a "deleted" run. See also PayrollPersisterTest for the defense-in-depth guard.
+        authenticateAs("ROLE_MANAGER/HR");
+        PayrollRun running = run(LocalDate.of(2026, 4, 1), PayrollRunStatus.RUNNING);
+        when(payrollRunRepository.findById(running.getId())).thenReturn(Optional.of(running));
+
+        assertThatThrownBy(() -> service.delete(running.getId()))
+                .isInstanceOf(ResponseStatusException.class)
+                .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+                .isEqualTo(HttpStatus.CONFLICT);
+        assertThat(running.isDeleted()).isFalse();
+    }
+
+    @Test
+    void delete_whenStatusIsRunningAndUserIsAdmin_thenConflict() {
+        authenticateAs("ROLE_ADMIN");
+        PayrollRun running = run(LocalDate.of(2026, 4, 1), PayrollRunStatus.RUNNING);
+        when(payrollRunRepository.findById(running.getId())).thenReturn(Optional.of(running));
+
+        assertThatThrownBy(() -> service.delete(running.getId()))
+                .isInstanceOf(ResponseStatusException.class)
+                .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+                .isEqualTo(HttpStatus.CONFLICT);
+        assertThat(running.isDeleted()).isFalse();
+    }
+
+    @Test
     void delete_whenStatusIsDraft_thenSoftDeletes() {
         PayrollRun draft = run(LocalDate.of(2026, 4, 1), PayrollRunStatus.DRAFT);
         when(payrollRunRepository.findById(draft.getId())).thenReturn(Optional.of(draft));

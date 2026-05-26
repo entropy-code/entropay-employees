@@ -58,10 +58,14 @@ class PayrollRunService extends BaseService<PayrollRun, PayrollRunDto, UUID> {
         if (existing.isPresent()) {
             PayrollRun current = existing.get();
             switch (current.getStatus()) {
-                case APPROVED, CLOSED -> throw new ResponseStatusException(
+                case APPROVED -> throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
-                        "A " + current.getStatus() + " payroll run already exists for " + period
+                        "An APPROVED payroll run already exists for " + period
                                 + ". Un-approve it first if you need to re-run.");
+                case CLOSED -> throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "A CLOSED payroll run already exists for " + period
+                                + ". Closed runs can only be removed by an admin.");
                 case RUNNING -> throw new ResponseStatusException(
                         HttpStatus.CONFLICT,
                         "A payroll run is already in progress for " + period);
@@ -132,6 +136,15 @@ class PayrollRunService extends BaseService<PayrollRun, PayrollRunDto, UUID> {
     public PayrollRunDto delete(UUID runId) {
         PayrollRun run = payrollRunRepository.findById(runId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payroll run not found"));
+        if (run.getStatus() == PayrollRunStatus.RUNNING) {
+            // Deleting a RUNNING run would race the async orchestrator's persist step. Even with
+            // PayrollPersister guarding against deleted/non-RUNNING runs, blocking here gives the
+            // user a clear answer instead of a silently dropped run. Wait for the run to finish
+            // (it will land in DRAFT or FAILED) and delete that.
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Cannot delete a payroll run while it is still RUNNING. "
+                            + "Wait for it to finish (DRAFT or FAILED) and try again.");
+        }
         boolean lockedStatus = run.getStatus() == PayrollRunStatus.APPROVED
                 || run.getStatus() == PayrollRunStatus.CLOSED;
         if (lockedStatus && AuthUtils.getUserRole() != AppRole.ROLE_ADMIN) {
