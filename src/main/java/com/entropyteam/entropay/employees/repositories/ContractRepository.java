@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.repositories;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,4 +34,41 @@ public interface ContractRepository extends BaseRepository<Contract, UUID> {
               AND c.deleted = false
             """)
     List<Contract> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * For payroll: contracts whose date range overlaps the period AND that are either currently
+     * active OR ended within the period (final settlement scenario — inactive contracts whose
+     * endDate falls in the month still need to be paid out for the days actually worked).
+     *
+     * Inactive contracts with no endDate or with endDate outside the period are excluded — they're
+     * historical records that should not be liquidated. Excludes soft-deleted employees too.
+     */
+    @Query(value = """
+            SELECT DISTINCT c FROM Contract c
+            JOIN FETCH c.employee e
+            LEFT JOIN FETCH e.country
+            JOIN FETCH c.paymentsSettlement
+            WHERE c.startDate <= :periodEnd
+              AND (c.endDate IS NULL OR c.endDate >= :periodStart)
+              AND c.deleted = false
+              AND e.deleted = false
+              AND (c.active = true
+                   OR (c.endDate IS NOT NULL
+                       AND c.endDate BETWEEN :periodStart AND :periodEnd))
+            """)
+    List<Contract> findAllOverlappingPeriodForPayroll(LocalDate periodStart, LocalDate periodEnd);
+
+    /**
+     * For payroll's hardware-clawback rule: hire date per employee, defined as the earliest
+     * non-deleted contract start. Pre-loaded into PayrollContext so the calculator never has to
+     * touch the Employee.contracts lazy collection from a thread without a Hibernate session.
+     */
+    @Query("""
+            SELECT c.employee.id, MIN(c.startDate)
+            FROM Contract c
+            WHERE c.employee.id IN :employeeIds
+              AND c.deleted = false
+            GROUP BY c.employee.id
+            """)
+    List<Object[]> findEarliestStartDateByEmployeeIds(@Param("employeeIds") Collection<UUID> employeeIds);
 }

@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.repositories;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,6 +53,26 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
     List<Assignment> findAllAssignmentsByClientIdIn(@Param("clientIds") List<UUID> clientIds);
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
+
+    /**
+     * For payroll context loading: active assignments overlapping the payroll period, joined to
+     * project + client so the calculator can resolve the per-item client name without lazy-loading
+     * {@code Employee.assignments} from worker threads.
+     */
+    @Query("""
+            SELECT a FROM Assignment a
+            LEFT JOIN FETCH a.project p
+            LEFT JOIN FETCH p.client
+            WHERE a.employee.id IN :employeeIds
+              AND a.deleted = false
+              AND a.active = true
+              AND (a.startDate IS NULL OR a.startDate <= :periodEnd)
+              AND (a.endDate IS NULL OR a.endDate >= :periodStart)
+            """)
+    List<Assignment> findActiveByEmployeeIdInOverlappingPeriod(
+            @Param("employeeIds") Collection<UUID> employeeIds,
+            @Param("periodStart") LocalDate periodStart,
+            @Param("periodEnd") LocalDate periodEnd);
 
     /**
      * This query is used for the Billing. Therefore, we are only including assignments that are full time or part
