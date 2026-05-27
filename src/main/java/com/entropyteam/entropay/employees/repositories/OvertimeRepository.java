@@ -11,4 +11,6 @@ import com.entropyteam.entropay.employees.models.Overtime;
 public interface OvertimeRepository extends BaseRepository<Overtime, UUID> {
 
     List<Overtime> findByDateBetween(final LocalDate startDate, final LocalDate endDate);
+
+    List<Overtime> findByDateBetweenAndDeletedIsFalse(final LocalDate startDate, final LocalDate endDate);
 }
