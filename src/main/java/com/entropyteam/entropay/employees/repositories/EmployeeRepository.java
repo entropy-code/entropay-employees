@@ -23,4 +23,11 @@ public interface EmployeeRepository extends BaseRepository<Employee, UUID>, Repo
             "SELECT * FROM Assignment AS a WHERE e.id = a.employee_id AND a.active = true AND a.deleted = false)",
             nativeQuery = true)
     List<Employee> findAllUnassignedEmployees();
+
+    @Query(value = "SELECT nextval('employee_internal_id_seq')", nativeQuery = true)
+    Long nextInternalIdSequenceValue();
+
+    @Query(value = "SELECT last_value + CASE WHEN is_called THEN 1 ELSE 0 END FROM employee_internal_id_seq",
+            nativeQuery = true)
+    Long peekInternalIdSequenceValue();
 }
