@@ -145,7 +145,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         Employee existingEmployee = getRepository().findById(employeeId).orElseThrow();
         entityToUpdate.setInternalId(existingEmployee.getInternalId());
 
-        if (shouldDeactivateEmployee(employeeId, entityToUpdate)) {
+        if (existingEmployee.isActive() && !entityToUpdate.isActive()) {
             List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
             List<Assignment> employeeAssignments =
                     assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
