@@ -60,6 +60,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final CountryRepository countryRepository;
     private final CalendarService calendarService;
     private final EmployeeEducationService employeeEducationService;
+    private final EmployeeInternalIdGenerator internalIdGenerator;
 
 
     @Autowired
@@ -67,7 +68,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             PaymentInformationService paymentInformationService, AssignmentRepository assignmentRepository,
             ContractRepository contractRepository, ReactAdminMapper reactAdminMapper,
             VacationRepository vacationRepository, CountryRepository countryRepository,
-            CalendarService calendarService, EmployeeEducationService employeeEducationService) {
+            CalendarService calendarService, EmployeeEducationService employeeEducationService,
+            EmployeeInternalIdGenerator internalIdGenerator) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -78,6 +80,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.countryRepository = countryRepository;
         this.calendarService = calendarService;
         this.employeeEducationService = employeeEducationService;
+        this.internalIdGenerator = internalIdGenerator;
     }
 
     @Override
@@ -121,6 +124,7 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Transactional
     public EmployeeDto create(EmployeeDto employeeDto) {
         Employee entityToCreate = toEntity(employeeDto);
+        entityToCreate.setInternalId(internalIdGenerator.next());
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
         if (employeeDto.getEducation() != null) {
@@ -138,8 +142,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto update(UUID employeeId, EmployeeDto employeeDto) {
         Employee entityToUpdate = toEntity(employeeDto);
         entityToUpdate.setId(employeeId);
+        Employee existingEmployee = getRepository().findById(employeeId).orElseThrow();
+        entityToUpdate.setInternalId(existingEmployee.getInternalId());
 
-        if (shouldDeactivateEmployee(employeeId, entityToUpdate)) {
+        if (existingEmployee.isActive() && !entityToUpdate.isActive()) {
             List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
             List<Assignment> employeeAssignments =
                     assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
@@ -282,6 +288,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Cacheable("internalEmployees")
     public Set<UUID> getInternalEmployeeIds() {
         return Set.copyOf(assignmentRepository.findAllInternalEmployeeIds());
+    }
+
+    public String peekNextInternalId() {
+        return internalIdGenerator.peek();
     }
 
     @Override
