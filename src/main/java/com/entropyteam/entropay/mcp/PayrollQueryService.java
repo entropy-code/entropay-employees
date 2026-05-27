@@ -109,8 +109,8 @@ public class PayrollQueryService {
             LocalDate endDate) {
         LocalDate from = startDate != null ? startDate : LocalDate.now().withDayOfYear(1);
         LocalDate to = endDate != null ? endDate : LocalDate.now();
-        return reimbursementRepository.findAllBetweenPeriod(from, to).stream()
-                .filter(reimbursement -> reimbursement.getEmployee().getId().equals(employeeId))
+        return reimbursementRepository
+                .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(employeeId, from, to).stream()
                 .map(this::toReimbursementEntry)
                 .toList();
     }
