@@ -2,7 +2,6 @@ package com.entropyteam.entropay.employees.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -103,6 +102,22 @@ class EmployeeInternalIdAssignmentTest {
         return employee;
     }
 
+    /**
+     * Mocks employeeRepository.save() to mimic what Hibernate does on flush: returns the entity
+     * that was passed in, and assigns a generated id if one was not already set. We need this
+     * because @GeneratedValue is a no-op without a real JPA session, but EmployeeService.toDTO
+     * follows the saved entity's id and collections downstream.
+     */
+    private void stubEmployeeSaveToEchoArgumentWithGeneratedId() {
+        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
+            Employee passed = invocation.getArgument(0);
+            if (passed.getId() == null) {
+                passed.setId(UUID.randomUUID());
+            }
+            return passed;
+        });
+    }
+
     @DisplayName("Create ignores client-supplied internalId and uses the generated one")
     @Test
     void createIgnoresClientInternalIdAndUsesGenerated() {
@@ -110,20 +125,7 @@ class EmployeeInternalIdAssignmentTest {
         when(roleRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(new HashSet<>());
         when(countryRepository.findById(any())).thenReturn(Optional.of(aCountry(dto.getCountryId())));
         when(internalIdGenerator.next()).thenReturn("E124");
-        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
-            Employee passed = invocation.getArgument(0);
-            passed.setId(UUID.randomUUID());
-            if (passed.getPaymentsInformation() == null) {
-                passed.setPaymentsInformation(new HashSet<>());
-            }
-            if (passed.getAssignments() == null) {
-                passed.setAssignments(new HashSet<>());
-            }
-            if (passed.getContracts() == null) {
-                passed.setContracts(new HashSet<>());
-            }
-            return passed;
-        });
+        stubEmployeeSaveToEchoArgumentWithGeneratedId();
 
         EmployeeDto result = employeeService.create(dto);
 
@@ -141,20 +143,7 @@ class EmployeeInternalIdAssignmentTest {
         when(roleRepository.findAllByDeletedIsFalseAndIdIn(any())).thenReturn(new HashSet<>());
         when(countryRepository.findById(any())).thenAnswer(inv -> Optional.of(aCountry(inv.getArgument(0))));
         when(internalIdGenerator.next()).thenReturn("E124", "E125");
-        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
-            Employee passed = invocation.getArgument(0);
-            passed.setId(UUID.randomUUID());
-            if (passed.getPaymentsInformation() == null) {
-                passed.setPaymentsInformation(new HashSet<>());
-            }
-            if (passed.getAssignments() == null) {
-                passed.setAssignments(new HashSet<>());
-            }
-            if (passed.getContracts() == null) {
-                passed.setContracts(new HashSet<>());
-            }
-            return passed;
-        });
+        stubEmployeeSaveToEchoArgumentWithGeneratedId();
 
         EmployeeDto firstResult = employeeService.create(buildCreateDto(null));
         EmployeeDto secondResult = employeeService.create(buildCreateDto(null));
@@ -181,7 +170,7 @@ class EmployeeInternalIdAssignmentTest {
         when(contractRepository.findAllByEmployeeIdAndDeletedIsFalse(any())).thenReturn(Collections.emptyList());
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(any()))
                 .thenReturn(Collections.emptyList());
-        when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        stubEmployeeSaveToEchoArgumentWithGeneratedId();
 
         EmployeeDto result = employeeService.update(employeeId, dto);
 
