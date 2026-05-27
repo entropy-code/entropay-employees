@@ -9,6 +9,9 @@ import com.entropyteam.entropay.employees.models.Reimbursement;
 
 public interface ReimbursementRepository extends BaseRepository<Reimbursement, UUID> {
 
+    List<Reimbursement> findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(
+            UUID employeeId, LocalDate from, LocalDate to);
+
     @Query("""
             SELECT r FROM Reimbursement r
             JOIN FETCH r.category
