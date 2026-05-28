@@ -11,9 +11,10 @@ import org.springframework.context.annotation.Configuration;
 public class McpServerConfig {
 
     @Bean
-    public ToolCallbackProvider rosterToolCallbackProvider(RosterMcpTools rosterMcpTools) {
+    public ToolCallbackProvider mcpToolCallbackProvider(RosterMcpTools rosterMcpTools,
+            Employee360McpTools employee360McpTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools)
+                .toolObjects(rosterMcpTools, employee360McpTools)
                 .build();
     }
 }
