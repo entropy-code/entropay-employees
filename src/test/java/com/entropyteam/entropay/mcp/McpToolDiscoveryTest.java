@@ -19,7 +19,11 @@ import com.entropyteam.entropay.employees.repositories.EmployeeFeedbackRepositor
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+import com.entropyteam.entropay.employees.services.BillingService;
 import com.entropyteam.entropay.employees.services.EmployeeService;
+import com.entropyteam.entropay.employees.services.MarginService;
+import com.entropyteam.entropay.employees.services.ReportService;
+import com.entropyteam.entropay.employees.services.TurnoverService;
 
 /**
  * Snapshot of the MCP tool surface advertised by the production tool-callback providers.
@@ -45,6 +49,14 @@ class McpToolDiscoveryTest {
     private ReimbursementRepository reimbursementRepository;
     @Mock
     private PtoRepository ptoRepository;
+    @Mock
+    private ReportService reportService;
+    @Mock
+    private BillingService billingService;
+    @Mock
+    private MarginService marginService;
+    @Mock
+    private TurnoverService turnoverService;
 
     private ToolCallback[] buildCallbacks() {
         RosterMcpTools rosterMcpTools = new RosterMcpTools(new RosterQueryService(employeeService));
@@ -55,8 +67,11 @@ class McpToolDiscoveryTest {
                 vacationRepository, employeeService));
         ReimbursementMcpTools reimbursementMcpTools = new ReimbursementMcpTools(
                 new ReimbursementQueryService(reimbursementRepository, employeeService));
+        ReportsMcpTools reportsMcpTools = new ReportsMcpTools(new ReportsQueryService(reportService,
+                billingService, marginService, turnoverService));
         return MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools)
+                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools,
+                        reportsMcpTools)
                 .build()
                 .getToolCallbacks();
     }
@@ -77,7 +92,11 @@ class McpToolDiscoveryTest {
                         "get_vacation_balance",
                         "list_employee_ptos",
                         "list_upcoming_ptos",
-                        "list_reimbursements"),
+                        "list_reimbursements",
+                        "get_turnover_report",
+                        "get_billing_report",
+                        "get_margin_report",
+                        "get_salaries_report"),
                 advertisedNames,
                 "Advertised tool names must match the expected snapshot. Update this test when a tool "
                         + "is intentionally added or removed.");

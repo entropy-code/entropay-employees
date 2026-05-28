@@ -13,9 +13,10 @@ public class McpServerConfig {
     @Bean
     public ToolCallbackProvider mcpToolCallbackProvider(RosterMcpTools rosterMcpTools,
             Employee360McpTools employee360McpTools, TimeOffMcpTools timeOffMcpTools,
-            ReimbursementMcpTools reimbursementMcpTools) {
+            ReimbursementMcpTools reimbursementMcpTools, ReportsMcpTools reportsMcpTools) {
         return MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools)
+                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools,
+                        reportsMcpTools)
                 .build();
     }
 }
