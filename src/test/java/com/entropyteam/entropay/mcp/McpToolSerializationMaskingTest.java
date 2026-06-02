@@ -66,6 +66,8 @@ class McpToolSerializationMaskingTest {
         }
     }
 
+    private Object previousSpringContext;
+
     @BeforeEach
     void setUp() throws Exception {
         sensitiveInformationService = new SensitiveInformationService(employeeService);
@@ -75,6 +77,9 @@ class McpToolSerializationMaskingTest {
         // because the discovery-only test does not exercise serialization.
         ApplicationContext mockCtx = mock(ApplicationContext.class);
         lenient().when(mockCtx.getBean(SensitiveInformationService.class)).thenReturn(sensitiveInformationService);
+        // Capture whatever was there (e.g. a real context set by a @SpringBootTest sharing this
+        // JVM) so tearDown can restore it instead of blanking the static holder for later tests.
+        previousSpringContext = springContextField.get(null);
         springContextField.set(null, mockCtx);
 
         probeTool = new SalaryProbeTool();
@@ -91,7 +96,7 @@ class McpToolSerializationMaskingTest {
     @AfterEach
     void tearDown() throws Exception {
         McpTestSecurityContext.clear();
-        springContextField.set(null, null);
+        springContextField.set(null, previousSpringContext);
     }
 
     @Test
