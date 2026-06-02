@@ -3,6 +3,7 @@ package com.entropyteam.entropay.mcp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -23,6 +24,7 @@ import org.springframework.data.domain.PageImpl;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.EmployeeFeedback;
 import com.entropyteam.entropay.employees.models.FeedbackSource;
@@ -82,15 +84,38 @@ class Employee360QueryServiceTest {
     }
 
     @Test
-    @DisplayName("get_employee resolves by name substring (case-insensitive)")
+    @DisplayName("get_employee resolves by name via the platform search (single DB match)")
     void getEmployeeByName() {
         EmployeeDto match = newEmployee(UUID.randomUUID(), "INT-1", "Maria", "Lopez");
-        EmployeeDto other = newEmployee(UUID.randomUUID(), "INT-2", "John", "Smith");
-        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(other, match)));
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(match)));
 
         EmployeeDto result = service().getEmployee("lopez");
 
         assertEquals(match.getId(), result.getId());
+    }
+
+    @Test
+    @DisplayName("get_employee throws an ambiguity error when the search returns several matches")
+    void getEmployeeAmbiguous() {
+        EmployeeDto first = newEmployee(UUID.randomUUID(), "INT-1", "Maria", "Lopez");
+        EmployeeDto second = newEmployee(UUID.randomUUID(), "INT-2", "Mario", "Lopez");
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(first, second)));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> service().getEmployee("lopez"));
+        assertTrue(ex.getMessage().contains("Multiple employees match"));
+    }
+
+    @Test
+    @DisplayName("get_employee prefers an exact internal-ID hit when the search returns several matches")
+    void getEmployeePrefersExactInternalId() {
+        EmployeeDto exact = newEmployee(UUID.randomUUID(), "INT-2", "Mario", "Lopez");
+        EmployeeDto partial = newEmployee(UUID.randomUUID(), "INT-20", "Maria", "Lopez");
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(partial, exact)));
+
+        EmployeeDto result = service().getEmployee("int-2");
+
+        assertEquals(exact.getId(), result.getId());
     }
 
     @Test
@@ -152,19 +177,20 @@ class Employee360QueryServiceTest {
     }
 
     @Test
-    @DisplayName("get_employee_summary assembles profile, vacation, feedbacks and reimbursements")
+    @DisplayName("get_employee_summary assembles profile, active engagements, vacation, feedbacks and reimbursements")
     void getEmployeeSummaryAssemblesAll() {
         UUID id = UUID.randomUUID();
         EmployeeDto dto = newEmployee(id, "INT-9", "Sam", "Rivera");
-        dto.setRate(new BigDecimal("80"));
         dto.setSalary(new BigDecimal("3000"));
         dto.setActive(true);
-        dto.setRole("Senior Engineer");
-        dto.setProject("Atlas");
-        dto.setClient("ClientCo");
         dto.setCountryName("Argentina");
         dto.setLabourEmail("sam@entropy.com");
         when(employeeService.findOne(id)).thenReturn(Optional.of(dto));
+
+        Assignment assignment = newAssignment(id, LocalDate.of(2024, 1, 1), "Atlas", "ClientCo",
+                "Senior Engineer", new BigDecimal("80"));
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(id))
+                .thenReturn(List.of(assignment));
 
         EmployeeFeedback feedback = newFeedback(id, LocalDate.of(2025, 1, 1), "Great work");
         Reimbursement reimbursement = newReimbursement(id, LocalDate.now().minusDays(10),
@@ -180,13 +206,72 @@ class Employee360QueryServiceTest {
 
         assertEquals(id, summary.id());
         assertEquals("INT-9", summary.internalId());
-        assertEquals(new BigDecimal("80"), summary.currentRate());
         assertEquals(new BigDecimal("3000"), summary.currentSalary());
+        assertEquals(1, summary.activeEngagements().size());
+        EmployeeSummary.ActiveEngagement engagement = summary.activeEngagements().get(0);
+        assertEquals("Atlas", engagement.project());
+        assertEquals("ClientCo", engagement.client());
+        assertEquals("Senior Engineer", engagement.role());
+        assertEquals(new BigDecimal("80"), engagement.rate());
         assertEquals(12, summary.vacationBalance());
         assertEquals(1, summary.recentFeedbacks().size());
         assertEquals("Great work", summary.recentFeedbacks().get(0).title());
         assertEquals(1, summary.latestReimbursements().size());
         assertEquals(new BigDecimal("250"), summary.latestReimbursements().get(0).amount());
+    }
+
+    @Test
+    @DisplayName("get_employee_summary lists every active engagement for a multi-project employee")
+    void getEmployeeSummaryListsMultipleActiveEngagements() {
+        UUID id = UUID.randomUUID();
+        EmployeeDto dto = newEmployee(id, "INT-9", "Sam", "Rivera");
+        dto.setSalary(new BigDecimal("3000"));
+        when(employeeService.findOne(id)).thenReturn(Optional.of(dto));
+
+        Assignment newer = newAssignment(id, LocalDate.of(2024, 6, 1), "Atlas", "ClientCo",
+                "Senior Engineer", new BigDecimal("80"));
+        Assignment older = newAssignment(id, LocalDate.of(2023, 1, 1), "Orion", "OtherCo",
+                "Tech Lead", new BigDecimal("90"));
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(id))
+                .thenReturn(List.of(older, newer));
+        when(vacationRepository.getAvailableDays(id)).thenReturn(0);
+        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of());
+        lenient().when(reimbursementRepository
+                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+                .thenReturn(List.of());
+
+        EmployeeSummary summary = service().getEmployeeSummary(id.toString());
+
+        assertEquals(2, summary.activeEngagements().size());
+        // Sorted by start date desc: the most recent engagement comes first.
+        assertEquals("Atlas", summary.activeEngagements().get(0).project());
+        assertEquals("Orion", summary.activeEngagements().get(1).project());
+    }
+
+    @Test
+    @DisplayName("get_employee_summary excludes inactive assignments from active engagements")
+    void getEmployeeSummaryExcludesInactiveAssignments() {
+        UUID id = UUID.randomUUID();
+        EmployeeDto dto = newEmployee(id, "INT-9", "Sam", "Rivera");
+        when(employeeService.findOne(id)).thenReturn(Optional.of(dto));
+
+        Assignment active = newAssignment(id, LocalDate.of(2024, 1, 1), "Atlas", "ClientCo",
+                "Senior Engineer", new BigDecimal("80"));
+        Assignment inactive = newAssignment(id, LocalDate.of(2022, 1, 1), "Legacy", "OldCo",
+                "Engineer", new BigDecimal("70"));
+        inactive.setActive(false);
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(id))
+                .thenReturn(List.of(active, inactive));
+        when(vacationRepository.getAvailableDays(id)).thenReturn(0);
+        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of());
+        lenient().when(reimbursementRepository
+                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+                .thenReturn(List.of());
+
+        EmployeeSummary summary = service().getEmployeeSummary(id.toString());
+
+        assertEquals(1, summary.activeEngagements().size());
+        assertEquals("Atlas", summary.activeEngagements().get(0).project());
     }
 
     @Test
@@ -219,13 +304,24 @@ class Employee360QueryServiceTest {
     }
 
     private Assignment newAssignment(UUID employeeId, LocalDate startDate) {
+        return newAssignment(employeeId, startDate, null, null, "Engineer", new BigDecimal("100"));
+    }
+
+    private Assignment newAssignment(UUID employeeId, LocalDate startDate, String projectName,
+            String clientName, String roleName, BigDecimal rate) {
         Employee employee = new Employee();
         employee.setId(employeeId);
         Project project = new Project();
         project.setId(UUID.randomUUID());
+        project.setName(projectName);
+        if (clientName != null) {
+            Client client = new Client();
+            client.setName(clientName);
+            project.setClient(client);
+        }
         Role role = new Role();
         role.setId(UUID.randomUUID());
-        role.setName("Engineer");
+        role.setName(roleName);
         Seniority seniority = new Seniority();
         seniority.setId(UUID.randomUUID());
 
@@ -235,7 +331,7 @@ class Employee360QueryServiceTest {
         a.setProject(project);
         a.setRole(role);
         a.setSeniority(seniority);
-        a.setBillableRate(new BigDecimal("100"));
+        a.setBillableRate(rate);
         a.setStartDate(startDate);
         a.setActive(true);
         return a;

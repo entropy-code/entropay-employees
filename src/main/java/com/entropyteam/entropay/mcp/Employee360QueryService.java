@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import com.entropyteam.entropay.common.ReactAdminParams;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.dtos.FeedbackDto;
+import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Reimbursement;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeFeedbackRepository;
@@ -26,8 +28,10 @@ import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 import com.entropyteam.entropay.mcp.dtos.EmployeeSummary;
+import com.entropyteam.entropay.mcp.dtos.EmployeeSummary.ActiveEngagement;
 import com.entropyteam.entropay.mcp.dtos.EmployeeSummary.FeedbackHighlight;
 import com.entropyteam.entropay.mcp.dtos.EmployeeSummary.ReimbursementHighlight;
+import com.google.gson.JsonObject;
 
 /**
  * Read-only Employee 360 queries backing the MCP tools. Role gates mirror the REST API:
@@ -101,6 +105,23 @@ public class Employee360QueryService {
         EmployeeDto employee = getEmployee(query);
         UUID employeeId = employee.getId();
 
+        // An employee can be active on more than one project/client at once, so the current
+        // engagement is a list — each with its own client, role and (sensitive) billable rate —
+        // rather than a single collapsed project/rate. Reuses the same finder as
+        // list_employee_assignments; no new query.
+        List<ActiveEngagement> activeEngagements = assignmentRepository
+                .findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId).stream()
+                .filter(Assignment::isActive)
+                .sorted(Comparator.comparing(a -> Optional.ofNullable(a.getStartDate()).orElse(LocalDate.MIN),
+                        Comparator.reverseOrder()))
+                .map(a -> new ActiveEngagement(
+                        a.getProject() != null ? a.getProject().getName() : null,
+                        a.getProject() != null && a.getProject().getClient() != null
+                                ? a.getProject().getClient().getName() : null,
+                        a.getRole() != null ? a.getRole().getName() : null,
+                        a.getBillableRate()))
+                .toList();
+
         Integer vacationBalance = vacationRepository.getAvailableDays(employeeId);
 
         List<FeedbackHighlight> recentFeedbacks = listEmployeeFeedbacks(employeeId).stream()
@@ -134,13 +155,10 @@ public class Employee360QueryService {
                 employee.getLabourEmail(),
                 employee.getCountryName(),
                 employee.isActive(),
-                employee.getRole(),
-                employee.getProject(),
-                employee.getClient(),
                 employee.getStartDate(),
                 employee.getEndDate(),
                 employee.getTimeSinceStart(),
-                employee.getRate(),
+                activeEngagements,
                 employee.getSalary(),
                 vacationBalance == null ? 0 : vacationBalance,
                 recentFeedbacks,
@@ -148,20 +166,50 @@ public class Employee360QueryService {
     }
 
     private Optional<EmployeeDto> resolveEmployee(String query) {
+        // Exact UUID match first — cheapest and unambiguous.
         Optional<EmployeeDto> byUuid = tryParseUuid(query).flatMap(employeeService::findOne);
         if (byUuid.isPresent()) {
             return byUuid;
         }
-        List<EmployeeDto> active = employeeService.findAllActive(new ReactAdminParams()).getContent();
-        Optional<EmployeeDto> byInternalId = active.stream()
+        // Otherwise delegate to the platform's active-employee search instead of scanning the
+        // whole roster in memory. This mirrors the admin-ui query
+        // /employees?filter={"active":true,"q":"<query>"} and reuses EmployeeService's
+        // getColumnsForSearch() (firstName, lastName, internalId) so the MCP tool resolves
+        // employees exactly the way the UI does.
+        List<EmployeeDto> matches = searchActiveEmployees(query);
+        if (matches.size() <= 1) {
+            return matches.stream().findFirst();
+        }
+        // Several employees matched the free-text search. Prefer an exact internal-ID hit;
+        // if there is none, the query is genuinely ambiguous — surface a clear error rather
+        // than silently picking one (the parent story requires "clear error, not partial data").
+        Optional<EmployeeDto> exactInternalId = matches.stream()
                 .filter(e -> StringUtils.equalsIgnoreCase(e.getInternalId(), query))
                 .findFirst();
-        if (byInternalId.isPresent()) {
-            return byInternalId;
+        if (exactInternalId.isPresent()) {
+            return exactInternalId;
         }
-        return active.stream()
-                .filter(e -> matchesName(e, query))
-                .findFirst();
+        throw new IllegalArgumentException(ambiguousMatchMessage(query, matches));
+    }
+
+    private List<EmployeeDto> searchActiveEmployees(String query) {
+        JsonObject filter = new JsonObject();
+        filter.addProperty("active", true);
+        filter.addProperty("q", query);
+        ReactAdminParams params = new ReactAdminParams();
+        params.setFilter(filter.toString());
+        return employeeService.findAllActive(params).getContent();
+    }
+
+    private static String ambiguousMatchMessage(String query, List<EmployeeDto> matches) {
+        String sample = matches.stream()
+                .limit(5)
+                .map(e -> (StringUtils.defaultString(e.getInternalId()) + " "
+                        + StringUtils.defaultString(e.getFirstName()) + " "
+                        + StringUtils.defaultString(e.getLastName())).trim())
+                .collect(Collectors.joining(", "));
+        return "Multiple employees match '" + query + "' (" + matches.size()
+                + "). Refine by internal ID or UUID. Matches: " + sample;
     }
 
     private static Optional<UUID> tryParseUuid(String input) {
@@ -170,13 +218,5 @@ public class Employee360QueryService {
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
-    }
-
-    private static boolean matchesName(EmployeeDto employee, String query) {
-        String full = (StringUtils.defaultString(employee.getFirstName()) + " "
-                + StringUtils.defaultString(employee.getLastName())).trim();
-        return StringUtils.containsIgnoreCase(full, query)
-                || StringUtils.containsIgnoreCase(employee.getFirstName(), query)
-                || StringUtils.containsIgnoreCase(employee.getLastName(), query);
     }
 }

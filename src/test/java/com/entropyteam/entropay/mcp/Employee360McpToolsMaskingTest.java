@@ -148,6 +148,8 @@ class Employee360McpToolsMaskingTest {
         EmployeeDto employee = newEmployee(employeeId, new BigDecimal("80"), new BigDecimal("3000"));
         when(employeeService.findOne(employeeId)).thenReturn(Optional.of(employee));
         when(employeeService.getInternalEmployeeIds()).thenReturn(Set.of(employeeId));
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
+                .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
         when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
         lenient().when(reimbursementRepository
@@ -157,8 +159,8 @@ class Employee360McpToolsMaskingTest {
 
         String json = summaryCallback.call("{\"query\":\"" + employeeId + "\"}");
 
-        assertTrue(json.contains("\"currentRate\":null"),
-                role + " should see masked currentRate. JSON: " + json);
+        assertTrue(json.contains("\"rate\":null"),
+                role + " should see masked engagement rate. JSON: " + json);
         assertTrue(json.contains("\"currentSalary\":null"),
                 role + " should see masked currentSalary. JSON: " + json);
     }
@@ -169,6 +171,8 @@ class Employee360McpToolsMaskingTest {
         UUID employeeId = UUID.randomUUID();
         EmployeeDto employee = newEmployee(employeeId, new BigDecimal("80"), new BigDecimal("3000"));
         when(employeeService.findOne(employeeId)).thenReturn(Optional.of(employee));
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
+                .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
         when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
         lenient().when(reimbursementRepository
@@ -178,7 +182,7 @@ class Employee360McpToolsMaskingTest {
 
         String json = summaryCallback.call("{\"query\":\"" + employeeId + "\"}");
 
-        assertTrue(json.contains("\"currentRate\":80"), "Admin should see raw rate. JSON: " + json);
+        assertTrue(json.contains("\"rate\":80"), "Admin should see raw engagement rate. JSON: " + json);
         assertTrue(json.contains("\"currentSalary\":3000"), "Admin should see raw salary. JSON: " + json);
     }
 
@@ -189,6 +193,8 @@ class Employee360McpToolsMaskingTest {
         EmployeeDto employee = newEmployee(employeeId, new BigDecimal("80"), new BigDecimal("3000"));
         when(employeeService.findOne(employeeId)).thenReturn(Optional.of(employee));
         when(employeeService.getInternalEmployeeIds()).thenReturn(Set.of(UUID.randomUUID()));
+        when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
+                .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
         when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
         lenient().when(reimbursementRepository
@@ -198,8 +204,8 @@ class Employee360McpToolsMaskingTest {
 
         String json = summaryCallback.call("{\"query\":\"" + employeeId + "\"}");
 
-        assertTrue(json.contains("\"currentRate\":80"),
-                "External-employee rate should not be masked for non-admin. JSON: " + json);
+        assertTrue(json.contains("\"rate\":80"),
+                "External-employee engagement rate should not be masked for non-admin. JSON: " + json);
         assertTrue(json.contains("\"currentSalary\":3000"),
                 "External-employee salary should not be masked for non-admin. JSON: " + json);
     }
