@@ -153,6 +153,13 @@ public class ReactAdminMapper {
 
     public <T> Comparator<T> getComparator(ReactAdminParams params, Class<T> clazz) {
 
+        // React Admin always sends sort, but programmatic callers (e.g. the MCP report tools)
+        // may not. Mirror buildPageable()'s null-guard: no sort means keep the incoming order
+        // rather than letting Jackson reject the null payload.
+        if (params.getSort() == null) {
+            return (object1, object2) -> 0;
+        }
+
         return (object1, object2) -> {
             try {
                 List<String> sortList = mapper.readValue(params.getSort(), List.class);
@@ -237,6 +244,11 @@ public class ReactAdminMapper {
     }
 
     private Map<String, String> parseFilters(ReactAdminParams params) {
+        // No filter means no constraints. Guard the null before it reaches Jackson, which
+        // rejects a null payload with IllegalArgumentException("argument \"content\" is null").
+        if (params.getFilter() == null) {
+            return new HashMap<>();
+        }
         Map<String, String> filters;
         try {
             filters = mapper.readValue(params.getFilter(), Map.class);
@@ -287,6 +299,12 @@ public class ReactAdminMapper {
 
 
     public Range<Integer> getRange(ReactAdminParams params) {
+        // No range means "return everything". Use a full, paginate()-safe range instead of
+        // letting Jackson reject the null payload. The upper bound stays below Integer.MAX_VALUE
+        // because paginate() computes getMaximum() + 1, which would overflow at MAX_VALUE.
+        if (params.getRange() == null) {
+            return Range.of(0, Integer.MAX_VALUE - 1);
+        }
         try {
             List<Integer> rangeList = mapper.readValue(params.getRange(), List.class);
             Integer start = rangeList.get(0);
@@ -309,15 +327,29 @@ public class ReactAdminMapper {
     @SuppressWarnings("unchecked")
     public ReactAdminSqlParams map(ReactAdminParams params) {
         try {
-            String[] array = mapper.readValue(params.getSort(), String[].class);
-            String sort = array[0];
-            String order = array[1];
+            // React Admin always sends sort/range/filter, but programmatic callers (e.g. the MCP
+            // report tools) may omit them. Guard each before it reaches Jackson, which rejects a
+            // null payload with IllegalArgumentException("argument \"content\" is null"). Mirrors
+            // the existing null-guards in buildPageable()/buildFilter().
+            String sort = null;
+            String order = null;
+            if (params.getSort() != null) {
+                String[] array = mapper.readValue(params.getSort(), String[].class);
+                sort = array[0];
+                order = array[1];
+            }
 
-            int[] range = mapper.readValue(params.getRange(), int[].class);
-            int limit = range[1] - range[0] + 1;
-            int offset = range[0];
+            int offset = 0;
+            int limit = Integer.MAX_VALUE;
+            if (params.getRange() != null) {
+                int[] range = mapper.readValue(params.getRange(), int[].class);
+                offset = range[0];
+                limit = range[1] - range[0] + 1;
+            }
 
-            Map<String, String> queryParameters = mapper.readValue(params.getFilter(), Map.class);
+            Map<String, String> queryParameters = params.getFilter() == null
+                    ? new HashMap<>()
+                    : mapper.readValue(params.getFilter(), Map.class);
 
             return new ReactAdminSqlParams(queryParameters, limit, offset, sort, order);
         } catch (JsonProcessingException e) {
