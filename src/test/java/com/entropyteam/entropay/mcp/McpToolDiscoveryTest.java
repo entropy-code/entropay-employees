@@ -14,6 +14,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
+import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
+import com.entropyteam.entropay.employees.repositories.EmployeeFeedbackRepository;
+import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
+import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 
 /**
@@ -22,30 +26,48 @@ import com.entropyteam.entropay.employees.services.EmployeeService;
  * MCP client at connection time so the assistant can discover them." If a tool is added,
  * renamed, or accidentally dropped, this test fails and forces the change to be intentional.
  *
- * <p>As new tool providers land in subsequent PRs (Employee 360, Time off, Reimbursements,
- * Reports), this expected-set is extended in lockstep.
+ * <p>As new tool providers land in subsequent PRs (Time off, Reimbursements, Reports), this
+ * expected-set is extended in lockstep.
  */
 @ExtendWith(MockitoExtension.class)
 class McpToolDiscoveryTest {
 
     @Mock
     private EmployeeService employeeService;
+    @Mock
+    private AssignmentRepository assignmentRepository;
+    @Mock
+    private EmployeeFeedbackRepository employeeFeedbackRepository;
+    @Mock
+    private VacationRepository vacationRepository;
+    @Mock
+    private ReimbursementRepository reimbursementRepository;
 
-    @Test
-    @DisplayName("Roster tool callback provider advertises exactly the expected tool names")
-    void rosterToolCallbackProviderAdvertisesExpectedTools() {
+    private ToolCallback[] buildCallbacks() {
         RosterMcpTools rosterMcpTools = new RosterMcpTools(new RosterQueryService(employeeService));
-
-        ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools)
+        Employee360McpTools employee360McpTools = new Employee360McpTools(new Employee360QueryService(
+                employeeService, assignmentRepository, employeeFeedbackRepository, vacationRepository,
+                reimbursementRepository));
+        return MethodToolCallbackProvider.builder()
+                .toolObjects(rosterMcpTools, employee360McpTools)
                 .build()
                 .getToolCallbacks();
+    }
 
-        Set<String> advertisedNames = Arrays.stream(callbacks)
+    @Test
+    @DisplayName("Tool callback provider advertises exactly the expected tool names")
+    void toolCallbackProviderAdvertisesExpectedTools() {
+        Set<String> advertisedNames = Arrays.stream(buildCallbacks())
                 .map(cb -> cb.getToolDefinition().name())
                 .collect(Collectors.toSet());
 
-        assertEquals(Set.of("list_roster"), advertisedNames,
+        assertEquals(Set.of(
+                        "list_roster",
+                        "get_employee",
+                        "get_employee_summary",
+                        "list_employee_assignments",
+                        "list_employee_feedbacks"),
+                advertisedNames,
                 "Advertised tool names must match the expected snapshot. Update this test when a tool "
                         + "is intentionally added or removed.");
     }
@@ -53,14 +75,7 @@ class McpToolDiscoveryTest {
     @Test
     @DisplayName("Every advertised tool exposes a non-blank name and description")
     void everyAdvertisedToolHasNameAndDescription() {
-        RosterMcpTools rosterMcpTools = new RosterMcpTools(new RosterQueryService(employeeService));
-
-        ToolCallback[] callbacks = MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools)
-                .build()
-                .getToolCallbacks();
-
-        List<ToolCallback> all = Arrays.asList(callbacks);
+        List<ToolCallback> all = Arrays.asList(buildCallbacks());
         assertTrue(all.size() > 0, "Expected at least one advertised tool");
         all.forEach(cb -> {
             assertTrue(cb.getToolDefinition().name() != null && !cb.getToolDefinition().name().isBlank(),
