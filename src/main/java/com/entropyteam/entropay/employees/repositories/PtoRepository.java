@@ -11,6 +11,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PtoRepository extends BaseRepository<Pto, UUID> {
+
+    List<Pto> findAllByEmployee_IdAndDeletedIsFalse(UUID employeeId);
+
     @Query(value = "SELECT DATE(start_date) FROM pto " +
             "WHERE employee_id = :employeeId AND deleted = false " +
             "AND DATE(start_date) >= CURRENT_DATE " +

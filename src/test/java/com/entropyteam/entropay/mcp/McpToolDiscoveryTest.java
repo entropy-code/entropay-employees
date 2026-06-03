@@ -16,6 +16,7 @@ import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeFeedbackRepository;
+import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.services.EmployeeService;
@@ -42,14 +43,18 @@ class McpToolDiscoveryTest {
     private VacationRepository vacationRepository;
     @Mock
     private ReimbursementRepository reimbursementRepository;
+    @Mock
+    private PtoRepository ptoRepository;
 
     private ToolCallback[] buildCallbacks() {
         RosterMcpTools rosterMcpTools = new RosterMcpTools(new RosterQueryService(employeeService));
         Employee360McpTools employee360McpTools = new Employee360McpTools(new Employee360QueryService(
                 employeeService, assignmentRepository, employeeFeedbackRepository, vacationRepository,
                 reimbursementRepository));
+        TimeOffMcpTools timeOffMcpTools = new TimeOffMcpTools(new TimeOffQueryService(ptoRepository,
+                vacationRepository, employeeService));
         return MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools, employee360McpTools)
+                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools)
                 .build()
                 .getToolCallbacks();
     }
@@ -66,7 +71,10 @@ class McpToolDiscoveryTest {
                         "get_employee",
                         "get_employee_summary",
                         "list_employee_assignments",
-                        "list_employee_feedbacks"),
+                        "list_employee_feedbacks",
+                        "get_vacation_balance",
+                        "list_employee_ptos",
+                        "list_upcoming_ptos"),
                 advertisedNames,
                 "Advertised tool names must match the expected snapshot. Update this test when a tool "
                         + "is intentionally added or removed.");
