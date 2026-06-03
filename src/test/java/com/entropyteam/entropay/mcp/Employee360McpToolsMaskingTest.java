@@ -151,9 +151,10 @@ class Employee360McpToolsMaskingTest {
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
                 .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(employeeId), any()))
+                .thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(employeeId), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(employeeId), any(), any(), any()))
                 .thenReturn(List.of());
         McpTestSecurityContext.authenticateWithRoles(role);
 
@@ -174,9 +175,10 @@ class Employee360McpToolsMaskingTest {
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
                 .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(employeeId), any()))
+                .thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(employeeId), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(employeeId), any(), any(), any()))
                 .thenReturn(List.of());
         McpTestSecurityContext.authenticateWithRoles(AuthConstants.ROLE_ADMIN);
 
@@ -196,9 +198,10 @@ class Employee360McpToolsMaskingTest {
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId))
                 .thenReturn(List.of(newAssignment(employeeId, new BigDecimal("80"))));
         when(vacationRepository.getAvailableDays(employeeId)).thenReturn(10);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(employeeId), any()))
+                .thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(employeeId), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(employeeId), any(), any(), any()))
                 .thenReturn(List.of());
         McpTestSecurityContext.authenticateWithRoles(AuthConstants.ROLE_ANALYST);
 

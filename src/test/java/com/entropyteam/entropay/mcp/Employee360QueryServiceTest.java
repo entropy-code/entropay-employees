@@ -196,10 +196,9 @@ class Employee360QueryServiceTest {
         Reimbursement reimbursement = newReimbursement(id, LocalDate.now().minusDays(10),
                 "Equipment", new BigDecimal("250"), "Monitor");
         when(vacationRepository.getAvailableDays(id)).thenReturn(12);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id))
+        when(employeeFeedbackRepository.findRecentByEmployee(eq(id), any()))
                 .thenReturn(List.of(feedback));
-        lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+        when(reimbursementRepository.findRecentWithCategoryByEmployee(eq(id), any(), any(), any()))
                 .thenReturn(List.of(reimbursement));
 
         EmployeeSummary summary = service().getEmployeeSummary(id.toString());
@@ -235,9 +234,9 @@ class Employee360QueryServiceTest {
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(id))
                 .thenReturn(List.of(older, newer));
         when(vacationRepository.getAvailableDays(id)).thenReturn(0);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(id), any())).thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(id), any(), any(), any()))
                 .thenReturn(List.of());
 
         EmployeeSummary summary = service().getEmployeeSummary(id.toString());
@@ -263,9 +262,9 @@ class Employee360QueryServiceTest {
         when(assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(id))
                 .thenReturn(List.of(active, inactive));
         when(vacationRepository.getAvailableDays(id)).thenReturn(0);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(id), any())).thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(id), any(), any(), any()))
                 .thenReturn(List.of());
 
         EmployeeSummary summary = service().getEmployeeSummary(id.toString());
@@ -281,9 +280,9 @@ class Employee360QueryServiceTest {
         EmployeeDto dto = newEmployee(id, "INT-1", "A", "B");
         when(employeeService.findOne(id)).thenReturn(Optional.of(dto));
         when(vacationRepository.getAvailableDays(id)).thenReturn(null);
-        when(employeeFeedbackRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of());
+        lenient().when(employeeFeedbackRepository.findRecentByEmployee(eq(id), any())).thenReturn(List.of());
         lenient().when(reimbursementRepository
-                        .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(eq(id), any(), any()))
+                        .findRecentWithCategoryByEmployee(eq(id), any(), any(), any()))
                 .thenReturn(List.of());
 
         EmployeeSummary summary = service().getEmployeeSummary(id.toString());

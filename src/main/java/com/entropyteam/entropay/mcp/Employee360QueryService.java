@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,6 @@ import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.dtos.FeedbackDto;
 import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Reimbursement;
 import com.entropyteam.entropay.employees.repositories.AssignmentRepository;
 import com.entropyteam.entropay.employees.repositories.EmployeeFeedbackRepository;
 import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
@@ -124,22 +124,25 @@ public class Employee360QueryService {
 
         Integer vacationBalance = vacationRepository.getAvailableDays(employeeId);
 
-        List<FeedbackHighlight> recentFeedbacks = listEmployeeFeedbacks(employeeId).stream()
-                .limit(RECENT_FEEDBACKS_LIMIT)
+        // Only the newest few highlights are needed, and FeedbackHighlight carries nothing from
+        // the Employee — so fetch and cap in the DB instead of mapping the full history through
+        // FeedbackDto (which lazy-loads the Employee per row).
+        List<FeedbackHighlight> recentFeedbacks = employeeFeedbackRepository
+                .findRecentByEmployee(employeeId, PageRequest.of(0, RECENT_FEEDBACKS_LIMIT)).stream()
                 .map(f -> new FeedbackHighlight(
-                        f.feedbackDate(),
-                        f.source() != null ? f.source().name() : null,
-                        f.title(),
-                        f.createdBy()))
+                        f.getFeedbackDate(),
+                        f.getSource() != null ? f.getSource().name() : null,
+                        f.getTitle(),
+                        f.getCreatedBy()))
                 .toList();
 
         LocalDate to = LocalDate.now();
         LocalDate from = to.minusDays(REIMBURSEMENT_LOOKBACK_DAYS);
+        // Order + cap in the DB and fetch the (LAZY) category eagerly to avoid an N+1 on
+        // category.name.
         List<ReimbursementHighlight> latestReimbursements = reimbursementRepository
-                .findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(employeeId, from, to).stream()
-                .sorted(Comparator.comparing(Reimbursement::getDate,
-                        Comparator.nullsLast(Comparator.reverseOrder())))
-                .limit(LATEST_REIMBURSEMENTS_LIMIT)
+                .findRecentWithCategoryByEmployee(employeeId, from, to,
+                        PageRequest.of(0, LATEST_REIMBURSEMENTS_LIMIT)).stream()
                 .map(r -> new ReimbursementHighlight(
                         r.getDate(),
                         r.getCategory() != null ? r.getCategory().getName() : null,
