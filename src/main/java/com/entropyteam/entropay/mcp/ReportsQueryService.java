@@ -7,6 +7,7 @@ import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
@@ -92,8 +93,9 @@ public class ReportsQueryService {
 
     private static ReactAdminParams buildParams(LocalDate startDate, LocalDate endDate) {
         DateTimeFormatter iso = DateTimeFormatter.ISO_LOCAL_DATE;
-        String filter = String.format("{\"startDate\":\"%s\",\"endDate\":\"%s\"}",
-                startDate.format(iso), endDate.format(iso));
-        return new ReactAdminParams(filter, null, null);
+        JsonObject filter = new JsonObject();
+        filter.addProperty("startDate", startDate.format(iso));
+        filter.addProperty("endDate", endDate.format(iso));
+        return new ReactAdminParams(filter.toString(), null, null);
     }
 }

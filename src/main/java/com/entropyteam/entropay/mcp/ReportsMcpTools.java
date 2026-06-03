@@ -38,8 +38,7 @@ public class ReportsMcpTools {
     @Tool(name = "get_billing_report",
             description = "Billing report for the given period, optionally filtered by client name "
                     + "(case-insensitive substring match). Returns one entry per billable assignment, "
-                    + "including rate and total. Rate and total are masked for non-admin callers viewing "
-                    + "internal employees — but this tool is ADMIN-only in the first place.")
+                    + "including rate and total. ADMIN-only.")
     public List<BillingDto> getBillingReport(
             @ToolParam(description = "Period start date (yyyy-MM-dd).")
             LocalDate startDate,
