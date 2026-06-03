@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.LeaveType;
@@ -24,6 +26,7 @@ import com.entropyteam.entropay.employees.models.Status;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 import com.entropyteam.entropay.employees.repositories.projections.VacationBalanceByYear;
+import com.entropyteam.entropay.employees.services.EmployeeService;
 import com.entropyteam.entropay.mcp.dtos.VacationBalance;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,22 +36,35 @@ class TimeOffQueryServiceTest {
     private PtoRepository ptoRepository;
     @Mock
     private VacationRepository vacationRepository;
+    @Mock
+    private EmployeeService employeeService;
 
     private TimeOffQueryService service() {
-        return new TimeOffQueryService(ptoRepository, vacationRepository);
+        return new TimeOffQueryService(ptoRepository, vacationRepository, employeeService);
+    }
+
+    /** Stubs the platform search so {@code internalId} resolves to {@code id}. */
+    private void stubResolution(String internalId, UUID id) {
+        EmployeeDto dto = new EmployeeDto();
+        dto.setId(id);
+        dto.setInternalId(internalId);
+        dto.setActive(true);
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(dto)));
     }
 
     @Test
-    @DisplayName("get_vacation_balance returns total and per-year breakdown")
+    @DisplayName("get_vacation_balance resolves the internal ID and returns total and per-year breakdown")
     void getVacationBalance() {
         UUID id = UUID.randomUUID();
+        stubResolution("INT-42", id);
         VacationBalanceByYear y2024 = mockYearBalance("2024", 5);
         VacationBalanceByYear y2025 = mockYearBalance("2025", 10);
         when(vacationRepository.getVacationByYear(id)).thenReturn(List.of(y2024, y2025));
         when(vacationRepository.getAvailableDays(id)).thenReturn(15);
 
-        VacationBalance result = service().getVacationBalance(id);
+        VacationBalance result = service().getVacationBalance("INT-42");
 
+        assertEquals("INT-42", result.internalId());
         assertEquals(15, result.totalAvailableDays());
         assertEquals(2, result.byYear().size());
         assertEquals("2024", result.byYear().get(0).year());
@@ -60,30 +76,41 @@ class TimeOffQueryServiceTest {
     @DisplayName("get_vacation_balance returns 0 when getAvailableDays is null")
     void getVacationBalanceNullTotal() {
         UUID id = UUID.randomUUID();
+        stubResolution("INT-42", id);
         when(vacationRepository.getVacationByYear(id)).thenReturn(List.of());
         when(vacationRepository.getAvailableDays(id)).thenReturn(null);
 
-        VacationBalance result = service().getVacationBalance(id);
+        VacationBalance result = service().getVacationBalance("INT-42");
 
         assertEquals(0, result.totalAvailableDays());
         assertTrue(result.byYear().isEmpty());
     }
 
     @Test
-    @DisplayName("get_vacation_balance rejects null employeeId")
-    void getVacationBalanceNullId() {
+    @DisplayName("get_vacation_balance rejects a blank internal ID")
+    void getVacationBalanceBlankId() {
         assertThrows(IllegalArgumentException.class, () -> service().getVacationBalance(null));
+        assertThrows(IllegalArgumentException.class, () -> service().getVacationBalance("  "));
+    }
+
+    @Test
+    @DisplayName("get_vacation_balance rejects an internal ID that matches no active employee")
+    void getVacationBalanceUnknownId() {
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of()));
+
+        assertThrows(IllegalArgumentException.class, () -> service().getVacationBalance("INT-404"));
     }
 
     @Test
     @DisplayName("list_employee_ptos returns all PTOs sorted by start date desc when no filters")
     void listEmployeePtosNoFilters() {
         UUID id = UUID.randomUUID();
+        stubResolution("INT-42", id);
         Pto older = newPto(id, LocalDate.of(2023, 6, 1), LocalDate.of(2023, 6, 5), "Vacation");
         Pto newer = newPto(id, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 3), "Sick");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of(older, newer));
 
-        List<PtoDto> result = service().listEmployeePtos(id, null, null, null);
+        List<PtoDto> result = service().listEmployeePtos("INT-42", null, null, null);
 
         assertEquals(2, result.size());
         assertEquals(LocalDate.of(2025, 1, 1), result.get(0).ptoStartDate());
@@ -94,11 +121,12 @@ class TimeOffQueryServiceTest {
     @DisplayName("list_employee_ptos filters by leave type case-insensitive")
     void listEmployeePtosFiltersByLeaveType() {
         UUID id = UUID.randomUUID();
+        stubResolution("INT-42", id);
         Pto vacation = newPto(id, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 5), "Vacation");
         Pto sick = newPto(id, LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 3), "Sick");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of(vacation, sick));
 
-        List<PtoDto> result = service().listEmployeePtos(id, null, null, "vacation");
+        List<PtoDto> result = service().listEmployeePtos("INT-42", null, null, "vacation");
 
         assertEquals(1, result.size());
         assertEquals(LocalDate.of(2025, 1, 1), result.get(0).ptoStartDate());
@@ -108,13 +136,14 @@ class TimeOffQueryServiceTest {
     @DisplayName("list_employee_ptos filters by overlapping date range")
     void listEmployeePtosFiltersByDateRange() {
         UUID id = UUID.randomUUID();
+        stubResolution("INT-42", id);
         Pto before = newPto(id, LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 5), "Vacation");
         Pto inWindow = newPto(id, LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 5), "Vacation");
         Pto after = newPto(id, LocalDate.of(2025, 7, 1), LocalDate.of(2025, 7, 5), "Vacation");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id))
                 .thenReturn(List.of(before, inWindow, after));
 
-        List<PtoDto> result = service().listEmployeePtos(id,
+        List<PtoDto> result = service().listEmployeePtos("INT-42",
                 LocalDate.of(2025, 1, 1), LocalDate.of(2025, 6, 30), null);
 
         assertEquals(1, result.size());
@@ -122,10 +151,21 @@ class TimeOffQueryServiceTest {
     }
 
     @Test
-    @DisplayName("list_employee_ptos rejects null id")
-    void listEmployeePtosNullId() {
+    @DisplayName("list_employee_ptos rejects a blank internal ID")
+    void listEmployeePtosBlankId() {
         assertThrows(IllegalArgumentException.class,
                 () -> service().listEmployeePtos(null, null, null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> service().listEmployeePtos("  ", null, null, null));
+    }
+
+    @Test
+    @DisplayName("list_employee_ptos rejects an internal ID that matches no active employee")
+    void listEmployeePtosUnknownId() {
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of()));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service().listEmployeePtos("INT-404", null, null, null));
     }
 
     @Test

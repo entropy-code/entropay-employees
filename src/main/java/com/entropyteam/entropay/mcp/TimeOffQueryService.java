@@ -9,14 +9,18 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.entropyteam.entropay.common.ReactAdminParams;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.dtos.PtoDto;
 import com.entropyteam.entropay.employees.models.Pto;
 import com.entropyteam.entropay.employees.repositories.PtoRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
+import com.entropyteam.entropay.employees.services.EmployeeService;
 import com.entropyteam.entropay.mcp.dtos.VacationBalance;
 
 /**
@@ -32,32 +36,31 @@ public class TimeOffQueryService {
 
     private final PtoRepository ptoRepository;
     private final VacationRepository vacationRepository;
+    private final EmployeeService employeeService;
 
-    public TimeOffQueryService(PtoRepository ptoRepository, VacationRepository vacationRepository) {
+    public TimeOffQueryService(PtoRepository ptoRepository, VacationRepository vacationRepository,
+            EmployeeService employeeService) {
         this.ptoRepository = ptoRepository;
         this.vacationRepository = vacationRepository;
+        this.employeeService = employeeService;
     }
 
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT})
     @Transactional(readOnly = true)
-    public VacationBalance getVacationBalance(UUID employeeId) {
-        if (employeeId == null) {
-            throw new IllegalArgumentException("employeeId is required");
-        }
+    public VacationBalance getVacationBalance(String internalId) {
+        UUID employeeId = resolveEmployeeId(internalId);
         List<VacationBalance.YearBalance> byYear = vacationRepository.getVacationByYear(employeeId).stream()
                 .map(b -> new VacationBalance.YearBalance(b.getYear(), b.getBalance()))
                 .toList();
         Integer total = vacationRepository.getAvailableDays(employeeId);
-        return new VacationBalance(employeeId, total == null ? 0 : total, byYear);
+        return new VacationBalance(internalId, total == null ? 0 : total, byYear);
     }
 
     @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
     @Transactional(readOnly = true)
-    public List<PtoDto> listEmployeePtos(UUID employeeId, LocalDate startDate, LocalDate endDate,
+    public List<PtoDto> listEmployeePtos(String internalId, LocalDate startDate, LocalDate endDate,
             String leaveType) {
-        if (employeeId == null) {
-            throw new IllegalArgumentException("employeeId is required");
-        }
+        UUID employeeId = resolveEmployeeId(internalId);
         return ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(employeeId).stream()
                 .filter(p -> dateRangeOverlaps(p, startDate, endDate))
                 .filter(p -> leaveTypeMatches(p, leaveType))
@@ -104,5 +107,28 @@ public class TimeOffQueryService {
         }
         return pto.getLeaveType() != null
                 && StringUtils.equalsIgnoreCase(pto.getLeaveType().getName(), leaveType);
+    }
+
+    /**
+     * Resolves an employee's internal ID (the identifier the admin UI exposes, e.g. {@code INT-42})
+     * to its UUID. Delegates to the platform's active-employee search — the same path the
+     * {@code get_employee} tool uses — so {@code internalId} is matched exactly the way the UI does,
+     * and callers never have to know the internal UUID.
+     */
+    private UUID resolveEmployeeId(String internalId) {
+        if (StringUtils.isBlank(internalId)) {
+            throw new IllegalArgumentException("internalId is required");
+        }
+        JsonObject filter = new JsonObject();
+        filter.addProperty("active", true);
+        filter.addProperty("q", internalId);
+        ReactAdminParams params = new ReactAdminParams();
+        params.setFilter(filter.toString());
+        return employeeService.findAllActive(params).getContent().stream()
+                .filter(e -> StringUtils.equalsIgnoreCase(e.getInternalId(), internalId))
+                .map(EmployeeDto::getId)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No active employee found with internal ID '" + internalId + "'"));
     }
 }

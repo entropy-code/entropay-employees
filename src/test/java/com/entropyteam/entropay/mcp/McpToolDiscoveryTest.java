@@ -52,7 +52,7 @@ class McpToolDiscoveryTest {
                 employeeService, assignmentRepository, employeeFeedbackRepository, vacationRepository,
                 reimbursementRepository));
         TimeOffMcpTools timeOffMcpTools = new TimeOffMcpTools(new TimeOffQueryService(ptoRepository,
-                vacationRepository));
+                vacationRepository, employeeService));
         return MethodToolCallbackProvider.builder()
                 .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools)
                 .build()

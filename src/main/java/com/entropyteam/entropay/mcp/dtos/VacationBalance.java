@@ -1,7 +1,6 @@
 package com.entropyteam.entropay.mcp.dtos;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Vacation balance returned by {@code get_vacation_balance}. Carries the total available days
@@ -10,7 +9,7 @@ import java.util.UUID;
  * <p>Not {@code @SensitiveInformation}-bearing: vacation balances are visible to every role
  * that can see the time-off screens in the admin UI.
  */
-public record VacationBalance(UUID employeeId, int totalAvailableDays, List<YearBalance> byYear) {
+public record VacationBalance(String internalId, int totalAvailableDays, List<YearBalance> byYear) {
 
     public record YearBalance(String year, int balance) {
     }

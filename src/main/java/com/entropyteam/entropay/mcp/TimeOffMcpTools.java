@@ -2,7 +2,6 @@ package com.entropyteam.entropay.mcp;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
@@ -26,9 +25,9 @@ public class TimeOffMcpTools {
             description = "Current vacation balance for an Entroteam employee, broken down by year. "
                     + "Returns the same numbers the admin UI shows on the employee's time-off screen.")
     public VacationBalance getVacationBalance(
-            @ToolParam(description = "Employee UUID to fetch the vacation balance for.")
-            UUID employeeId) {
-        return queryService.getVacationBalance(employeeId);
+            @ToolParam(description = "Employee internal ID (e.g. 'INT-42') to fetch the vacation balance for.")
+            String internalId) {
+        return queryService.getVacationBalance(internalId);
     }
 
     @Tool(name = "list_employee_ptos",
@@ -36,15 +35,15 @@ public class TimeOffMcpTools {
                     + "range (inclusive overlap) and leave type name (case-insensitive). Returns all "
                     + "statuses (approved, pending, rejected), sorted from most recent start date.")
     public List<PtoDto> listEmployeePtos(
-            @ToolParam(description = "Employee UUID to list PTOs for.")
-            UUID employeeId,
+            @ToolParam(description = "Employee internal ID (e.g. 'INT-42') to list PTOs for.")
+            String internalId,
             @ToolParam(required = false, description = "Earliest start date to include (yyyy-MM-dd). Optional.")
             LocalDate startDate,
             @ToolParam(required = false, description = "Latest end date to include (yyyy-MM-dd). Optional.")
             LocalDate endDate,
             @ToolParam(required = false, description = "Leave type name to filter by, e.g. 'Vacation'. Optional.")
             String leaveType) {
-        return queryService.listEmployeePtos(employeeId, startDate, endDate, leaveType);
+        return queryService.listEmployeePtos(internalId, startDate, endDate, leaveType);
     }
 
     @Tool(name = "list_upcoming_ptos",
