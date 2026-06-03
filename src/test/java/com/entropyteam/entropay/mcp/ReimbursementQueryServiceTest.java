@@ -20,10 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import com.entropyteam.entropay.employees.dtos.EmployeeDto;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Reimbursement;
 import com.entropyteam.entropay.employees.models.ReimbursementCategory;
 import com.entropyteam.entropay.employees.repositories.ReimbursementRepository;
+import com.entropyteam.entropay.employees.services.EmployeeService;
 import com.entropyteam.entropay.mcp.dtos.ReimbursementEntry;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,21 +34,33 @@ class ReimbursementQueryServiceTest {
 
     @Mock
     private ReimbursementRepository reimbursementRepository;
+    @Mock
+    private EmployeeService employeeService;
 
     private ReimbursementQueryService service() {
-        return new ReimbursementQueryService(reimbursementRepository);
+        return new ReimbursementQueryService(reimbursementRepository, employeeService);
+    }
+
+    /** Stubs the platform search so {@code internalId} resolves to {@code id}. */
+    private void stubResolution(String internalId, UUID id) {
+        EmployeeDto dto = new EmployeeDto();
+        dto.setId(id);
+        dto.setInternalId(internalId);
+        dto.setActive(true);
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of(dto)));
     }
 
     @Test
-    @DisplayName("list_reimbursements with employeeId calls the per-employee finder")
+    @DisplayName("list_reimbursements with internalId calls the per-employee finder")
     void listForEmployee() {
         UUID employeeId = UUID.randomUUID();
+        stubResolution("E042", employeeId);
         Reimbursement r = newReimbursement(employeeId, LocalDate.of(2025, 3, 1), "Equipment",
                 new BigDecimal("250"), "Monitor");
         when(reimbursementRepository.findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(
                 eq(employeeId), any(), any())).thenReturn(List.of(r));
 
-        List<ReimbursementEntry> result = service().listReimbursements(employeeId,
+        List<ReimbursementEntry> result = service().listReimbursements("E042",
                 LocalDate.of(2025, 1, 1), LocalDate.of(2025, 12, 31));
 
         assertEquals(1, result.size());
@@ -55,7 +70,7 @@ class ReimbursementQueryServiceTest {
     }
 
     @Test
-    @DisplayName("list_reimbursements without employeeId returns company-wide entries")
+    @DisplayName("list_reimbursements without internalId returns company-wide entries")
     void listCompanyWide() {
         Reimbursement r = newReimbursement(UUID.randomUUID(), LocalDate.of(2025, 4, 1), "Travel",
                 new BigDecimal("500"), "Flight");
@@ -69,9 +84,21 @@ class ReimbursementQueryServiceTest {
     }
 
     @Test
+    @DisplayName("list_reimbursements rejects an unknown internalId")
+    void rejectsUnknownInternalId() {
+        when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of()));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> service().listReimbursements("E999", null, null));
+        verify(reimbursementRepository, never()).findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(any(), any(), any());
+        verify(reimbursementRepository, never()).findAllBetweenPeriod(any(), any());
+    }
+
+    @Test
     @DisplayName("list_reimbursements sorts results by date desc")
     void listSortedByDateDesc() {
         UUID id = UUID.randomUUID();
+        stubResolution("E042", id);
         Reimbursement older = newReimbursement(id, LocalDate.of(2025, 2, 1), "Equipment",
                 new BigDecimal("100"), "Older");
         Reimbursement newer = newReimbursement(id, LocalDate.of(2025, 5, 1), "Travel",
@@ -79,7 +106,7 @@ class ReimbursementQueryServiceTest {
         when(reimbursementRepository.findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(
                 eq(id), any(), any())).thenReturn(List.of(older, newer));
 
-        List<ReimbursementEntry> result = service().listReimbursements(id, null, null);
+        List<ReimbursementEntry> result = service().listReimbursements("E042", null, null);
 
         assertEquals(2, result.size());
         assertEquals("Newer", result.get(0).comment());
@@ -107,6 +134,7 @@ class ReimbursementQueryServiceTest {
     @DisplayName("list_reimbursements gracefully maps a reimbursement with no category")
     void handlesMissingCategory() {
         UUID id = UUID.randomUUID();
+        stubResolution("E042", id);
         Employee employee = new Employee();
         employee.setId(id);
         Reimbursement r = new Reimbursement();
@@ -117,7 +145,7 @@ class ReimbursementQueryServiceTest {
         when(reimbursementRepository.findAllByEmployeeIdAndDateBetweenAndDeletedIsFalse(
                 eq(id), any(), any())).thenReturn(List.of(r));
 
-        List<ReimbursementEntry> result = service().listReimbursements(id, null, null);
+        List<ReimbursementEntry> result = service().listReimbursements("E042", null, null);
 
         assertEquals(1, result.size());
         assertEquals(null, result.get(0).category());

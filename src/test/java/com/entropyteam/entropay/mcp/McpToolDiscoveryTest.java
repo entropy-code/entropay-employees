@@ -54,7 +54,7 @@ class McpToolDiscoveryTest {
         TimeOffMcpTools timeOffMcpTools = new TimeOffMcpTools(new TimeOffQueryService(ptoRepository,
                 vacationRepository, employeeService));
         ReimbursementMcpTools reimbursementMcpTools = new ReimbursementMcpTools(
-                new ReimbursementQueryService(reimbursementRepository));
+                new ReimbursementQueryService(reimbursementRepository, employeeService));
         return MethodToolCallbackProvider.builder()
                 .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools)
                 .build()

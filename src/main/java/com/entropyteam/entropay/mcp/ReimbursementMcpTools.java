@@ -2,7 +2,6 @@ package com.entropyteam.entropay.mcp;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
@@ -25,12 +24,12 @@ public class ReimbursementMcpTools {
                     + "no date range is given, defaults to the current year to date. When no employee "
                     + "is given, returns reimbursements across the company. Sorted from most recent.")
     public List<ReimbursementEntry> listReimbursements(
-            @ToolParam(required = false, description = "Employee UUID to filter by. Optional; when omitted, returns company-wide.")
-            UUID employeeId,
+            @ToolParam(required = false, description = "Employee internal ID (e.g. 'E042') to filter by. Optional; when omitted, returns company-wide.")
+            String internalId,
             @ToolParam(required = false, description = "Earliest reimbursement date (yyyy-MM-dd). Defaults to first of current year.")
             LocalDate startDate,
             @ToolParam(required = false, description = "Latest reimbursement date (yyyy-MM-dd). Defaults to today.")
             LocalDate endDate) {
-        return queryService.listReimbursements(employeeId, startDate, endDate);
+        return queryService.listReimbursements(internalId, startDate, endDate);
     }
 }
