@@ -110,7 +110,7 @@ public class TimeOffQueryService {
     }
 
     /**
-     * Resolves an employee's internal ID (the identifier the admin UI exposes, e.g. {@code INT-42})
+     * Resolves an employee's internal ID (the identifier the admin UI exposes, e.g. {@code E042})
      * to its UUID. Delegates to the platform's active-employee search — the same path the
      * {@code get_employee} tool uses — so {@code internalId} is matched exactly the way the UI does,
      * and callers never have to know the internal UUID.

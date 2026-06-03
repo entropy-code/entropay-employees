@@ -56,15 +56,15 @@ class TimeOffQueryServiceTest {
     @DisplayName("get_vacation_balance resolves the internal ID and returns total and per-year breakdown")
     void getVacationBalance() {
         UUID id = UUID.randomUUID();
-        stubResolution("INT-42", id);
+        stubResolution("E042", id);
         VacationBalanceByYear y2024 = mockYearBalance("2024", 5);
         VacationBalanceByYear y2025 = mockYearBalance("2025", 10);
         when(vacationRepository.getVacationByYear(id)).thenReturn(List.of(y2024, y2025));
         when(vacationRepository.getAvailableDays(id)).thenReturn(15);
 
-        VacationBalance result = service().getVacationBalance("INT-42");
+        VacationBalance result = service().getVacationBalance("E042");
 
-        assertEquals("INT-42", result.internalId());
+        assertEquals("E042", result.internalId());
         assertEquals(15, result.totalAvailableDays());
         assertEquals(2, result.byYear().size());
         assertEquals("2024", result.byYear().get(0).year());
@@ -76,11 +76,11 @@ class TimeOffQueryServiceTest {
     @DisplayName("get_vacation_balance returns 0 when getAvailableDays is null")
     void getVacationBalanceNullTotal() {
         UUID id = UUID.randomUUID();
-        stubResolution("INT-42", id);
+        stubResolution("E042", id);
         when(vacationRepository.getVacationByYear(id)).thenReturn(List.of());
         when(vacationRepository.getAvailableDays(id)).thenReturn(null);
 
-        VacationBalance result = service().getVacationBalance("INT-42");
+        VacationBalance result = service().getVacationBalance("E042");
 
         assertEquals(0, result.totalAvailableDays());
         assertTrue(result.byYear().isEmpty());
@@ -98,19 +98,19 @@ class TimeOffQueryServiceTest {
     void getVacationBalanceUnknownId() {
         when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of()));
 
-        assertThrows(IllegalArgumentException.class, () -> service().getVacationBalance("INT-404"));
+        assertThrows(IllegalArgumentException.class, () -> service().getVacationBalance("E404"));
     }
 
     @Test
     @DisplayName("list_employee_ptos returns all PTOs sorted by start date desc when no filters")
     void listEmployeePtosNoFilters() {
         UUID id = UUID.randomUUID();
-        stubResolution("INT-42", id);
+        stubResolution("E042", id);
         Pto older = newPto(id, LocalDate.of(2023, 6, 1), LocalDate.of(2023, 6, 5), "Vacation");
         Pto newer = newPto(id, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 3), "Sick");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of(older, newer));
 
-        List<PtoDto> result = service().listEmployeePtos("INT-42", null, null, null);
+        List<PtoDto> result = service().listEmployeePtos("E042", null, null, null);
 
         assertEquals(2, result.size());
         assertEquals(LocalDate.of(2025, 1, 1), result.get(0).ptoStartDate());
@@ -121,12 +121,12 @@ class TimeOffQueryServiceTest {
     @DisplayName("list_employee_ptos filters by leave type case-insensitive")
     void listEmployeePtosFiltersByLeaveType() {
         UUID id = UUID.randomUUID();
-        stubResolution("INT-42", id);
+        stubResolution("E042", id);
         Pto vacation = newPto(id, LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 5), "Vacation");
         Pto sick = newPto(id, LocalDate.of(2025, 2, 1), LocalDate.of(2025, 2, 3), "Sick");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id)).thenReturn(List.of(vacation, sick));
 
-        List<PtoDto> result = service().listEmployeePtos("INT-42", null, null, "vacation");
+        List<PtoDto> result = service().listEmployeePtos("E042", null, null, "vacation");
 
         assertEquals(1, result.size());
         assertEquals(LocalDate.of(2025, 1, 1), result.get(0).ptoStartDate());
@@ -136,14 +136,14 @@ class TimeOffQueryServiceTest {
     @DisplayName("list_employee_ptos filters by overlapping date range")
     void listEmployeePtosFiltersByDateRange() {
         UUID id = UUID.randomUUID();
-        stubResolution("INT-42", id);
+        stubResolution("E042", id);
         Pto before = newPto(id, LocalDate.of(2024, 12, 1), LocalDate.of(2024, 12, 5), "Vacation");
         Pto inWindow = newPto(id, LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 5), "Vacation");
         Pto after = newPto(id, LocalDate.of(2025, 7, 1), LocalDate.of(2025, 7, 5), "Vacation");
         when(ptoRepository.findAllByEmployee_IdAndDeletedIsFalse(id))
                 .thenReturn(List.of(before, inWindow, after));
 
-        List<PtoDto> result = service().listEmployeePtos("INT-42",
+        List<PtoDto> result = service().listEmployeePtos("E042",
                 LocalDate.of(2025, 1, 1), LocalDate.of(2025, 6, 30), null);
 
         assertEquals(1, result.size());
@@ -165,7 +165,7 @@ class TimeOffQueryServiceTest {
         when(employeeService.findAllActive(any())).thenReturn(new PageImpl<>(List.of()));
 
         assertThrows(IllegalArgumentException.class,
-                () -> service().listEmployeePtos("INT-404", null, null, null));
+                () -> service().listEmployeePtos("E404", null, null, null));
     }
 
     @Test

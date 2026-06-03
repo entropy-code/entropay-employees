@@ -25,7 +25,7 @@ public class TimeOffMcpTools {
             description = "Current vacation balance for an Entroteam employee, broken down by year. "
                     + "Returns the same numbers the admin UI shows on the employee's time-off screen.")
     public VacationBalance getVacationBalance(
-            @ToolParam(description = "Employee internal ID (e.g. 'INT-42') to fetch the vacation balance for.")
+            @ToolParam(description = "Employee internal ID (e.g. 'E042') to fetch the vacation balance for.")
             String internalId) {
         return queryService.getVacationBalance(internalId);
     }
@@ -35,7 +35,7 @@ public class TimeOffMcpTools {
                     + "range (inclusive overlap) and leave type name (case-insensitive). Returns all "
                     + "statuses (approved, pending, rejected), sorted from most recent start date.")
     public List<PtoDto> listEmployeePtos(
-            @ToolParam(description = "Employee internal ID (e.g. 'INT-42') to list PTOs for.")
+            @ToolParam(description = "Employee internal ID (e.g. 'E042') to list PTOs for.")
             String internalId,
             @ToolParam(required = false, description = "Earliest start date to include (yyyy-MM-dd). Optional.")
             LocalDate startDate,
