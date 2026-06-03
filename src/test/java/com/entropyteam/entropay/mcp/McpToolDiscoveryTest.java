@@ -53,8 +53,10 @@ class McpToolDiscoveryTest {
                 reimbursementRepository));
         TimeOffMcpTools timeOffMcpTools = new TimeOffMcpTools(new TimeOffQueryService(ptoRepository,
                 vacationRepository, employeeService));
+        ReimbursementMcpTools reimbursementMcpTools = new ReimbursementMcpTools(
+                new ReimbursementQueryService(reimbursementRepository, employeeService));
         return MethodToolCallbackProvider.builder()
-                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools)
+                .toolObjects(rosterMcpTools, employee360McpTools, timeOffMcpTools, reimbursementMcpTools)
                 .build()
                 .getToolCallbacks();
     }
@@ -74,7 +76,8 @@ class McpToolDiscoveryTest {
                         "list_employee_feedbacks",
                         "get_vacation_balance",
                         "list_employee_ptos",
-                        "list_upcoming_ptos"),
+                        "list_upcoming_ptos",
+                        "list_reimbursements"),
                 advertisedNames,
                 "Advertised tool names must match the expected snapshot. Update this test when a tool "
                         + "is intentionally added or removed.");
