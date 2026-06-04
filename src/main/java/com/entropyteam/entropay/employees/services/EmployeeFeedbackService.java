@@ -2,7 +2,6 @@ package com.entropyteam.entropay.employees.services;
 
 import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import com.entropyteam.entropay.common.BaseService;
@@ -21,7 +20,6 @@ public class EmployeeFeedbackService extends BaseService<EmployeeFeedback, Feedb
     private final EmployeeFeedbackRepository employeeFeedbackRepository;
     private final EmployeeRepository employeeRepository;
 
-    // Added since we need to generate a summary on POST
     private final EmployeeFeedbackSummaryService summaryService;
 
     public EmployeeFeedbackService(EmployeeFeedbackRepository employeeFeedbackRepository,
@@ -55,7 +53,7 @@ public class EmployeeFeedbackService extends BaseService<EmployeeFeedback, Feedb
 
         // Save employee feedback and then generate summary with AI
         FeedbackDto createFeedback = super.create(updatedDto);
-        summaryService.generateSummaryWithAI(dto.employeeId()); // Add error checks if needed
+        summaryService.generateSummaryWithAIAsync(dto.employeeId()); // Add error checks if needed
 
         return createFeedback;
     }

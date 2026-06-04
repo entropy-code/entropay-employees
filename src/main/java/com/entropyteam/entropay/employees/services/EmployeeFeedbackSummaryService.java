@@ -2,9 +2,11 @@ package com.entropyteam.entropay.employees.services;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import com.entropyteam.entropay.common.exceptions.InvalidRequestParametersException;
 import com.entropyteam.entropay.common.exceptions.ResourceNotFoundException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,8 +89,9 @@ public class EmployeeFeedbackSummaryService extends BaseService<EmployeeFeedback
      * @throws EntityNotFoundException if employee not found
      * @throws IllegalArgumentException if employee has no feedbacks to summarize
      */
+
     @Transactional
-    public EmployeeFeedbackSummaryDto generateSummaryWithAI(UUID employeeId) {
+    public  EmployeeFeedbackSummaryDto generateSummaryWithAI(UUID employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
 
@@ -112,6 +115,14 @@ public class EmployeeFeedbackSummaryService extends BaseService<EmployeeFeedback
         return toDTO(savedEntity);
     }
 
+    @Async
+    @Transactional
+    public CompletableFuture<EmployeeFeedbackSummaryDto>  generateSummaryWithAIAsync(UUID employeeId) {
+        EmployeeFeedbackSummaryDto summaryDto = generateSummaryWithAI(employeeId);
+        return CompletableFuture.completedFuture(summaryDto);
+    }
+
+
     @Override
     public EmployeeFeedbackSummaryRepository getRepository() {
         return summaryRepository;
@@ -129,4 +140,6 @@ public class EmployeeFeedbackSummaryService extends BaseService<EmployeeFeedback
 
         return new EmployeeFeedbackSummary(employee, dto.summary(), dto.createdBy());
     }
+
+
 }
