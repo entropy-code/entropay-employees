@@ -67,6 +67,7 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
             CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaQuery<Entity> entityQuery = cb.createQuery(entityClass);
             Root<Entity> root = entityQuery.from(entityClass);
+            addFetchJoins(root);
 
             List<Predicate> predicates = getPredicates(cb, root, filter);
             entityQuery.select(root).where(cb.and(predicates.toArray(new Predicate[0])));
@@ -233,5 +234,8 @@ public abstract class BaseService<Entity extends BaseEntity, DTO, Key> implement
 
     protected Collection<Predicate> buildCustomFieldsPredicates(Root<Entity> root, Filter filter, CriteriaBuilder cb) {
         return CollectionUtils.emptyCollection();
+    }
+
+    protected void addFetchJoins(Root<Entity> root) {
     }
 }

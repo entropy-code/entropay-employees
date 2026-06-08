@@ -1,0 +1,1 @@
+ALTER TABLE employee ADD COLUMN has_children BOOLEAN DEFAULT FALSE;

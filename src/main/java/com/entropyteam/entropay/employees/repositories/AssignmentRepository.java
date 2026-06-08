@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.repositories;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,7 +16,15 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     List<Assignment> findAssignmentByEmployee_IdAndDeletedIsFalse(UUID employee_id);
 
-    Optional<Assignment> findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(UUID employee_id);
+    @Query(value = """
+            SELECT a
+            FROM Assignment a
+            WHERE a.active is TRUE
+              AND a.deleted is FALSE
+              AND a.employee.id = :employeeId
+              AND a.project.id = :projectId
+            """)
+    Optional<Assignment> findActiveAssignmentByEmployeeAndProject(UUID employeeId, UUID projectId);
 
     List<Assignment> findAllByDeletedIsFalseAndActiveIsTrueAndEndDateLessThan(LocalDate date);
 
@@ -45,6 +54,33 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
 
     List<Assignment> findAllByEmployeeIdInAndDeletedIsFalse(List<UUID> employeesId);
 
+    /**
+     * For payroll context loading: active assignments overlapping the payroll period, joined to
+     * project + client so the calculator can resolve the per-item client name without lazy-loading
+     * {@code Employee.assignments} from worker threads.
+     */
+    @Query("""
+            SELECT a FROM Assignment a
+            LEFT JOIN FETCH a.project p
+            LEFT JOIN FETCH p.client
+            WHERE a.employee.id IN :employeeIds
+              AND a.deleted = false
+              AND a.active = true
+              AND (a.startDate IS NULL OR a.startDate <= :periodEnd)
+              AND (a.endDate IS NULL OR a.endDate >= :periodStart)
+            """)
+    List<Assignment> findActiveByEmployeeIdInOverlappingPeriod(
+            @Param("employeeIds") Collection<UUID> employeeIds,
+            @Param("periodStart") LocalDate periodStart,
+            @Param("periodEnd") LocalDate periodEnd);
+
+    /**
+     * This query is used for the Billing. Therefore, we are only including assignments that are full time or part
+     *
+     * @param startDate start date
+     * @param endDate end date
+     * @return list of assignments
+     */
     @Query(value = """
             FROM Assignment a
             JOIN FETCH a.employee e
@@ -54,6 +90,7 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
             WHERE a.startDate <= :endDate
                 AND (a.endDate IS NULL OR a.endDate between :startDate and :endDate)
                 AND a.deleted = FALSE
+                AND a.engagementType in ('FULL_TIME', 'PART_TIME')
                 AND e.active = TRUE""")
     List<Assignment> findAllBetweenPeriod(LocalDate startDate, LocalDate endDate);
 
@@ -72,6 +109,7 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                                      where a.deleted is false
                                        and e.deleted is false
                                        and p.deleted is false
+                                       and a.engagement_type in ('FULL_TIME', 'PART_TIME')
                                      GROUP BY a.employee_id, a.project_id),
             data as (SELECT TO_CHAR(month_series, 'YYYY-MM') as "year-month",
                    pp.employee_id,
@@ -93,8 +131,8 @@ public interface AssignmentRepository extends BaseRepository<Assignment, UUID> {
                                 ) AS month_series)
             select *
             from data
-            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')                                                                       
-              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')                                                                     
+            where "year-month" >= TO_CHAR(CAST(:start_date AS date), 'YYYY-MM')
+              and "year-month" <= TO_CHAR(CAST(:end_date AS date), 'YYYY-MM')
             order by "year-month", client_id, project_id, employee_id
             """, nativeQuery = true)
     List<MonthlyAssignment> findMonthlyAssignmentBetweenPeriod(@Param("start_date") LocalDate startDate,

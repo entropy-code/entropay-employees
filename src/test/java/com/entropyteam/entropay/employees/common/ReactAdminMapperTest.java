@@ -2,6 +2,7 @@ package com.entropyteam.entropay.employees.common;
 
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.Range;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Sort.Order;
 import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.common.ReactAdminParams;
+import com.entropyteam.entropay.common.ReactAdminSqlParams;
+import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -97,5 +100,67 @@ public class ReactAdminMapperTest {
         Sort sort = pageable.getSort();
         List<Order> orderList = sort.stream().toList();
         Assertions.assertEquals(0, orderList.size());
+    }
+
+    // --- Regression: programmatic callers (e.g. the MCP report tools) build a ReactAdminParams
+    // without sort/range — React Admin always sends them, but those callers do not. Before the
+    // null-guards, map()/paginate()/getRange()/getComparator() handed the null straight to
+    // Jackson's readValue, which throws IllegalArgumentException: argument "content" is null —
+    // the exact error the four report tools returned in QA. ---
+
+    private record Row(UUID id, String name) {
+    }
+
+    @Test
+    public void mapToleratesAllNullParams() {
+        // The get_salaries_report tool calls map() with new ReactAdminParams() (filter/range/sort null).
+        ReactAdminSqlParams sqlParams = mapper.map(new ReactAdminParams());
+
+        Assertions.assertTrue(sqlParams.queryParameters().isEmpty());
+        Assertions.assertEquals(0, sqlParams.offset());
+        Assertions.assertNull(sqlParams.sort());
+        Assertions.assertNull(sqlParams.order());
+    }
+
+    @Test
+    public void mapToleratesFilterOnlyParams() {
+        // The billing/margin/turnover tools set only the date filter, leaving sort/range null.
+        ReactAdminParams params =
+                new ReactAdminParams("{\"startDate\":\"2026-01-01\",\"endDate\":\"2026-05-31\"}", null, null);
+
+        ReactAdminSqlParams sqlParams = mapper.map(params);
+
+        Assertions.assertEquals("2026-01-01", sqlParams.queryParameters().get("startDate"));
+        Assertions.assertEquals("2026-05-31", sqlParams.queryParameters().get("endDate"));
+    }
+
+    @Test
+    public void paginateToleratesNullSortRangeAndFilter() {
+        // salaries/billing/margin then flow through paginate(), which also parsed sort/range/filter.
+        List<Row> rows = List.of(new Row(UUID.randomUUID(), "a"), new Row(UUID.randomUUID(), "b"));
+
+        ReportDto<Row> result = mapper.paginate(new ReactAdminParams(), rows, Row.class);
+
+        Assertions.assertEquals(2, result.size());
+        Assertions.assertEquals(2, result.data().size());
+    }
+
+    @Test
+    public void paginateWithNullParamsOnEmptyInputYieldsEmptyStructureNotNull() {
+        // "report sin filas" must yield an empty structure, never null.
+        ReportDto<Row> result = mapper.paginate(new ReactAdminParams(), List.of(), Row.class);
+
+        Assertions.assertEquals(0, result.size());
+        Assertions.assertNotNull(result.data());
+        Assertions.assertTrue(result.data().isEmpty());
+    }
+
+    @Test
+    public void getRangeWithNullRangeReturnsFullPaginateSafeRange() {
+        Range<Integer> range = mapper.getRange(new ReactAdminParams());
+
+        Assertions.assertEquals(0, range.getMinimum());
+        // Stays below Integer.MAX_VALUE so paginate()'s getMaximum() + 1 does not overflow.
+        Assertions.assertEquals(Integer.MAX_VALUE - 1, range.getMaximum());
     }
 }

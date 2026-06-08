@@ -110,15 +110,14 @@ public class SensitiveInformationSerializerTest {
         UUID employeeId = UUID.randomUUID();
         when(sensitiveInformationService.shouldMask(employeeId)).thenReturn(true);
         SalariesReportDto dto = new SalariesReportDto(
-                UUID.randomUUID(), employeeId, "INT-1", "John", "Doe", "ClientCo",
-                new BigDecimal("10000"), new BigDecimal("120"), "FULL_TIME", "USD", "PlatformX", "CountryY");
+            UUID.randomUUID(), employeeId, "INT-1", "John", "Doe", "ClientCo",
+            new BigDecimal("10000"), "Mural", "USD", "PlatformX", "CountryY", true);
 
         // when
         String json = objectMapper.writeValueAsString(dto);
 
         // then
         assertTrue(json.contains("\"salary\":null"), "Salary should be masked. JSON: " + json);
-        assertTrue(json.contains("\"rate\":null"), "Rate should be masked. JSON: " + json);
         assertTrue(json.contains("\"firstName\":\"John\""), "Non-sensitive fields should remain. JSON: " + json);
     }
 }

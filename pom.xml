@@ -11,7 +11,7 @@
 
     <groupId>com.entropyteam.entropay</groupId>
     <artifactId>entropay-employees</artifactId>
-    <version>1.5.5-SNAPSHOT</version>
+    <version>1.9.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>entropay-employees</name>
     <description>Entropay Employees API</description>
@@ -19,13 +19,13 @@
     <properties>
         <apache-commons.version>3.20.0</apache-commons.version>
         <apache-commons-collections.version>4.5.0</apache-commons-collections.version>
-        <google-auth.version>1.40.0</google-auth.version>
+        <google-auth.version>1.47.0</google-auth.version>
         <google-services-calendar.version>v3-rev20251207-2.0.0</google-services-calendar.version>
         <hibernate-validator.version>9.1.0.Final</hibernate-validator.version>
         <java.version>21</java.version>
-        <postgresql.version>42.7.8</postgresql.version>
+        <postgresql.version>42.7.11</postgresql.version>
         <resilience4j.version>2.3.0</resilience4j.version>
-        <software-amazon-sdk.version>2.39.6</software-amazon-sdk.version>
+        <software-amazon-sdk.version>2.46.1</software-amazon-sdk.version>
         <springdoc-openapi.version>2.8.14</springdoc-openapi.version>
     </properties>
 
@@ -68,6 +68,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+            <version>1.1.6</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -145,6 +155,10 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

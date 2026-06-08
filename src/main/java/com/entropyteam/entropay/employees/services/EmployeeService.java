@@ -26,8 +26,8 @@ import com.entropyteam.entropay.common.Filter;
 import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.calendar.CalendarService;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.PaymentInformationDto;
 import com.entropyteam.entropay.employees.models.Assignment;
-import com.entropyteam.entropay.employees.models.Children;
 import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Country;
 import com.entropyteam.entropay.employees.models.Employee;
@@ -42,6 +42,7 @@ import com.entropyteam.entropay.employees.repositories.RoleRepository;
 import com.entropyteam.entropay.employees.repositories.VacationRepository;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -58,7 +59,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     private final VacationRepository vacationRepository;
     private final CountryRepository countryRepository;
     private final CalendarService calendarService;
-    private final ChildrenService childrenService;
+    private final EmployeeEducationService employeeEducationService;
+    private final EmployeeInternalIdGenerator internalIdGenerator;
 
 
     @Autowired
@@ -66,7 +68,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             PaymentInformationService paymentInformationService, AssignmentRepository assignmentRepository,
             ContractRepository contractRepository, ReactAdminMapper reactAdminMapper,
             VacationRepository vacationRepository, CountryRepository countryRepository,
-            CalendarService calendarService, ChildrenService childrenService) {
+            CalendarService calendarService, EmployeeEducationService employeeEducationService,
+            EmployeeInternalIdGenerator internalIdGenerator) {
         super(Employee.class, reactAdminMapper);
         this.employeeRepository = employeeRepository;
         this.roleRepository = roleRepository;
@@ -76,7 +79,8 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         this.vacationRepository = vacationRepository;
         this.countryRepository = countryRepository;
         this.calendarService = calendarService;
-        this.childrenService = childrenService;
+        this.employeeEducationService = employeeEducationService;
+        this.internalIdGenerator = internalIdGenerator;
     }
 
     @Override
@@ -86,8 +90,6 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
 
     @Override
     protected EmployeeDto toDTO(Employee employee) {
-        List<PaymentInformation> paymentInformationList = new ArrayList<>(employee.getPaymentsInformation());
-        List<Children> childrenList = new ArrayList<>(employee.getChildren());
         Optional<Assignment> assignment =
                 employee.getAssignments().stream().filter(Assignment::isActive).findFirst();
         List<Contract> contracts = new ArrayList<>(employee.getContracts());
@@ -97,26 +99,24 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
             latestContract = contracts.stream().max(Comparator.comparing(Contract::getStartDate));
         }
 
-        Integer availableDays = employee.getAvailableVacationsDays();
         String timeSinceStart = getEmployeesTimeSinceStart(firstContract.orElse(null), latestContract.orElse(null));
-        LocalDate nearestPto = employee.getNearestPto(LocalDate.now());
 
-        return new EmployeeDto(employee, paymentInformationList, childrenList, assignment.orElse(null),
-                firstContract.orElse(null),
-                availableDays, latestContract.orElse(null), nearestPto, timeSinceStart);
+        return new EmployeeDto(employee, assignment.orElse(null), firstContract.orElse(null),
+                latestContract.orElse(null), timeSinceStart);
     }
 
     @Override
     protected Employee toEntity(EmployeeDto dto) {
         Employee employee = new Employee(dto);
-        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.profile());
-        Country country = countryRepository.findById(dto.countryId()).orElseThrow();
+        Set<Role> roles = roleRepository.findAllByDeletedIsFalseAndIdIn(dto.getProfile());
+        Country country = countryRepository.findById(dto.getCountryId()).orElseThrow();
         employee.setCountry(country);
         employee.setRoles(roles);
-        employee.setPaymentsInformation(dto.paymentInformation() == null ? Collections.emptySet()
-                : dto.paymentInformation().stream().map(PaymentInformation::new).collect(Collectors.toSet()));
-        employee.setChildren((dto.children() == null) ? Collections.emptySet()
-                : dto.children().stream().map(Children::new).collect(Collectors.toSet()));
+        List<PaymentInformationDto> paymentInfo = dto.getPaymentInformation() != null ? dto.getPaymentInformation() : Collections.emptyList();
+        employee.setPaymentsInformation(
+                paymentInfo.stream().map(PaymentInformation::new).collect(Collectors.toSet()));
+        // Note: education is handled separately in create/update methods to avoid transient object issues
+        employee.setHasChildren(dto.isHasChildren());
         return employee;
     }
 
@@ -124,9 +124,12 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     @Transactional
     public EmployeeDto create(EmployeeDto employeeDto) {
         Employee entityToCreate = toEntity(employeeDto);
+        entityToCreate.setInternalId(internalIdGenerator.next());
         Employee savedEntity = getRepository().save(entityToCreate);
         paymentInformationService.createPaymentsInformation(savedEntity.getPaymentsInformation(), savedEntity);
-        childrenService.createChildren(savedEntity.getChildren(), savedEntity);
+        if (employeeDto.getEducation() != null) {
+            employeeEducationService.createEducation(employeeDto.getEducation(), savedEntity);
+        }
 
         calendarService.createBirthdayEvent(entityToCreate.getId().toString(), entityToCreate.getFirstName(),
                 entityToCreate.getLastName(), entityToCreate.getBirthDate());
@@ -139,8 +142,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
     public EmployeeDto update(UUID employeeId, EmployeeDto employeeDto) {
         Employee entityToUpdate = toEntity(employeeDto);
         entityToUpdate.setId(employeeId);
+        Employee existingEmployee = getRepository().findById(employeeId).orElseThrow();
+        entityToUpdate.setInternalId(existingEmployee.getInternalId());
 
-        if (shouldDeactivateEmployee(employeeId, entityToUpdate)) {
+        if (existingEmployee.isActive() && !entityToUpdate.isActive()) {
             List<Contract> employeeContracts = contractRepository.findAllByEmployeeIdAndDeletedIsFalse(employeeId);
             List<Assignment> employeeAssignments =
                     assignmentRepository.findAssignmentByEmployee_IdAndDeletedIsFalse(employeeId);
@@ -151,14 +156,17 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
         Employee savedEntity = getRepository().save(entityToUpdate);
 
-        if (!employeeDto.active()) {
+        if (!employeeDto.isActive()) {
             calendarService.deleteBirthdayEvent(savedEntity.getId().toString());
         } else {
             calendarService.updateBirthdayEvent(savedEntity.getId().toString(), savedEntity.getFirstName(),
                     savedEntity.getLastName(), savedEntity.getBirthDate());
         }
-        paymentInformationService.updatePaymentsInformation(employeeDto.paymentInformation(), savedEntity);
-        childrenService.updateChildren(employeeDto.children(), savedEntity);
+        paymentInformationService.updatePaymentsInformation(
+                employeeDto.getPaymentInformation() != null ? employeeDto.getPaymentInformation() : Collections.emptyList(), savedEntity);
+        if (employeeDto.getEducation() != null) {
+            employeeEducationService.updateEducation(employeeDto.getEducation(), savedEntity);
+        }
 
         return toDTO(savedEntity);
     }
@@ -282,6 +290,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         return Set.copyOf(assignmentRepository.findAllInternalEmployeeIds());
     }
 
+    public String peekNextInternalId() {
+        return internalIdGenerator.peek();
+    }
+
     @Override
     protected Collection<Predicate> buildCustomFieldsPredicates(Root<Employee> root, Filter filter,
             CriteriaBuilder cb) {
@@ -310,5 +322,10 @@ public class EmployeeService extends BaseService<Employee, EmployeeDto, UUID> {
         }
 
         return predicates;
+    }
+
+    @Override
+    protected void addFetchJoins(Root<Employee> root) {
+        root.fetch("education", JoinType.LEFT);
     }
 }

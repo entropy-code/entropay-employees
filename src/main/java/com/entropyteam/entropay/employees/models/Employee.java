@@ -19,6 +19,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 
@@ -47,6 +48,7 @@ public class Employee extends BaseEntity {
     private String notes;
     private String labourEmail;
     private boolean active;
+    private boolean hasChildren;
 
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
@@ -76,6 +78,9 @@ public class Employee extends BaseEntity {
     @BatchSize(size = 100)
     private Set<Children> children = new HashSet<>();
 
+    @OneToOne(mappedBy = "employee")
+    private EmployeeEducation education;
+
     @OneToMany(mappedBy = "employee")
     @SQLRestriction("deleted = false")
     @BatchSize(size = 100)
@@ -99,27 +104,28 @@ public class Employee extends BaseEntity {
     public Employee() {
     }
 
-    public Employee(EmployeeDto entity) {
-        this.internalId = entity.internalId();
-        this.firstName = entity.firstName();
-        this.lastName = entity.lastName();
-        this.gender = entity.gender();
-        this.personalEmail = entity.personalEmail();
-        this.phoneNumber = entity.phoneNumber();
-        this.mobileNumber = entity.mobileNumber();
-        this.address = entity.address();
-        this.city = entity.city();
-        this.state = entity.state();
-        this.zip = entity.zip();
-        this.birthDate = entity.birthDate();
-        this.personalNumber = entity.personalNumber();
-        this.taxId = entity.taxId();
-        this.emergencyContactFullName = entity.emergencyContactFullName();
-        this.emergencyContactPhone = entity.emergencyContactPhone();
-        this.notes = entity.notes();
-        this.healthInsurance = entity.healthInsurance();
-        this.labourEmail = entity.labourEmail();
-        this.active = entity.active();
+    public Employee(EmployeeDto employeeDto) {
+        this.internalId = employeeDto.getInternalId();
+        this.firstName = employeeDto.getFirstName();
+        this.lastName = employeeDto.getLastName();
+        this.gender = employeeDto.getGender();
+        this.personalEmail = employeeDto.getPersonalEmail();
+        this.phoneNumber = employeeDto.getPhoneNumber();
+        this.mobileNumber = employeeDto.getMobileNumber();
+        this.address = employeeDto.getAddress();
+        this.city = employeeDto.getCity();
+        this.state = employeeDto.getState();
+        this.zip = employeeDto.getZip();
+        this.birthDate = employeeDto.getBirthDate();
+        this.personalNumber = employeeDto.getPersonalNumber();
+        this.taxId = employeeDto.getTaxId();
+        this.emergencyContactFullName = employeeDto.getEmergencyContactFullName();
+        this.emergencyContactPhone = employeeDto.getEmergencyContactPhone();
+        this.notes = employeeDto.getNotes();
+        this.healthInsurance = employeeDto.getHealthInsurance();
+        this.labourEmail = employeeDto.getLabourEmail();
+        this.active = employeeDto.isActive();
+        this.hasChildren = employeeDto.isHasChildren();
     }
 
     public String getFirstName() {
@@ -327,6 +333,21 @@ public class Employee extends BaseEntity {
         this.children = children;
     }
 
+    public EmployeeEducation getEducation() {
+        return education;
+    }
+
+    public void setEducation(EmployeeEducation education) {
+        this.education = education;
+    }
+  
+    public boolean isHasChildren() {
+        return hasChildren;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
+    }
 
     public Set<Assignment> getAssignments() {
         return assignments;

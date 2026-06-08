@@ -1,6 +1,7 @@
 package com.entropyteam.entropay.employees.services;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
 import com.entropyteam.entropay.employees.timetracking.OvertimeTimeEntry;
 import com.entropyteam.entropay.employees.timetracking.PtoTimeEntry;
 import com.entropyteam.entropay.employees.timetracking.TimeTrackingEntry;
+
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class MarginService {
@@ -149,5 +152,18 @@ public class MarginService {
                 });
 
         return salaries;
+    }
+
+    public static BigDecimal calculateMargin(@NotNull BigDecimal salary, @NotNull BigDecimal rate) {
+        if (rate.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal annualRevenue = rate.multiply(BigDecimal.valueOf(1850));
+        BigDecimal annualCost = salary.multiply(BigDecimal.valueOf(12));
+        BigDecimal grossMargin = annualRevenue.subtract(annualCost);
+        BigDecimal marginPercentage = grossMargin.divide(annualRevenue, 2, RoundingMode.HALF_UP);
+
+        return marginPercentage.multiply(BigDecimal.valueOf(100));
     }
 }

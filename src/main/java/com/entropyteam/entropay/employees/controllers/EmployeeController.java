@@ -16,21 +16,26 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.entropyteam.entropay.common.BaseController;
 import com.entropyteam.entropay.employees.dtos.EmployeeDto;
+import com.entropyteam.entropay.employees.dtos.NextInternalIdDto;
 import com.entropyteam.entropay.employees.services.EmployeeService;
 
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_ADMIN;
 import static com.entropyteam.entropay.auth.AuthConstants.ROLE_DEVELOPMENT;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_HR_DIRECTOR;
+import static com.entropyteam.entropay.auth.AuthConstants.ROLE_MANAGER_HR;
 
 
 @RestController
 @CrossOrigin
 @RequestMapping(value = "/employees", produces = MediaType.APPLICATION_JSON_VALUE)
 public class EmployeeController extends BaseController<EmployeeDto, UUID> {
+    private final EmployeeService employeeService;
     private final EmployeeJob employeeJob;
 
     @Autowired
     public EmployeeController(EmployeeService employeeService, EmployeeJob employeeJob) {
         super(employeeService);
+        this.employeeService = employeeService;
         this.employeeJob = employeeJob;
     }
 
@@ -45,5 +50,11 @@ public class EmployeeController extends BaseController<EmployeeDto, UUID> {
             String errorMessage = "An error occurred: " + exception.getMessage();
             return ResponseEntity.badRequest().body(errorMessage);
         }
+    }
+
+    @GetMapping("/next-internal-id")
+    @Secured({ROLE_ADMIN, ROLE_MANAGER_HR, ROLE_DEVELOPMENT, ROLE_HR_DIRECTOR})
+    public ResponseEntity<NextInternalIdDto> getNextInternalId() {
+        return ResponseEntity.ok(new NextInternalIdDto(employeeService.peekNextInternalId()));
     }
 }

@@ -21,7 +21,9 @@ import com.entropyteam.entropay.common.ReactAdminMapper;
 import com.entropyteam.entropay.employees.dtos.AssignmentDto;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Country;
+import com.entropyteam.entropay.employees.models.Currency;
 import com.entropyteam.entropay.employees.models.Employee;
+import com.entropyteam.entropay.employees.models.EngagementType;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.models.Role;
 import com.entropyteam.entropay.employees.models.Seniority;
@@ -85,18 +87,21 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
     }
 
     @Override
-    protected Assignment toEntity(AssignmentDto entity) {
-        Employee employee = employeeRepository.findById(entity.employeeId()).orElseThrow();
-        Role role = roleRepository.findById(entity.roleId()).orElseThrow();
-        Seniority seniority = seniorityRepository.findById(entity.seniorityId()).orElseThrow();
-        Project project = projectRepository.findById(entity.projectId()).orElseThrow();
+    protected Assignment toEntity(AssignmentDto assignmentDto) {
+        Employee employee = employeeRepository.findById(assignmentDto.employeeId()).orElseThrow();
+        Role role = roleRepository.findById(assignmentDto.roleId()).orElseThrow();
+        Seniority seniority = seniorityRepository.findById(assignmentDto.seniorityId()).orElseThrow();
+        Project project = projectRepository.findById(assignmentDto.projectId()).orElseThrow();
 
-        Assignment assignment = new Assignment(entity);
+        Assignment assignment = new Assignment(assignmentDto);
         assignment.setEmployee(employee);
         assignment.setRole(role);
         assignment.setSeniority(seniority);
         assignment.setProject(project);
         assignment.setActive(true);
+        assignment.setEngagementType(EngagementType.valueOf(assignmentDto.engagementType()));
+        assignment.setBillableRate(assignmentDto.billableRate());
+        assignment.setCurrency(Currency.valueOf(assignmentDto.currency()));
 
         return assignment;
     }
@@ -105,8 +110,9 @@ public class AssignmentService extends BaseService<Assignment, AssignmentDto, UU
         if (DateUtils.isDocumentActive(assignmentToCheck.getStartDate(), assignmentToCheck.getEndDate())) {
             assignmentToCheck.setActive(true);
             Optional<Assignment> activeAssignment =
-                    assignmentRepository.findAssignmentByEmployeeIdAndActiveIsTrueAndDeletedIsFalse(
-                            assignmentToCheck.getEmployee().getId());
+                    assignmentRepository.findActiveAssignmentByEmployeeAndProject(
+                            assignmentToCheck.getEmployee().getId(),
+                            assignmentToCheck.getProject().getId());
             activeAssignment.ifPresent(assignment -> {
                 assignment.setActive(false);
                 if (assignment.getEndDate() == null) {

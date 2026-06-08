@@ -3,6 +3,7 @@
 
 # Log file
 *.log
+logs/
 
 # BlueJ files
 *.ctxt
@@ -39,6 +40,7 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
+.run/
 *.iws
 *.iml
 *.ipr
@@ -58,5 +60,6 @@ build/
 
 *.env
 *.versionsBackup
+src/main/resources/application-local.properties
 /.hypersistence/
 .claude/
