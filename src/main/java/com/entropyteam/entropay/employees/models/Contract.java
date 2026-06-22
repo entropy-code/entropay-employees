@@ -222,6 +222,24 @@ public class Contract extends BaseEntity {
         return BigDecimal.ZERO;
     }
 
+    /**
+     * Per-month hourly cost for this contract, for every month it is active within the given range.
+     * The value is the employee's hourly cost (the {@code HOUR}/{@code USD} settlement salary), constant
+     * across months; the margin report multiplies it by the hours actually worked that month.
+     *
+     * @return a map of {@code YearMonth -> hourly cost}, or an empty map when the contract has no
+     *         hourly cost (e.g. a monthly contract).
+     */
+    public Map<YearMonth, BigDecimal> getHourlyCostByMonth(LocalDate startDate, LocalDate endDate) {
+        BigDecimal hourlyCost = calculateHourlyCostInUSD();
+        if (hourlyCost.signum() == 0) {
+            return Map.of();
+        }
+        return generatePeriod(startDate, endDate)
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), yearMonth -> hourlyCost, (a, b) -> b));
+    }
+
     private List<YearMonth> generatePeriod(LocalDate startDate, LocalDate endDate) {
         YearMonth start =
                 startDate.isAfter(this.startDate) ? YearMonth.from(startDate) : YearMonth.from(this.startDate);
@@ -248,6 +266,22 @@ public class Contract extends BaseEntity {
     public BigDecimal calculateMonthlySalaryInUSD() {
         return paymentsSettlement.stream()
                 .filter(payment -> Modality.MONTHLY.equals(payment.getModality()))
+                .filter(payment -> Currency.USD.equals(payment.getCurrency()))
+                .map(PaymentSettlement::getSalary)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Cumulative hourly cost in USD for all payment settlements with modality {@code HOUR} and
+     * currency {@code USD}. For an hourly contract the settlement salary stores the employee's
+     * cost per hour (see {@code PayrollCalculatorService#computeHourlyRate}).
+     *
+     * @return the total hourly cost as a {@code BigDecimal}, or {@code BigDecimal.ZERO} when there
+     *         is no matching hourly settlement.
+     */
+    public BigDecimal calculateHourlyCostInUSD() {
+        return paymentsSettlement.stream()
+                .filter(payment -> Modality.HOUR.equals(payment.getModality()))
                 .filter(payment -> Currency.USD.equals(payment.getCurrency()))
                 .map(PaymentSettlement::getSalary)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
