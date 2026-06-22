@@ -26,7 +26,7 @@
         <postgresql.version>42.7.11</postgresql.version>
         <resilience4j.version>2.3.0</resilience4j.version>
         <software-amazon-sdk.version>2.46.1</software-amazon-sdk.version>
-        <springdoc-openapi.version>2.8.14</springdoc-openapi.version>
+        <springdoc-openapi.version>3.0.3</springdoc-openapi.version>
     </properties>
 
     <dependencies>
