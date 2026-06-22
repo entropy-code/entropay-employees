@@ -139,7 +139,7 @@ public final class EmployeeDto implements EmployeeIdAware {
         this.nearestPto = employee.getNearestPto(LocalDate.now());
         this.timeSinceStart = timeSinceStart;
         this.countryName = employee.getCountry().getName();
-        this.salary = activeContract != null ? activeContract.calculateMonthlySalaryInUSD() : BigDecimal.ZERO;
+        this.salary = activeContract != null ? MarginService.monthlyCostInUSD(activeContract) : BigDecimal.ZERO;
         this.rate = lastAssignment != null ? lastAssignment.getBillableRate() : BigDecimal.ZERO;
         this.margin = MarginService.calculateMargin(salary, rate);
         this.hasChildren = employee.isHasChildren();
