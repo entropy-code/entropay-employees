@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.entropyteam.entropay.common.BaseEntity;
+import com.entropyteam.entropay.common.sensitiveInformation.EmployeeIdAware;
+import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation;
 import com.entropyteam.entropay.employees.models.Assignment;
 import com.entropyteam.entropay.employees.models.Client;
 import com.entropyteam.entropay.employees.models.Contract;
@@ -14,14 +16,14 @@ import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Gender;
 import com.entropyteam.entropay.employees.models.Project;
 import com.entropyteam.entropay.employees.services.MarginService;
-import com.entropyteam.entropay.employees.dtos.EmployeeEducationDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 
 
-public final class EmployeeDto {
+public final class EmployeeDto implements EmployeeIdAware {
 
     private UUID id;
     private String internalId;
@@ -75,7 +77,9 @@ public final class EmployeeDto {
     private LocalDate nearestPto;
     private String timeSinceStart;
     private String countryName;
+    @SensitiveInformation
     private BigDecimal rate;
+    @SensitiveInformation
     private BigDecimal salary;
     private BigDecimal margin;
     private boolean hasChildren;
@@ -135,7 +139,7 @@ public final class EmployeeDto {
         this.nearestPto = employee.getNearestPto(LocalDate.now());
         this.timeSinceStart = timeSinceStart;
         this.countryName = employee.getCountry().getName();
-        this.salary = activeContract != null ? activeContract.calculateMonthlySalaryInUSD() : BigDecimal.ZERO;
+        this.salary = activeContract != null ? MarginService.monthlyCostInUSD(activeContract) : BigDecimal.ZERO;
         this.rate = lastAssignment != null ? lastAssignment.getBillableRate() : BigDecimal.ZERO;
         this.margin = MarginService.calculateMargin(salary, rate);
         this.hasChildren = employee.isHasChildren();
@@ -295,6 +299,18 @@ public final class EmployeeDto {
     }
 
     public UUID getId() {
+        return id;
+    }
+
+    /**
+     * The masking subject for the {@link SensitiveInformation} fields on this DTO (rate, salary).
+     * An {@code EmployeeDto}'s {@code id} is the employee's own id, so it owns its sensitive
+     * fields. Marked {@link JsonIgnore} so it does not surface a redundant {@code employeeId}
+     * property in the serialized response — {@code id} already carries that value.
+     */
+    @Override
+    @JsonIgnore
+    public UUID getEmployeeId() {
         return id;
     }
 

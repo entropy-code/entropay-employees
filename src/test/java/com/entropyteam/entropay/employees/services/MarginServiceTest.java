@@ -156,6 +156,121 @@ class MarginServiceTest {
         validateResult(data.get(15), YearMonth.of(2025, 4), rate2025, 160.0, 56d, BigDecimal.valueOf(2800));
     }
 
+    @Test
+    void testMonthlyCostInUSD_monthlyContractIsUnchanged() {
+        Contract contract = buildContract(buildEmployee(UUID.randomUUID(), "E010"),
+                LocalDate.of(2024, 1, 1), null, BigDecimal.valueOf(2300));
+
+        Assertions.assertEquals(BigDecimal.valueOf(2300), MarginService.monthlyCostInUSD(contract));
+    }
+
+    @Test
+    void testMonthlyCostInUSD_hourlyContractIsScaledToMonthlyEquivalent() {
+        Contract contract = buildHourlyContract(buildEmployee(UUID.randomUUID(), "E011"),
+                LocalDate.of(2024, 1, 1), null, BigDecimal.valueOf(60));
+
+        // hourlyCost (60) × 1850 annual hours / 12 months = 9250.00
+        Assertions.assertEquals(0,
+                new BigDecimal("9250.00").compareTo(MarginService.monthlyCostInUSD(contract)));
+    }
+
+    @Test
+    void testCalculateMargin_passThroughHourlyEngagementIsZero() {
+        Contract contract = buildHourlyContract(buildEmployee(UUID.randomUUID(), "E012"),
+                LocalDate.of(2024, 1, 1), null, BigDecimal.valueOf(60));
+        BigDecimal rate = BigDecimal.valueOf(60);
+
+        BigDecimal salary = MarginService.monthlyCostInUSD(contract);
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(margin));
+    }
+
+    @Test
+    void testCalculateMargin_hourlyCostBelowRateIsPositiveAndProportional() {
+        Contract contract = buildHourlyContract(buildEmployee(UUID.randomUUID(), "E013"),
+                LocalDate.of(2024, 1, 1), null, BigDecimal.valueOf(30));
+        BigDecimal rate = BigDecimal.valueOf(60);
+
+        BigDecimal salary = MarginService.monthlyCostInUSD(contract);
+        BigDecimal margin = MarginService.calculateMargin(salary, rate);
+
+        // cost 30 vs rate 60 → exactly half the revenue is cost → 50% margin
+        Assertions.assertEquals(0, BigDecimal.valueOf(50).compareTo(margin));
+    }
+
+    @Test
+    void testCalculateMargin_monthlyContractMarginIsUnchanged() {
+        // Regression: salary 5000, rate 60 → annualRevenue 111000, annualCost 60000 → 45.95% → 46%
+        BigDecimal margin = MarginService.calculateMargin(BigDecimal.valueOf(5000), BigDecimal.valueOf(60));
+
+        Assertions.assertEquals(0, BigDecimal.valueOf(46).compareTo(margin));
+    }
+
+    @Test
+    void testGenerateMarginReport_passThroughHourlyEmployeeHasZeroMargin() {
+        List<MarginDto> data = generateSingleMonthHourlyReport(BigDecimal.valueOf(60), BigDecimal.valueOf(60), "E020");
+
+        Assertions.assertEquals(1, data.size());
+        MarginDto dto = data.get(0);
+        // 5 weekdays in 2025-06-02..2025-06-06 × 8h = 40 billable hours
+        Assertions.assertEquals(40.0, dto.hours());
+        Assertions.assertEquals(0, dto.paid().compareTo(dto.total()));
+        Assertions.assertEquals(0, BigDecimal.ZERO.compareTo(dto.margin()));
+    }
+
+    @Test
+    void testGenerateMarginReport_hourlyCostBelowRateHasPositiveMargin() {
+        List<MarginDto> data = generateSingleMonthHourlyReport(BigDecimal.valueOf(30), BigDecimal.valueOf(60), "E021");
+
+        Assertions.assertEquals(1, data.size());
+        MarginDto dto = data.get(0);
+        // cost 30 × 40h = 1200 paid; total 60 × 40h = 2400; margin = 1200
+        Assertions.assertEquals(0, BigDecimal.valueOf(1200).compareTo(dto.paid()));
+        Assertions.assertEquals(0, BigDecimal.valueOf(2400).compareTo(dto.total()));
+        Assertions.assertEquals(0, BigDecimal.valueOf(1200).compareTo(dto.margin()));
+    }
+
+    private List<MarginDto> generateSingleMonthHourlyReport(BigDecimal hourlyCost, BigDecimal rate,
+            String internalId) {
+        String start = "2025-06-02";
+        String end = "2025-06-06";
+        ReactAdminParams params = new ReactAdminParams(FILTER_JSON.formatted(start, end), RANGE_JSON.formatted(0, 20),
+                SORT_JSON.formatted("internalId", "ASC"));
+
+        Employee employee = buildEmployee(UUID.randomUUID(), internalId);
+        LocalDate startDate = LocalDate.parse(start);
+        LocalDate endDate = LocalDate.parse(end);
+
+        Mockito.when(holidayService.getHolidaysByCountry(startDate, endDate)).thenReturn(Map.of());
+        Mockito.when(contractService.findByDateBetween(startDate, endDate))
+                .thenReturn(List.of(buildHourlyContract(employee, LocalDate.of(2025, 1, 1), null, hourlyCost)));
+        Mockito.when(ptoRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(List.of());
+        Mockito.when(overtimeService.findByDateBetween(startDate, endDate)).thenReturn(List.of());
+
+        Assignment assignment = buildAssignment(employee, LocalDate.of(2025, 1, 1), null, rate);
+        Mockito.when(assignmentRepository.findAllBetweenPeriod(startDate, endDate)).thenReturn(List.of(assignment));
+
+        return marginService.generateMarginReport(params).data();
+    }
+
+    private static Contract buildHourlyContract(Employee employee, LocalDate startDate, LocalDate endDate,
+            BigDecimal hourlyCost) {
+        Contract contract = new Contract();
+        contract.setId(UUID.randomUUID());
+        contract.setCompany(COMPANY);
+        contract.setEmployee(employee);
+        contract.setStartDate(startDate);
+        contract.setEndDate(endDate);
+        contract.setActive(true);
+        PaymentSettlement paymentSettlement = new PaymentSettlement();
+        paymentSettlement.setCurrency(Currency.USD);
+        paymentSettlement.setSalary(hourlyCost);
+        paymentSettlement.setModality(Modality.HOUR);
+        contract.addPaymentSettlement(paymentSettlement);
+        return contract;
+    }
+
     private static void validateResult(MarginDto marginDto, YearMonth yearMonth, BigDecimal rate, double hours,
             double ptoHours, BigDecimal paid) {
         Assertions.assertEquals(yearMonth.toString(), marginDto.yearMonth());

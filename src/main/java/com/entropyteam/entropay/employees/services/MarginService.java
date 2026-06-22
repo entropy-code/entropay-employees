@@ -23,6 +23,7 @@ import com.entropyteam.entropay.common.sensitiveInformation.EmployeeIdAware;
 import com.entropyteam.entropay.common.sensitiveInformation.SensitiveInformation;
 import com.entropyteam.entropay.employees.dtos.ReportDto;
 import com.entropyteam.entropay.employees.models.Assignment;
+import com.entropyteam.entropay.employees.models.Contract;
 import com.entropyteam.entropay.employees.models.Employee;
 import com.entropyteam.entropay.employees.models.Overtime;
 import com.entropyteam.entropay.employees.timetracking.AssignmentTimeEntry;
@@ -36,6 +37,11 @@ import jakarta.validation.constraints.NotNull;
 public class MarginService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarginService.class);
+    /** Annual billable hours used as the revenue basis: {@code annualRevenue = rate × 1850}. */
+    private static final BigDecimal ANNUAL_BILLABLE_HOURS = BigDecimal.valueOf(1850);
+    /** Months per year used to annualize a monthly cost: {@code annualCost = monthlySalary × 12}. */
+    private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
+    private static final int MONEY_SCALE = 2;
     private final PtoService ptoService;
     private final OvertimeService overtimeService;
     private final AssignmentService assignmentService;
@@ -93,6 +99,7 @@ public class MarginService {
         LOGGER.info("Generating margin for period {} - {}", startDate, endDate);
 
         Map<EmployeeMonthly, BigDecimal> salaries = getSalaries(startDate, endDate);
+        Map<EmployeeMonthly, BigDecimal> hourlyCosts = getHourlyCosts(startDate, endDate);
         Map<EmployeeMonthly, Double> ptoHours = getPtoHours(startDate, endDate);
 
         Map<MonthlyAssignment, List<TimeTrackingEntry>> timeTrackingByAssignment =
@@ -108,10 +115,17 @@ public class MarginService {
         List<MarginDto> report = new ArrayList<>();
         timeTrackingByAssignment.forEach((key, value) -> {
             EmployeeMonthly employeeMonthly = new EmployeeMonthly(key.assignment().getEmployee(), key.month());
-            BigDecimal salary = salaries.get(employeeMonthly);
             Double ptoHoursValue = ptoHours.getOrDefault(employeeMonthly, 0.0);
             Double hours = value.stream().map(TimeTrackingEntry::getHours).reduce(Double::sum).orElse(0.0);
             BigDecimal rate = key.assignment.getBillableRate();
+
+            // Hourly contracts: the monthly cost is the hourly cost times the hours actually worked
+            // (net of PTO), the same basis as `total`, so a pass-through engagement nets to 0% margin.
+            // Monthly contracts keep their precomputed salary untouched.
+            BigDecimal hourlyCost = hourlyCosts.get(employeeMonthly);
+            BigDecimal salary = hourlyCost != null
+                    ? hourlyCost.multiply(BigDecimal.valueOf(hours - ptoHoursValue))
+                    : salaries.get(employeeMonthly);
 
             report.add(getMarginDto(key, rate, hours, ptoHoursValue, salary));
         });
@@ -154,16 +168,54 @@ public class MarginService {
         return salaries;
     }
 
+    private Map<EmployeeMonthly, BigDecimal> getHourlyCosts(LocalDate startDate, LocalDate endDate) {
+        Map<EmployeeMonthly, BigDecimal> hourlyCosts = new HashMap<>();
+
+        contractService.findByDateBetween(startDate, endDate)
+                .forEach(contract -> {
+                    Map<YearMonth, BigDecimal> costByMonth = contract.getHourlyCostByMonth(startDate, endDate);
+                    costByMonth.forEach((yearMonth, hourlyCost) -> {
+                        EmployeeMonthly key = new EmployeeMonthly(contract.getEmployee(), yearMonth);
+                        hourlyCosts.merge(key, hourlyCost, BigDecimal::add);
+                    });
+                });
+
+        return hourlyCosts;
+    }
+
     public static BigDecimal calculateMargin(@NotNull BigDecimal salary, @NotNull BigDecimal rate) {
         if (rate.compareTo(BigDecimal.ZERO) == 0) {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal annualRevenue = rate.multiply(BigDecimal.valueOf(1850));
-        BigDecimal annualCost = salary.multiply(BigDecimal.valueOf(12));
+        BigDecimal annualRevenue = rate.multiply(ANNUAL_BILLABLE_HOURS);
+        BigDecimal annualCost = salary.multiply(MONTHS_PER_YEAR);
         BigDecimal grossMargin = annualRevenue.subtract(annualCost);
         BigDecimal marginPercentage = grossMargin.divide(annualRevenue, 2, RoundingMode.HALF_UP);
 
         return marginPercentage.multiply(BigDecimal.valueOf(100));
+    }
+
+    /**
+     * Monthly cost in USD for the employee card and detail header. Monthly contracts return their
+     * monthly salary unchanged. For an hourly contract — whose monthly salary is zero — the hourly
+     * cost is scaled to a monthly equivalent on the same annualized basis {@link #calculateMargin}
+     * uses, so that {@code annualCost = hourlyCost × ANNUAL_BILLABLE_HOURS}. This makes a pass-through
+     * engagement (hourly cost equal to the billed rate) yield a 0% margin instead of 100%.
+     *
+     * @return the monthly cost in USD, or {@code BigDecimal.ZERO} when neither a monthly salary nor
+     *         an hourly cost is present.
+     */
+    public static BigDecimal monthlyCostInUSD(@NotNull Contract contract) {
+        BigDecimal monthlySalary = contract.calculateMonthlySalaryInUSD();
+        if (monthlySalary.signum() != 0) {
+            return monthlySalary;
+        }
+        BigDecimal hourlyCost = contract.calculateHourlyCostInUSD();
+        if (hourlyCost.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        return hourlyCost.multiply(ANNUAL_BILLABLE_HOURS)
+                .divide(MONTHS_PER_YEAR, MONEY_SCALE, RoundingMode.HALF_UP);
     }
 }
