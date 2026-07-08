@@ -58,6 +58,8 @@ public class ReportService {
     private final static String EMPLOYEE_ID = "employeeId";
     private final static String CLIENT_ID = "clientId";
     private final static String YEAR = "year";
+        private final static String DATE_FROM = "dateFrom";
+        private final static String DATE_TO = "dateTo";
     private final static String NO_CLIENT = "noClient";
     private final ReactAdminMapper mapper;
     private final RoleRepository roleRepository;
@@ -153,22 +155,21 @@ public class ReportService {
     public Page<PtoReportDetailDto> getPtoReportDetail(ReactAdminParams params) {
         List<PtoReportDetailDto> ptoReportDetailDtoList;
         Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
-        Integer year = getYearFromFilter(filter);
         if (filter.getGetByFieldsFilter().containsKey(EMPLOYEE_ID)) {
             ptoReportDetailDtoList = getPtoReportDetailByEmployee(employeeRepository.findById(
-                    UUID.fromString((String) filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow(), year);
+                                        UUID.fromString((String) filter.getGetByFieldsFilter().get(EMPLOYEE_ID))).orElseThrow(), filter);
         } else if (filter.getGetByFieldsFilter().containsKey(CLIENT_ID)) {
             Client client = (filter.getGetByFieldsFilter().get(CLIENT_ID)).equals(NO_CLIENT) ? null :
                     clientRepository.findById(UUID.fromString((String) filter.getGetByFieldsFilter().get(CLIENT_ID)))
                             .orElseThrow();
-            ptoReportDetailDtoList = getPtoReportDetailByClient(client, year);
+                        ptoReportDetailDtoList = getPtoReportDetailByClient(client, filter);
         } else {
             ptoReportDetailDtoList = Collections.emptyList();
         }
         return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
     }
 
-    public List<PtoReportDetailDto> getPtoReportDetailByEmployee(Employee employee, Integer year) {
+        public List<PtoReportDetailDto> getPtoReportDetailByEmployee(Employee employee, Filter filter) {
         List<PtoReportDetailDto> ptoReportDetailDtoList;
 
         List<Assignment> employeesAssignments =
@@ -177,7 +178,11 @@ public class ReportService {
         UUID clientId = lastAssignment.map(assignment -> assignment.getProject().getClient().getId()).orElse(null);
         String clientName =
                 lastAssignment.map(assignment -> assignment.getProject().getClient().getName()).orElse("No client");
-        List<Pto> employeesPtosList = ptoRepository.findPtosByEmployeeIdIsAndDeletedIsFalse(employee.getId(), year);
+        List<Pto> employeesPtosList = ptoRepository.findAllByDeletedIsFalseAndStatusIs(Status.APPROVED)
+                .stream()
+                .filter(pto -> pto.getEmployee().getId().equals(employee.getId()))
+                .filter(pto -> matchesDateFilter(pto, filter))
+                .toList();
 
         ptoReportDetailDtoList = employeesPtosList.stream()
                 .sorted(Comparator.comparing(Pto::getStartDate))
@@ -194,14 +199,16 @@ public class ReportService {
                         clientId,
                         pto.getStartDate(),
                         pto.getEndDate(),
-                        year
+                        getDisplayYear(filter, pto),
+                        pto.getStatus().name(),
+                        pto.getDetails()
                 ))
                 .collect(Collectors.toList());
 
         return ptoReportDetailDtoList;
     }
 
-    public List<PtoReportDetailDto> getPtoReportDetailByClient(Client client, Integer year) {
+        public List<PtoReportDetailDto> getPtoReportDetailByClient(Client client, Filter filter) {
         List<PtoReportDetailDto> ptoReportDetailDtoList;
         List<Employee> employeeList;
         if (client != null) {
@@ -211,9 +218,12 @@ public class ReportService {
         } else {
             employeeList = employeeRepository.findAllUnassignedEmployees();
         }
-        List<Pto> employeesPtoList =
-                ptoRepository.findPtosByEmployeeIdInAndForYear(employeeList.stream().map(BaseEntity::getId).toList(),
-                        year);
+        List<UUID> employeeIds = employeeList.stream().map(BaseEntity::getId).toList();
+        List<Pto> employeesPtoList = ptoRepository.findAllByDeletedIsFalseAndStatusIs(Status.APPROVED)
+                .stream()
+                .filter(pto -> employeeIds.contains(pto.getEmployee().getId()))
+                .filter(pto -> matchesDateFilter(pto, filter))
+                .toList();
 
         ptoReportDetailDtoList = employeesPtoList.stream()
                 .sorted(Comparator.comparing(Pto::getStartDate))
@@ -232,7 +242,9 @@ public class ReportService {
                             client != null ? client.getId() : null,
                             pto.getStartDate(),
                             pto.getEndDate(),
-                            year
+                            getDisplayYear(filter, pto),
+                            pto.getStatus().name(),
+                            pto.getDetails()
                     );
                 })
                 .collect(Collectors.toList());
@@ -243,12 +255,8 @@ public class ReportService {
     public Page<PtoReportEmployeeDto> getPtosReportByEmployees(ReactAdminParams params) {
         List<PtoReportEmployeeDto> ptoReportDtoList;
         Filter filter = mapper.buildReportFilter(params, PtoReportEmployeeDto.class);
-        int year = LocalDate.now().getYear();
-        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
-            year = getYearFromFilter(filter);
-        }
-        ptoReportDtoList = getPtoReportEmployeeDtos(
-                ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
+                Integer year = getYearFromFilter(filter);
+                ptoReportDtoList = getPtoReportEmployeeDtos(getFilteredPtos(filter), year);
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
@@ -288,12 +296,8 @@ public class ReportService {
     public Page<PtoReportClientDto> getPtosReportByClients(ReactAdminParams params) {
         List<PtoReportClientDto> ptoReportDtoList;
         Filter filter = mapper.buildReportFilter(params, PtoReportClientDto.class);
-        int year = LocalDate.now().getYear();
-        if (filter.getGetByFieldsFilter().containsKey(YEAR)) {
-            year = getYearFromFilter(filter);
-        }
-        ptoReportDtoList = getPtoReportClientDtos(
-                ptoRepository.findAllByDeletedIsFalseAndStatusIsForYear(Status.APPROVED.name(), year), year);
+                Integer year = getYearFromFilter(filter);
+                ptoReportDtoList = getPtoReportClientDtos(getFilteredPtos(filter), year);
         return new PageImpl<>(ptoReportDtoList, Pageable.unpaged(), ptoReportDtoList.size());
     }
 
@@ -327,21 +331,82 @@ public class ReportService {
 
     public Page<PtoReportDetailDto> getPtoReportAllDetails(ReactAdminParams params) {
         Filter filter = mapper.buildReportFilter(params, PtoReportDetailDto.class);
-        Integer year = getYearFromFilter(filter);
-        List<PtoReportDetailDto> ptoReportDetailDtoList = getPtoReportAllDetailsDto(year);
+                List<PtoReportDetailDto> ptoReportDetailDtoList = getPtoReportAllDetailsDto(filter);
         return new PageImpl<>(ptoReportDetailDtoList, Pageable.unpaged(), ptoReportDetailDtoList.size());
     }
 
-    private List<PtoReportDetailDto> getPtoReportAllDetailsDto(Integer year) {
+        private List<PtoReportDetailDto> getPtoReportAllDetailsDto(Filter filter) {
         return employeeRepository.findAllByDeletedIsFalseAndActiveIsTrue().stream()
-                .flatMap(employee -> getPtoReportDetailByEmployee(employee, year).stream())
+                                .flatMap(employee -> getPtoReportDetailByEmployee(employee, filter).stream())
                 .collect(Collectors.toList());
     }
 
     private Integer getYearFromFilter(Filter filter) {
         Object yearObject = filter.getGetByFieldsFilter().get(YEAR);
+                if (yearObject == null || yearObject.toString().isBlank()) {
+                        return null;
+                }
         return Integer.parseInt(yearObject.toString());
     }
+
+        private int getDisplayYear(Filter filter, Pto pto) {
+                Integer year = getYearFromFilter(filter);
+                if (year != null) {
+                        return year;
+                }
+
+                return pto.getStartDate().getYear();
+        }
+
+        private List<Pto> getFilteredPtos(Filter filter) {
+                List<Pto> approvedPtos = ptoRepository.findAllByDeletedIsFalseAndStatusIs(Status.APPROVED);
+                return approvedPtos.stream().filter(pto -> matchesDateFilter(pto, filter)).toList();
+        }
+
+        private boolean matchesDateFilter(Pto pto, Filter filter) {
+                LocalDate dateFrom = getDateFrom(filter);
+                LocalDate dateTo = getDateTo(filter);
+
+                if (dateFrom == null && dateTo == null) {
+                        Integer year = getYearFromFilter(filter);
+                        if (year == null) {
+                                return true;
+                        }
+                        return pto.getStartDate().getYear() == year || pto.getEndDate().getYear() == year;
+                }
+
+                LocalDate normalizedFrom = dateFrom != null ? dateFrom : dateTo;
+                LocalDate normalizedTo = dateTo != null ? dateTo : dateFrom;
+
+                if (normalizedFrom.isAfter(normalizedTo)) {
+                        LocalDate tmp = normalizedFrom;
+                        normalizedFrom = normalizedTo;
+                        normalizedTo = tmp;
+                }
+
+                return isDateBetween(pto.getStartDate(), normalizedFrom, normalizedTo)
+                                   || isDateBetween(pto.getEndDate(), normalizedFrom, normalizedTo);
+        }
+
+        private LocalDate getDateFrom(Filter filter) {
+                Object dateFrom = filter.getGetByFieldsFilter().get(DATE_FROM);
+                if (dateFrom == null) {
+                        return null;
+                }
+                return LocalDate.parse(dateFrom.toString());
+        }
+
+        private LocalDate getDateTo(Filter filter) {
+                Object dateTo = filter.getGetByFieldsFilter().get(DATE_TO);
+                if (dateTo == null) {
+                        return null;
+                }
+                return LocalDate.parse(dateTo.toString());
+        }
+
+        private boolean isDateBetween(LocalDate value, LocalDate from, LocalDate to) {
+                return (value.isEqual(from) || value.isAfter(from)) && (value.isEqual(to) || value.isBefore(to));
+        }
 
     public ReportDto<SalariesReportDto> getSalariesReport(ReactAdminParams params) {
         LOGGER.info("Getting salaries report with params: {}", params);

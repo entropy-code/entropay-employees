@@ -136,7 +136,10 @@ public class ReactAdminMapper {
             if (params.getFilter() != null) {
                 Map<String, Object> requestFilter = mapper.readValue(params.getFilter(), Map.class);
                 for (Map.Entry<String, Object> filter : requestFilter.entrySet()) {
-                    if (isEntityField(report, filter.getKey())) {
+                    if (isEntityField(report, filter.getKey())
+                        || StringUtils.equalsIgnoreCase(filter.getKey(), YEAR_SEARCH_TERM_KEY)
+                        || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_FROM_TERM_KEY)
+                        || StringUtils.equalsIgnoreCase(filter.getKey(), DATE_TO_TERM_KEY)) {
                         getByFieldsFilter.put(filter.getKey(), filter.getValue());
                     }
                 }
